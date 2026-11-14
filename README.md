@@ -140,7 +140,7 @@ pnpm desktop
 
 For desktop development with live reload, run `pnpm dev --host 127.0.0.1 --strictPort` and `pnpm desktop:dev` in separate terminals. To use a port other than 5173, pass `--port <port>` to `pnpm dev` and set `NESSO_DEV_PORT=<port>` for `pnpm desktop:dev`. For the web demo alone, use `pnpm dev`.
 
-Checks: `pnpm build`, `pnpm lint`, `pnpm test`, `pnpm test:plugin-runtime`, and `pnpm analyze --summary`.
+Checks: `pnpm build`, `pnpm lint`, `pnpm test`, `pnpm test:e2e`, and `pnpm analyze --summary`.
 
 See the [plugin guide](packages/plugin/README.md#create-a-plugin) for plugin authoring, or `pnpm release --help` for release options. The app, UI package, plugin SDK, and official example are released together with the same version and channel.
 

@@ -2,10 +2,10 @@ import assert from 'node:assert/strict'
 import { ipcMain, type BrowserWindow } from 'electron'
 import { build } from 'vite'
 import { preparePluginPackage } from '@nesso-how/plugin/package'
-import example from '../../packages/plugin/example/package.json' with { type: 'json' }
-import type { Platform } from './cases.ts'
+import example from '../packages/plugin/example/package.json' with { type: 'json' }
+import type { Platform } from './scenarios.ts'
 import { themeTokens, type ActionState } from '@nesso-how/plugin/runtime'
-import { createBackup } from '../../src/store/backup.ts'
+import { createBackup } from '../src/store/backup.ts'
 
 export type CheckContext = {
   window: BrowserWindow
@@ -95,7 +95,7 @@ export async function waitFor<T>(
 
 export async function listExamplePlugin() {
   const output = await build({
-    configFile: new URL('../../packages/plugin/example/vite.config.ts', import.meta.url).pathname,
+    configFile: new URL('../packages/plugin/example/vite.config.ts', import.meta.url).pathname,
     logLevel: 'silent',
     build: { write: false },
   })

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { ipcMain } from 'electron'
-import { connectFixtureStorage, waitFor, type CheckContext } from './helpers.ts'
+import { connectFixtureStorage, waitFor, type CheckContext } from '../helpers.ts'
 
 export async function verifyIntro({ window, url, name }: CheckContext) {
   const saved = connectFixtureStorage()

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { ipcMain } from 'electron'
-import { connectFixtureStorage, panelFrame, waitFor, type CheckContext } from './helpers.ts'
+import { connectFixtureStorage, panelFrame, waitFor, type CheckContext } from '../helpers.ts'
 
 export async function verifyCompact({ window, url, name }: CheckContext) {
   if (name === 'desktop') {

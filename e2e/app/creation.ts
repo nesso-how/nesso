@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { ipcMain } from 'electron'
-import { openFixtureWorkspace, waitFor, type CheckContext } from './helpers.ts'
+import { openFixtureWorkspace, waitFor, type CheckContext } from '../helpers.ts'
 
 export async function verifyCreation(context: CheckContext) {
   ipcMain.handle('plugins:list', () => ({

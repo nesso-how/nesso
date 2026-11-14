@@ -9,7 +9,7 @@ import {
   panelFrame,
   waitFor,
   type CheckContext,
-} from './helpers.ts'
+} from '../helpers.ts'
 
 export async function verifyPanelWorkspace(context: CheckContext) {
   connectMenu(() => true, false)

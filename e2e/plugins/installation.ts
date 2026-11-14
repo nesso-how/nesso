@@ -7,7 +7,7 @@ import { ElectronError } from '../../electron/errors.ts'
 import { connectExternalLinks } from '../../electron/links.ts'
 import { preparePluginPackage, parsePackageIdentity } from '@nesso-how/plugin/package'
 import theme from '../../packages/plugin/test/theme.json' with { type: 'json' }
-import { connectFixtureStorage, countWorkers, waitFor, type CheckContext } from './helpers.ts'
+import { connectFixtureStorage, countWorkers, waitFor, type CheckContext } from '../helpers.ts'
 
 const kinds = ['actions', 'theme', 'vocab'] as const
 type Kind = (typeof kinds)[number]

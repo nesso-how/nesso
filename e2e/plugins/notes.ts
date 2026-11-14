@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { actionState, panelFrame, waitFor, type CheckContext } from './helpers.ts'
+import { actionState, panelFrame, waitFor, type CheckContext } from '../helpers.ts'
 
 export async function verifyNotes({ window, url }: CheckContext) {
   await window.loadURL(url)

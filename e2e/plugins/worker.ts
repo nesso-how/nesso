@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { actionState, countWorkers, waitFor, type CheckContext } from './helpers.ts'
+import { actionState, countWorkers, waitFor, type CheckContext } from '../helpers.ts'
 
 export async function verifyWorker({ window, url, name, attempted }: CheckContext) {
   const code = `export const create=(...args)=>{
