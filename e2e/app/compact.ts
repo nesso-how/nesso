@@ -30,7 +30,11 @@ export async function verifyCompact({ window, url, name }: CheckContext) {
     name === 'static-web',
   )
   await click('.compact-intro-footer button')
-  await ready(`!!document.querySelector('#canvas .react-flow__node')`)
+  await ready(`(()=>{
+    const canvas=document.querySelector('#canvas .react-flow')?.getBoundingClientRect();
+    const nodes=[...document.querySelectorAll('#canvas .react-flow__node')].map(node=>node.getBoundingClientRect());
+    return !!canvas && nodes.length>0 && nodes.every(node=>node.width>0 && node.left>=canvas.left && node.right<=canvas.right && node.top>=canvas.top && node.bottom<=canvas.bottom);
+  })()`)
   assert.equal(await evaluate(`!!document.querySelector('.nesso-sheet')`), false)
   await click('[data-id="urn:nesso:example:coffee"]')
   await centered()

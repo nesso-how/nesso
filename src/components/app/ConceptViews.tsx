@@ -120,6 +120,7 @@ export function ConceptViews({
       >
         <Combobox.Trigger
           ref={trigger}
+          aria-label={t('otherViews')}
           render={<Button variant="outline" className="mt-2 w-full justify-start bg-transparent" />}
         >
           <Plus />

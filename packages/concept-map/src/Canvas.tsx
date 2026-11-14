@@ -746,6 +746,13 @@ export function Canvas({
     duration,
   ])
 
+  useLayoutEffect(() => {
+    if (initialViewport || hasOverlay || framed.current || !nodesInitialized || !width || !height)
+      return
+    framed.current = true
+    void fitView(fitViewOptions)
+  }, [initialViewport, hasOverlay, nodesInitialized, width, height, fitView])
+
   useEffect(() => {
     if (!hasOverlay || !nodesInitialized || !width || !height) return
     const viewport = getViewportForBounds(
@@ -1005,8 +1012,6 @@ export function Canvas({
                 write([{ kind: 'viewport.set', rendererId: 'concept-map', viewId: view, value }])
               }
         }
-        fitView={!initialViewport && !hasOverlay}
-        fitViewOptions={fitViewOptions}
         minZoom={0.2}
       >
         <Background
