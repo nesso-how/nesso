@@ -15,7 +15,7 @@ See [README.md](README.md) for the product overview, architecture, and package d
 - Use English and TypeScript for code, tests, and scripts; JavaScript only when required by tooling. Keep data and documentation in native formats. No code comments.
 - Use `NessoError` from `@nesso-how/errors` for structured failures. Package-scoped errors extend it, retaining domain-specific identity and validation.
 - When adding or changing an external link in the app, review `electron/links.ts` and update its allowlist if the destination is not already covered. Keep external links restricted to trusted HTTPS destinations and open them in the system browser.
-- After code changes, run `pnpm analyze --summary`. Inspect scoped findings with `pnpm analyze --changed-since origin/main --format json --quiet` and verify unused exports with `pnpm analyze dead-code --trace FILE:EXPORT` before deleting them. Do not run Fallow autofix or add suppressions to make a check pass.
+- After code changes, run `pnpm analyze --summary`. Inspect findings introduced by the branch with `pnpm analyze audit --base origin/main` and verify unused exports with `pnpm analyze dead-code --trace FILE:EXPORT` before deleting them. Do not run Fallow autofix or add suppressions to make a check pass.
 
 ## Release
 

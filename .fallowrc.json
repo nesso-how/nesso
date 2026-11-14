@@ -11,29 +11,92 @@
     "packages/plugin/src/panel.ts",
     "packages/plugin/src/react.ts"
   ],
-  "workspaces": { "patterns": ["packages/plugin/example"] },
+  "ignorePatterns": ["dist-electron/**"],
+  "workspaces": {
+    "patterns": ["packages/plugin/example"]
+  },
   "ignoreDependencies": ["shadcn"],
   "rules": {
-    "unused-exports": "warn",
     "complexity-cyclomatic": "warn",
     "complexity-cognitive": "warn",
     "complexity-crap": "warn"
   },
-  "duplicates": { "threshold": 0 },
+  "health": {
+    "ignore": ["scripts/**"]
+  },
   "boundaries": {
     "zones": [
-      { "name": "host", "patterns": ["src/**", "electron/**"] },
-      { "name": "schema", "patterns": ["packages/schema/**"] },
-      { "name": "errors", "patterns": ["packages/errors/**"] },
-      { "name": "shared", "patterns": ["packages/**"] },
-      { "name": "plugins", "patterns": ["plugins/**"] }
+      {
+        "name": "host",
+        "patterns": ["src/**", "electron/**"]
+      },
+      {
+        "name": "app-shared",
+        "patterns": ["shared/**"]
+      },
+      {
+        "name": "plugin-tests",
+        "patterns": ["plugins/**/*.test.{ts,tsx}"]
+      },
+      {
+        "name": "plugins",
+        "patterns": ["plugins/**", "packages/plugin/example/**"]
+      },
+      {
+        "name": "schema",
+        "patterns": ["packages/schema/**"]
+      },
+      {
+        "name": "errors",
+        "patterns": ["packages/errors/**"]
+      },
+      {
+        "name": "sdk",
+        "patterns": ["packages/plugin/**", "packages/ui/**"]
+      },
+      {
+        "name": "shared",
+        "patterns": ["packages/**"]
+      }
     ],
     "rules": [
-      { "from": "schema", "allow": ["errors"] },
-      { "from": "errors", "allow": [] },
-      { "from": "shared", "allow": ["schema", "errors"] },
-      { "from": "plugins", "allow": ["schema", "errors", "shared"] }
-    ]
+      {
+        "from": "host",
+        "allow": ["app-shared", "schema", "errors", "sdk", "shared"]
+      },
+      {
+        "from": "app-shared",
+        "allow": ["schema", "errors", "sdk", "shared"]
+      },
+      {
+        "from": "schema",
+        "allow": ["errors"]
+      },
+      {
+        "from": "errors",
+        "allow": []
+      },
+      {
+        "from": "sdk",
+        "allow": ["schema", "errors", "shared"]
+      },
+      {
+        "from": "shared",
+        "allow": ["schema", "errors", "sdk"]
+      },
+      {
+        "from": "plugins",
+        "allow": ["schema", "errors", "sdk"]
+      },
+      {
+        "from": "plugin-tests",
+        "allow": ["plugins", "schema", "errors", "sdk", "shared"]
+      }
+    ],
+    "coverage": {
+      "requireAllFiles": true,
+      "allowUnmatched": ["scripts/**", "site/**", "index.html", "vite.config.ts"]
+    }
   },
   "rulePacks": ["fallow-rules.json"]
 }
