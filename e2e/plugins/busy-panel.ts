@@ -17,11 +17,10 @@ export async function verifyBusyPanel(context: CheckContext) {
   connectPluginTermination(ipcMain, createTrustedRequest(appUrl(false)), () =>
     webContents.getAllWebContents(),
   )
-  context.window.webContents.debugger.attach()
-  await context.window.webContents.debugger.sendCommand('Page.addScriptToEvaluateOnNewDocument', {
-    source: `{const set=setInterval;setInterval=(f,ms,...a)=>set(f,ms===${runtimeLimits.heartbeat}?2000:ms,...a)}`,
-  })
   const { evaluate } = await openFixtureWorkspace(context)
+  await evaluate(
+    `{const set=setInterval;setInterval=(f,ms,...a)=>set(f,ms===${runtimeLimits.heartbeat}?2000:ms,...a)};undefined`,
+  )
   const host = context.window.webContents.mainFrame
   const preloaded = await waitFor(
     async () => host.framesInSubtree.filter((frame) => frame?.url === 'about:srcdoc'),
