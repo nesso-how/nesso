@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { ipcMain, nativeImage } from 'electron'
 import type { FileSaveOptions } from '@nesso-how/plugin/runtime'
 import { imageBounds } from '../../packages/concept-map/src/image-bounds.ts'
-import { openFixtureWorkspace, waitFor, type CheckContext } from './helpers.ts'
+import { openFixtureWorkspace, waitFor, type CheckContext } from '../helpers.ts'
 
 export async function verifyImages(context: CheckContext) {
   context.window.setSize(1280, 900)

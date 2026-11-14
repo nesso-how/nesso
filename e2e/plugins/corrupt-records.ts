@@ -9,7 +9,7 @@ import { createPluginStorage } from '../../electron/plugin-storage/index.ts'
 import { appUrl, createTrustedRequest } from '../../electron/ipc.ts'
 import { preparePluginPackage } from '@nesso-how/plugin/package'
 import theme from '../../packages/plugin/test/theme.json' with { type: 'json' }
-import { openFixtureWorkspace, waitFor, type CheckContext } from './helpers.ts'
+import { openFixtureWorkspace, waitFor, type CheckContext } from '../helpers.ts'
 
 export async function verifyCorruptRecords({ window, url }: CheckContext) {
   const directory = path.join(app.getPath('userData'), 'plugins')

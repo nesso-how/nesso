@@ -22,7 +22,7 @@
     "complexity-crap": "warn"
   },
   "health": {
-    "ignore": ["scripts/**"]
+    "ignore": ["scripts/**", "e2e/**"]
   },
   "boundaries": {
     "zones": [
@@ -95,7 +95,7 @@
     ],
     "coverage": {
       "requireAllFiles": true,
-      "allowUnmatched": ["scripts/**", "site/**", "index.html", "vite.config.ts"]
+      "allowUnmatched": ["scripts/**", "e2e/**", "site/**", "index.html", "vite.config.ts"]
     }
   },
   "rulePacks": ["fallow-rules.json"]

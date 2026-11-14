@@ -6,7 +6,7 @@ import {
   type ActionBadgeResult,
   type ActionState,
 } from '@nesso-how/plugin/runtime'
-import { actionState, waitFor, type CheckContext } from './helpers.ts'
+import { actionState, waitFor, type CheckContext } from '../helpers.ts'
 
 type Probe = {
   done: boolean
@@ -19,6 +19,7 @@ type Probe = {
 }
 
 export async function verifyBundled({ window, url }: CheckContext) {
+  await window.loadURL(url)
   const graph = {
     concepts: [{ id: 'urn:probe:concept', label: 'Probe' }],
     relations: [],

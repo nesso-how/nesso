@@ -6,7 +6,7 @@ import { connectPlugins } from '../../electron/plugins.ts'
 import { createPluginStorage } from '../../electron/plugin-storage/index.ts'
 import { appUrl, createTrustedRequest } from '../../electron/ipc.ts'
 import { preparePluginPackage } from '@nesso-how/plugin/package'
-import { openFixtureWorkspace, type CheckContext } from './helpers.ts'
+import { openFixtureWorkspace, type CheckContext } from '../helpers.ts'
 
 export async function verifySafePlugins({ window, url }: CheckContext) {
   assert.ok(process.argv.includes('--safe-plugins'))

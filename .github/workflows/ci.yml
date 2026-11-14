@@ -37,7 +37,7 @@ jobs:
       - if: github.event_name == 'pull_request'
         run: pnpm analyze audit --base origin/${{ github.base_ref }} --format github-annotations --quiet
 
-  plugin-runtime:
+  e2e:
     if: github.event_name == 'push' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
@@ -51,5 +51,5 @@ jobs:
       - run: pnpm build
       - name: Allow Chromium sandbox
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-      - name: Check plugin runtime
-        run: node scripts/test-plugin-runtime.ts
+      - name: Run e2e tests
+        run: node e2e/run.ts

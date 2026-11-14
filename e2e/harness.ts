@@ -3,32 +3,14 @@ import { readFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import path from 'node:path'
 import assert from 'node:assert/strict'
-import { serveAppAsset } from '../../electron/asset-protocol.ts'
-import { desktopHostCsp } from '../../shared/plugin-policy.ts'
-import { cases, type Platform, type Scenario } from './cases.ts'
-import type { CheckContext } from './helpers.ts'
-import { verifyWorker } from './security.ts'
-import { verifyBundled } from './bundled.ts'
-import { verifyStartup } from './startup.ts'
-import { verifyInstallation } from './installation.ts'
-import { verifySafePlugins } from './safe-plugins.ts'
-import { verifyCorruptRecords } from './corrupt-records.ts'
-import { verifyStorage } from './storage.ts'
-import { verifyPanel } from './panel.ts'
-import { verifyPanelWorkspace } from './panel-workspace.ts'
-import { verifyBusyPanel } from './busy-panel.ts'
-import { verifyNotes } from './notes.ts'
-import { verifyImages } from './images.ts'
-import { verifyIntro } from './intro.ts'
-import { verifyCompact } from './compact.ts'
-import { verifyCreation } from './creation.ts'
+import { serveAppAsset } from '../electron/asset-protocol.ts'
+import { desktopHostCsp } from '../shared/plugin-policy.ts'
+import { scenarios, type Platform } from './scenarios.ts'
 
-const [scenario, name, profile] = process.argv.slice(2) as [Scenario, Platform, string]
-assert.ok(
-  Object.hasOwn(cases, scenario) &&
-    (cases[scenario] as readonly string[]).includes(name) &&
-    profile,
-)
+const [scenario, name, profile] = process.argv.slice(2) as [string, Platform, string]
+assert.ok(Object.hasOwn(scenarios, scenario) && scenarios[scenario].platforms.includes(name))
+assert.ok(profile)
+const { blank, load } = scenarios[scenario]
 app.setPath('userData', profile)
 app.on('window-all-closed', () => {})
 protocol.registerSchemesAsPrivileged([
@@ -44,24 +26,11 @@ const deadline = setTimeout(() => {
 app
   .whenReady()
   .then(async () => {
-    const root = path.resolve(import.meta.dirname, '../../dist')
+    const root = path.resolve(import.meta.dirname, '../dist')
     const host =
       '<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="frame-src \'self\'; object-src \'none\'"></head><body></body></html>'
-    const workspace = [
-      'startup',
-      'installation',
-      'safe-plugins',
-      'corrupt-records',
-      'storage',
-      'panel-workspace',
-      'busy-panel',
-      'images',
-      'intro',
-      'compact',
-      'creation',
-    ].includes(scenario)
     protocol.handle('nesso', (request) =>
-      !workspace && new URL(request.url).pathname === '/'
+      blank && new URL(request.url).pathname === '/'
         ? new Response(host, {
             headers: { 'Content-Type': 'text/html', 'Content-Security-Policy': desktopHostCsp },
           })
@@ -75,7 +44,7 @@ app
     const server = createServer(async (request, response) => {
       try {
         const url = new URL(request.url ?? '/', 'http://localhost')
-        if (url.pathname === '/' && !workspace) {
+        if (blank && url.pathname === '/') {
           response.writeHead(200, { 'Content-Type': 'text/html' }).end(host)
           return
         }
@@ -134,60 +103,11 @@ app
         console.error(event.message.slice(0, 2048))
     })
     if (process.platform === 'linux') window.show()
-    const context: CheckContext = { window, url, name, attempted }
     try {
-      if (scenario === 'bundled') {
-        stage = 'page loading'
-        await window.loadURL(url)
-      }
       stage = scenario
-      switch (scenario) {
-        case 'worker':
-          await verifyWorker(context)
-          break
-        case 'panel':
-          await verifyPanel(context)
-          break
-        case 'notes':
-          await verifyNotes(context)
-          break
-        case 'panel-workspace':
-          await verifyPanelWorkspace(context)
-          break
-        case 'busy-panel':
-          await verifyBusyPanel(context)
-          break
-        case 'bundled':
-          await verifyBundled(context)
-          break
-        case 'images':
-          await verifyImages(context)
-          break
-        case 'intro':
-          await verifyIntro(context)
-          break
-        case 'compact':
-          await verifyCompact(context)
-          break
-        case 'creation':
-          await verifyCreation(context)
-          break
-        case 'startup':
-          await verifyStartup(context)
-          break
-        case 'installation':
-          await verifyInstallation(context)
-          break
-        case 'safe-plugins':
-          await verifySafePlugins(context)
-          break
-        case 'corrupt-records':
-          await verifyCorruptRecords(context)
-          break
-        case 'storage':
-          await verifyStorage(context)
-          break
-      }
+      await (
+        await load()
+      )({ window, url, name, attempted })
     } finally {
       window.destroy()
       server.close()

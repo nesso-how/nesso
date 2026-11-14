@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { once } from 'node:events'
 import { ipcMain } from 'electron'
-import { waitFor, type CheckContext } from './helpers.ts'
+import { waitFor, type CheckContext } from '../helpers.ts'
 
 export async function verifyStartup({ window, url }: CheckContext) {
   let release = () => {}

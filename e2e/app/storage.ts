@@ -7,7 +7,7 @@ import { appUrl, createTrustedRequest } from '../../electron/ipc.ts'
 import type { PersistenceSection } from '../../shared/persistence.ts'
 import { persistenceSections } from '../../shared/persistence.ts'
 import type { Backup } from '../../shared/backup.ts'
-import { connectFixtureStorage, waitFor, type CheckContext } from './helpers.ts'
+import { connectFixtureStorage, waitFor, type CheckContext } from '../helpers.ts'
 
 export async function verifyStorage({ window, url, name }: CheckContext) {
   const saved = name === 'desktop' ? connectFixtureStorage() : undefined
