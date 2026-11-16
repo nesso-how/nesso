@@ -61,6 +61,11 @@ export function createWriteCommands<Commit, Created>(
         [{ kind: 'concept.italic', id, value }],
         historyGroup ? { historyGroup } : undefined,
       ),
+    setConceptStrikethrough: (id, value, historyGroup) =>
+      applyOperations(
+        [{ kind: 'concept.strikethrough', id, value }],
+        historyGroup ? { historyGroup } : undefined,
+      ),
     addConcept: (position, historyGroup) => {
       const id = newIri()
       return created(

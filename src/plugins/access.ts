@@ -7,6 +7,7 @@ const writes = {
   'concept.color': 'pluginAccessColor',
   'concept.bold': 'pluginAccessEmphasis',
   'concept.italic': 'pluginAccessEmphasis',
+  'concept.strikethrough': 'pluginAccessEmphasis',
   'concept.position': 'pluginAccessPosition',
   'concept.positions': 'pluginAccessPositions',
   'concept.add': 'pluginAccessAdd',

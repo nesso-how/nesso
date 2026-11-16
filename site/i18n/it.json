@@ -35,7 +35,7 @@
   "howItWorks": "Come funziona",
   "elementsTitle": "Pochi elementi essenziali",
   "concepts": "Concetti",
-  "conceptsDescription": "Idee a cui assegnare un colore, un’etichetta in grassetto o corsivo e note Markdown.",
+  "conceptsDescription": "Idee a cui assegnare un colore, un’etichetta in grassetto, corsivo o barrato e note Markdown.",
   "relations": "Relazioni",
   "relationsDescription": "Connessioni con un tipo che descrive il legame tra due idee, come “suscita” o “si basa su”. Usa i tipi inclusi o definisci i tuoi.",
   "views": "Viste",

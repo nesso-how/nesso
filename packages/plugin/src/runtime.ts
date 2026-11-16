@@ -109,6 +109,7 @@ const operation = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('concept.color'), id, value: z.string() }),
   z.strictObject({ kind: z.literal('concept.bold'), id, value: z.boolean() }),
   z.strictObject({ kind: z.literal('concept.italic'), id, value: z.boolean() }),
+  z.strictObject({ kind: z.literal('concept.strikethrough'), id, value: z.boolean() }),
   z.strictObject({ kind: z.literal('concept.position'), id, value: position }),
   z.strictObject({
     kind: z.literal('concept.positions'),
@@ -181,7 +182,7 @@ export function parsePluginI18n(value: unknown): PluginI18n {
   return parseOrThrow(pluginI18n, value, 'i18n.')
 }
 
-export const pluginApiVersion = 4
+export const pluginApiVersion = 5
 const manifestFields = {
   apiVersion: z.literal(pluginApiVersion),
 }
@@ -199,6 +200,7 @@ const pluginWriteKinds = [
   'concept.color',
   'concept.bold',
   'concept.italic',
+  'concept.strikethrough',
   'concept.position',
   'concept.positions',
   'concept.add',

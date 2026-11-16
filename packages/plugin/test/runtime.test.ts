@@ -12,7 +12,7 @@ import {
 import { pluginErrorCode } from '../src/errors.ts'
 
 const manifest = {
-  apiVersion: 4,
+  apiVersion: 5,
   kind: 'actions',
   entry: 'dist/index.js',
   writes: ['selection.set'],
@@ -33,6 +33,7 @@ test('manifests and action descriptors reject unknown authority, duplicates and 
         'concept.label',
         'concept.notes',
         'concept.color',
+        'concept.strikethrough',
         'concept.position',
         'concept.positions',
         'concept.add',
@@ -47,12 +48,13 @@ test('manifests and action descriptors reject unknown authority, duplicates and 
         'view.membership',
       ],
     }).writes.length,
-    15,
+    16,
   )
   for (const value of [
     { ...manifest, apiVersion: 1 },
     { ...manifest, apiVersion: 2 },
     { ...manifest, apiVersion: 3 },
+    { ...manifest, apiVersion: 4 },
     { ...manifest, network: true },
     { ...manifest, writes: ['selection.set', 'selection.set'] },
     { ...manifest, operations: [] },

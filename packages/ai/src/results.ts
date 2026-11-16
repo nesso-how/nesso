@@ -39,6 +39,7 @@ export type AiToolResults = {
     readonly color?: string
     readonly bold?: boolean
     readonly italic?: boolean
+    readonly strikethrough?: boolean
   }>
   readonly relations: Page<{
     readonly id: string

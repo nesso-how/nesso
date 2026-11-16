@@ -107,7 +107,7 @@ test('MCP plugin proposals forward only the package entry read from its director
     name: 'nesso-plugin-theme',
     version: '1.0.0',
     nesso: {
-      apiVersion: 4,
+      apiVersion: 5,
       kind: 'theme',
       entry: 'dist/definition.json',
       writes: [],

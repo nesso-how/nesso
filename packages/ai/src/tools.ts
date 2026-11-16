@@ -25,6 +25,7 @@ const operation = z.discriminatedUnion('kind', [
   }),
   z.strictObject({ kind: z.literal('concept.bold'), id, value: z.boolean() }),
   z.strictObject({ kind: z.literal('concept.italic'), id, value: z.boolean() }),
+  z.strictObject({ kind: z.literal('concept.strikethrough'), id, value: z.boolean() }),
   z.strictObject({ kind: z.literal('concept.position'), id, value: position }),
   z.strictObject({
     kind: z.literal('concept.positions'),
@@ -105,7 +106,7 @@ export const aiTools = {
   },
   edit: {
     description:
-      'Stage ordered undoable graph and saved-view operations, not live writes. Supply unique absolute IRIs for new concepts and types. Position updates, colors and bold/italic styles belong to the active saved view and are rejected in Overview or for concepts outside it. Reset color with an empty string and bold/italic with false. Creating a saved view makes it active for subsequent operations. New concepts join the active saved view, or no view in Overview where their initial position is ignored, and link to the concept selected when the turn began, if exactly one, using the default type; concepts added in the same turn do not link to each other. All edits in a turn apply together after validation and any required approval, as a single undoable batch. All edit calls in a turn merge into one batch that can only be undone together.',
+      'Stage ordered undoable graph and saved-view operations, not live writes. Supply unique absolute IRIs for new concepts and types. Position updates, colors and bold/italic/strikethrough styles belong to the active saved view and are rejected in Overview or for concepts outside it. Reset color with an empty string and bold/italic/strikethrough with false. Creating a saved view makes it active for subsequent operations. New concepts join the active saved view, or no view in Overview where their initial position is ignored, and link to the concept selected when the turn began, if exactly one, using the default type; concepts added in the same turn do not link to each other. All edits in a turn apply together after validation and any required approval, as a single undoable batch. All edit calls in a turn merge into one batch that can only be undone together.',
     inputSchema: z.strictObject({ operations: z.array(operation).min(1).max(500) }),
   },
   history: {

@@ -28,7 +28,14 @@ const views: View[] = [
     id: 'urn:old-view',
     name: '',
     members: [
-      { id: 'urn:old-a', position: { x: 1, y: 2 }, color: '#aabbcc', bold: true, italic: true },
+      {
+        id: 'urn:old-a',
+        position: { x: 1, y: 2 },
+        color: '#aabbcc',
+        bold: true,
+        italic: true,
+        strikethrough: true,
+      },
       { id: 'urn:old-b', position: { x: 3, y: 4 } },
     ],
   },
@@ -81,6 +88,7 @@ test('import recreates file views with presentation and remaps concept ids with 
     ['concept.color', '#aabbcc'],
     ['concept.bold', true],
     ['concept.italic', true],
+    ['concept.strikethrough', true],
   ] as const)
     assert.deepEqual(
       operations.filter((operation) => operation.kind === kind),
