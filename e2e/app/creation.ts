@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { ipcMain } from 'electron'
+import { defaultRelationId } from '../../plugins/base-vocab/src/index.ts'
 import { openFixtureWorkspace, waitFor, type CheckContext } from '../helpers.ts'
 
 export async function verifyCreation(context: CheckContext) {
@@ -77,6 +78,47 @@ export async function verifyCreation(context: CheckContext) {
       await ready(`!document.querySelector('#canvas [data-id="${sleep}"]')`)
     }
   }
+
+  await click(coffee)
+  const drop = await evaluate<{ start: { x: number; y: number }; end: { x: number; y: number } }>(
+    `(()=>{
+      const handle=document.querySelector('${coffee} [data-handleid="create"]').getBoundingClientRect();
+      const pane=document.querySelector('#canvas .react-flow__pane').getBoundingClientRect();
+      return {start:{x:Math.round(handle.x+handle.width/2),y:Math.round(handle.y+handle.height/2)},end:{x:Math.round(pane.right-140),y:Math.round(pane.bottom-150)}};
+    })()`,
+  )
+  context.window.webContents.sendInputEvent({
+    type: 'mouseDown',
+    ...drop.start,
+    button: 'left',
+    clickCount: 1,
+  })
+  context.window.webContents.sendInputEvent({ type: 'mouseMove', ...drop.end, button: 'left' })
+  await ready(`!!document.querySelector('#canvas .react-flow__connection')`)
+  context.window.webContents.sendInputEvent({
+    type: 'mouseUp',
+    ...drop.end,
+    button: 'left',
+    clickCount: 1,
+  })
+  await ready(`document.activeElement?.matches('${label}')`)
+  const dropped = await evaluate<string>(
+    `document.querySelector('${label}').closest('.react-flow__node').dataset.id`,
+  )
+  assert.deepEqual(await nodes(), [...baseline, dropped].sort())
+  const relation = JSON.stringify(['urn:nesso:example:coffee', defaultRelationId, dropped])
+  assert.equal(
+    await evaluate(
+      `[...document.querySelectorAll('#canvas .react-flow__edge')].some(edge=>edge.dataset.id===${JSON.stringify(relation)})`,
+    ),
+    true,
+  )
+  await context.window.webContents.insertText('Dropped concept')
+  key('Enter')
+  await ready(`!document.querySelector('${label}')`)
+  await click('#canvas [aria-label="Undo"]')
+  await ready(`!document.querySelector('#canvas [data-id="${dropped}"]')`)
+  assert.deepEqual(await nodes(), baseline)
 
   await click(coffee)
   await evaluate(`document.querySelector('${coffee} .concept-node').focus()`)

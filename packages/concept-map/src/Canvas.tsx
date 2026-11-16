@@ -971,6 +971,28 @@ export function Canvas({
               }
             : undefined
         }
+        onConnectEnd={(event, state) => {
+          if (
+            !interactive ||
+            connection ||
+            reconnecting.current ||
+            !flow.getState().connection.inProgress ||
+            state.isValid ||
+            state.toNode ||
+            !state.fromNode
+          )
+            return
+          const pointer = 'changedTouches' in event ? event.changedTouches[0] : event
+          if (!pointer) return
+          const target = document.elementFromPoint(pointer.clientX, pointer.clientY)
+          if (!target?.classList.contains('react-flow__pane') || !canvas.current?.contains(target))
+            return
+          const source = state.fromNode.id
+          if (!presentedGraph(store.getState()).concepts.some(({ id }) => id === source)) return
+          addConceptAt({ x: pointer.clientX, y: pointer.clientY }, [
+            { kind: 'concept', id: source },
+          ])
+        }}
         {...objectHandlers}
         reconnectRadius={5}
         connectionMode={ConnectionMode.Loose}
