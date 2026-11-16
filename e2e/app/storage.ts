@@ -144,7 +144,7 @@ export async function verifyStorage({ window, url, name }: CheckContext) {
         graph: unknown
         workspace: object
       },
-    (value) => value.version === 4,
+    (value) => value.version === 5,
   )
   assert.deepEqual(upgraded.graph, document.graph)
   assert.deepEqual(

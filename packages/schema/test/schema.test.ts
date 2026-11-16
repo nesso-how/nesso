@@ -42,7 +42,7 @@ test('a graph with compact and custom predicates survives a JSON-LD round trip',
   graph.relations.push(...targets.map((target) => ({ source: subject, predicate: custom, target })))
   const original = structuredClone(graph)
   const serialized = serializeGraph(graph)
-  assert.equal(serialized.schemaVersion, 1)
+  assert.equal(serialized.schemaVersion, 2)
   const entry = (serialized['@graph'] as Record<string, unknown>[]).find(
     (entry) => entry['@id'] === subject,
   )!
@@ -206,7 +206,7 @@ test('legacy documents preserve presentation and relation aliases when migrated'
   assert.equal(views.length, 1)
   assert.equal(views[0].name, '')
   assert.deepEqual(views[0].members, [
-    { id: subject, position: { x: 10, y: 20 }, color: '#e1ecde', bold: false, italic: true },
+    { id: subject, position: { x: 10, y: 20 }, color: 'sage', bold: false, italic: true },
     { id: targets[0], position: { x: 30, y: 40 } },
     { id: targets[1], position: { x: 0, y: 0 } },
   ])
@@ -233,7 +233,7 @@ test('views keep their members presentation across a JSON-LD round trip', () => 
 
 test('versioned documents reject unknown versions, invalid mappings and legacy presentation', () => {
   const document = serializeGraph(parse(fixture))
-  for (const schemaVersion of [2, '1'])
+  for (const schemaVersion of [3, '2'])
     assert.throws(
       () => parseGraph({ ...document, schemaVersion }),
       (error: unknown) =>
@@ -303,8 +303,8 @@ test('documents cannot mix inline concept presentation with views', () => {
   )
 })
 
-test('colors must be six-digit hex strings at view and JSON-LD boundaries', () => {
-  for (const color of ['e1ecde', '#abc', 42]) {
+test('colors must be six-digit hex strings or preset ids at view and JSON-LD boundaries', () => {
+  for (const color of ['e1ecde', '#abc', 'Sand', 42]) {
     const { graph, views } = parseGraph(fixture)
     views[0].members[0].color = color as never
     assert.throws(() => serializeGraph(graph, views), SchemaError)

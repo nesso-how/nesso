@@ -21,7 +21,11 @@ const operation = z.discriminatedUnion('kind', [
   z.strictObject({
     kind: z.literal('concept.color'),
     id,
-    value: z.string().describe('Six-digit hex color (#rrggbb), or an empty string to reset.'),
+    value: z
+      .string()
+      .describe(
+        'Preset id that follows the active theme (neutral, sand, peach, rose, sage, mint, sky or lavender), a fixed six-digit hex color (#rrggbb), or an empty string to reset.',
+      ),
   }),
   z.strictObject({ kind: z.literal('concept.bold'), id, value: z.boolean() }),
   z.strictObject({ kind: z.literal('concept.italic'), id, value: z.boolean() }),

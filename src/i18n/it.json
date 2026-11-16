@@ -456,7 +456,7 @@
   "saturationHint": "Le frecce sinistra e destra cambiano la saturazione. Le frecce su e giù cambiano la luminosità. Tieni premuto Shift per passi più grandi.",
   "hue": "Tonalità",
   "colorPresets": "Colori predefiniti",
-  "presetWhite": "Bianco",
+  "presetNeutral": "Neutro",
   "presetSand": "Sabbia",
   "presetPeach": "Pesca",
   "presetRose": "Rosa",

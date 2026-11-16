@@ -66,7 +66,7 @@ test('manual backups round-trip every record, exclude device secrets and bind co
       ...backup,
       records: {
         ...backup.records,
-        document: { ...document, graph: { ...document.graph, schemaVersion: 2 } },
+        document: { ...document, graph: { ...document.graph, schemaVersion: 3 } },
       },
     },
     { ...backup, records: { ...backup.records, preferences: { version: 99 } } },

@@ -1,7 +1,7 @@
 import { resolveRelationTypeLabel } from '@nesso-how/core'
 import { defaultLocale } from '@nesso-how/i18n'
 import { relationKey } from '@nesso-how/schema'
-import { BottomSheet, Button, ContextLabel, MarkdownInput } from '@nesso-how/ui'
+import { BottomSheet, Button, ContextLabel, MarkdownInput, conceptColor } from '@nesso-how/ui'
 import { ArrowLeft, ArrowRight, ChevronRight, Share2 } from 'lucide-react'
 import { useLayoutEffect, useState, type RefObject } from 'react'
 import { useTranslation } from '@/i18n'
@@ -90,7 +90,9 @@ export function ConceptSheet({
           <span
             aria-hidden="true"
             className="size-3.5 shrink-0 self-start rounded-[4px] border border-node-border mt-1"
-            style={{ background: shown?.color ?? 'var(--background)' }}
+            style={{
+              background: shown?.color ? conceptColor(shown.color).background : 'var(--background)',
+            }}
           />
           <span className="min-w-0">{shown?.label}</span>
         </span>
@@ -158,7 +160,11 @@ export function ConceptSheet({
                         <span
                           aria-hidden="true"
                           className="size-2.5 shrink-0 rounded-[3px] border border-node-border"
-                          style={{ background: other?.color ?? 'var(--background)' }}
+                          style={{
+                            background: other?.color
+                              ? conceptColor(other.color).background
+                              : 'var(--background)',
+                          }}
                         />
                         <span className="min-w-0 flex-1 text-[15px] leading-[21px] break-words">
                           {other?.label}

@@ -3,7 +3,7 @@ import test from 'node:test'
 import { parseContribution, parseDefinition, PluginError } from '../src/runtime.ts'
 import theme from './theme.json' with { type: 'json' }
 
-test('theme definitions require matching light and dark palettes with readable text and no CSS authority or plugin fonts', () => {
+test('theme definitions require matching light and dark palettes with readable text and presets, and no CSS authority or plugin fonts', () => {
   assert.deepEqual(parseDefinition('theme', theme), theme)
   const { light, dark } = theme.colors
   for (const value of [
@@ -16,6 +16,7 @@ test('theme definitions require matching light and dark palettes with readable t
     { ...theme, colors: { light: { ...light, foreground: '#eeeeee' }, dark } },
     { ...theme, colors: { light, dark: { ...dark, foreground: '#333333' } } },
     { ...theme, colors: { light, dark: { ...dark, shadow: undefined } } },
+    { ...theme, colors: { light, dark: { ...dark, 'preset-sand': '#cccccc' } } },
     { ...theme, metrics: { ...theme.metrics, 'duration-state': 301 } },
     { ...theme, fonts: { sans: { faces: [] }, mono: { faces: [] } } },
     { ...theme, metrics: { ...theme.metrics, 'font-sans': 'Other' } },

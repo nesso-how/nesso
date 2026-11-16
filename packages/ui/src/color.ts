@@ -7,7 +7,7 @@ const colorLuminance = (hex: string): number => {
   return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722
 }
 
-export const contrastColor = (hex: string): string => {
+const contrastColor = (hex: string): string => {
   const lightness = colorLuminance(hex)
   if ((lightness + 0.05) / (colorLuminance('#292929') + 0.05) >= 4.5) return '#292929'
   if (1.05 / (lightness + 0.05) >= 4.5) return '#ffffff'
@@ -43,13 +43,7 @@ export const hsvToHex = ({ h, s, v }: Hsv): string => {
   return `#${channel(5)}${channel(3)}${channel(1)}`
 }
 
-export const presetColors = [
-  { key: 'presetWhite', value: '#ffffff' },
-  { key: 'presetSand', value: '#f3ead5' },
-  { key: 'presetPeach', value: '#f5e3d5' },
-  { key: 'presetRose', value: '#f5dfe2' },
-  { key: 'presetSage', value: '#e1ecde' },
-  { key: 'presetMint', value: '#dceee8' },
-  { key: 'presetSky', value: '#dfeaf5' },
-  { key: 'presetLavender', value: '#e9e2f3' },
-] as const
+export const conceptColor = (value: string) =>
+  value.startsWith('#')
+    ? { background: value, color: contrastColor(value) }
+    : { background: `var(--preset-${value})`, color: 'var(--foreground)' }

@@ -1,5 +1,11 @@
 import { z } from 'zod'
-import { iriSchema, newIri, parseGraph, serializeGraph } from '@nesso-how/schema'
+import {
+  iriSchema,
+  migratePresetColor,
+  newIri,
+  parseGraph,
+  serializeGraph,
+} from '@nesso-how/schema'
 import { checkMessageSize, pluginStorageLimits } from '@nesso-how/plugin/runtime'
 import { aiChatLimits, aiConversation } from '@nesso-how/ai'
 import { viewportKey } from '@nesso-how/core'
@@ -31,8 +37,12 @@ const documentV2 = z.strictObject({
 })
 const documentV3 = documentV2.extend({ version: z.literal(3) })
 const documentV4 = documentV2.extend({ version: z.literal(4) })
+const documentV5 = documentV2.extend({ version: z.literal(5) })
 const workspaceV2 = z.looseObject({
   savedViews: z.array(z.looseObject({ conceptIds: z.array(z.string()) })),
+})
+const workspaceV4 = z.looseObject({
+  savedViews: z.array(z.looseObject({ members: z.array(z.unknown()) })),
 })
 const versionSchema = z.object({ version: z.number().int().positive() })
 const preferencesV1 = z.strictObject({
@@ -140,7 +150,7 @@ export function migratePluginStorage(value: unknown): unknown {
   }
 }
 
-export function migrateDocument(value: unknown): z.infer<typeof documentV4> {
+export function migrateDocument(value: unknown): z.infer<typeof documentV5> {
   const { version } = parseSettings(versionSchema, value)
   switch (version) {
     case 1: {
@@ -178,7 +188,7 @@ export function migrateDocument(value: unknown): z.infer<typeof documentV4> {
     case 3: {
       const saved = parseSettings(documentV3, value)
       const workspace = saved.workspace === null ? null : parseWorkspace(saved.workspace)
-      return {
+      return migrateDocument({
         ...saved,
         version: 4,
         workspace: workspace && {
@@ -190,10 +200,26 @@ export function migrateDocument(value: unknown): z.infer<typeof documentV4> {
             ]),
           ),
         },
+      })
+    }
+    case 4: {
+      const saved = parseSettings(documentV4, value)
+      const workspace =
+        saved.workspace === null ? null : parseSettings(workspaceV4, saved.workspace)
+      return {
+        ...saved,
+        version: 5,
+        workspace: workspace && {
+          ...workspace,
+          savedViews: workspace.savedViews.map((view) => ({
+            ...view,
+            members: view.members.map(migratePresetColor),
+          })),
+        },
       }
     }
-    case 4:
-      return parseSettings(documentV4, value)
+    case 5:
+      return parseSettings(documentV5, value)
     default:
       return fail('version', 'Unsupported storage version')
   }

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { conceptKeys, isAbsoluteIri, relationKey } from './core.ts'
+import { colorPresets, conceptKeys, isAbsoluteIri, relationKey } from './core.ts'
 
 export const iriSchema = z
   .string({ error: 'Expected an absolute IRI' })
@@ -12,10 +12,7 @@ export const conceptSchema = z.strictObject({
 })
 export const presentationSchema = z.strictObject({
   position: positionSchema,
-  color: z
-    .string()
-    .regex(/^#[0-9a-fA-F]{6}$/)
-    .optional(),
+  color: z.union([z.string().regex(/^#[0-9a-fA-F]{6}$/), z.enum(colorPresets)]).optional(),
   bold: z.boolean().optional(),
   italic: z.boolean().optional(),
   strikethrough: z.boolean().optional(),

@@ -1,4 +1,12 @@
-export { isAbsoluteIri, newIri, relationKey, schemaContext } from './core.ts'
+export {
+  colorPresets,
+  isAbsoluteIri,
+  newIri,
+  relationKey,
+  schemaContext,
+  type ColorPreset,
+} from './core.ts'
+export { migratePresetColor } from './migrations.ts'
 export { SchemaError, type SchemaIssue } from './errors.ts'
 export { parseGraph, serializeGraph } from './jsonld.ts'
 export { validateGraph } from './validate.ts'

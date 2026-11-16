@@ -6,7 +6,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
 } from 'react'
-import { contrastColor } from '@nesso-how/ui'
+import { conceptColor } from '@nesso-how/ui'
 import { ConceptLabelEditor } from './ConceptLabelEditor'
 import type { ConceptNode } from './types'
 import { conceptNodeMinSize } from './adapters'
@@ -62,7 +62,7 @@ export function ConceptNodeView({ id, data, selected, isConnectable }: NodeProps
       style={{
         minWidth: conceptNodeMinSize.width,
         height: conceptNodeMinSize.height,
-        ...(data.color ? { background: data.color, color: contrastColor(data.color) } : {}),
+        ...(data.color ? conceptColor(data.color) : {}),
       }}
       onClick={(event) => {
         if ((event.target as Element).closest('.react-flow__handle')) event.stopPropagation()

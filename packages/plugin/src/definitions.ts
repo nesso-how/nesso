@@ -1,8 +1,9 @@
 import { z } from 'zod'
-import { validateGraph } from '@nesso-how/schema'
+import { colorPresets, validateGraph } from '@nesso-how/schema'
 import { parseOrThrow } from './errors.ts'
 import type { DeepReadonly, VocabDefinition } from '@nesso-how/core'
 
+const presetColors = colorPresets.map((preset) => `preset-${preset}` as const)
 export const themeColors = [
   'background',
   'foreground',
@@ -22,6 +23,7 @@ export const themeColors = [
   'edge',
   'handle',
   'shadow',
+  ...presetColors,
 ] as const
 export const colorSchemes = ['light', 'dark'] as const
 export type ColorScheme = (typeof colorSchemes)[number]
@@ -65,6 +67,9 @@ const palette = (scheme: ColorScheme) =>
             message: 'Insufficient foreground contrast',
           })
       }
+      for (const key of presetColors)
+        if (!opaque(colors[key]) || contrast(colors.foreground, colors[key]) < 4.5)
+          context.addIssue({ code: 'custom', path: [key], message: 'Insufficient preset contrast' })
       if (
         !opaque(colors.primary) ||
         !opaque(colors['primary-foreground']) ||

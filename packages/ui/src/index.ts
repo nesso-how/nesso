@@ -28,7 +28,7 @@ export { PreferenceSelect } from './preference-select'
 export { Menu, MenuItem, MenuPopup, MenuRadioItem } from './menu'
 export { Popover, PopoverPopup } from './popover'
 export { ColorPicker } from './color-picker'
-export { contrastColor, presetColors } from './color'
+export { conceptColor } from './color'
 export { Combobox, ComboboxItem, ComboboxPopup } from './combobox'
 export {
   Autocomplete,
