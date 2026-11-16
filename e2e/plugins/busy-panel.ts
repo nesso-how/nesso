@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { ipcMain, webContents } from 'electron'
 import { appUrl, createTrustedRequest } from '../../electron/ipc.ts'
-import { connectPluginTermination } from '../../electron/plugin-termination.ts'
+import { connectPluginTermination } from '../../electron/plugins/termination.ts'
 import { runtimeLimits } from '@nesso-how/plugin/runtime'
 import {
   chooseTab,

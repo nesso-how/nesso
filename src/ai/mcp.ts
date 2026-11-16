@@ -4,7 +4,7 @@ import {
   type AiResult,
   type AiToolResults,
 } from '@nesso-how/ai'
-import type { McpBridge } from '../../electron/mcp-bridge.ts'
+import type { McpBridge } from '../../electron/mcp/bridge.ts'
 import { NessoError } from '@nesso-how/errors'
 import { createAiTurn } from './turn.ts'
 import { executeAiPluginTool, type AiPlugins } from './plugins.ts'

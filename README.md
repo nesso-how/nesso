@@ -109,6 +109,8 @@ On desktop, chat with your own API key (BYOK), a local model, or ChatGPT sign-in
 
 The app lives in `src/`, with desktop services in `electron/`. Shared packages live in `packages/`: **Core** packages provide contracts and reusable building blocks, while **Renderer** packages provide trusted graph interfaces. Bundled **Plugin** packages live in `plugins/` and deliberately use the same contracts as external plugins, so Nesso tests those contracts through its own everyday features before others build on them.
 
+Desktop services are grouped by responsibility in `electron/ai/`, `electron/mcp/`, `electron/plugins/`, `electron/persistence/`, `electron/files/`, and `electron/shell/` (windows, menus, navigation, and app assets). Entry points and shared desktop infrastructure remain at the root of `electron/`; tests stay beside their modules.
+
 | Package                                                   | Kind     | Responsibility                                                            |
 | --------------------------------------------------------- | -------- | ------------------------------------------------------------------------- |
 | [`@nesso-how/schema`](packages/schema/)                   | Core     | Graph model, validation, and JSON-LD.                                     |

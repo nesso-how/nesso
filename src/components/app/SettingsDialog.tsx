@@ -12,8 +12,8 @@ import { ShortcutSettings } from './ShortcutSettings'
 import { LocalDataSettings } from './LocalDataSettings'
 import { PluginSettings } from './PluginSettings'
 import { ToastsHost } from './Toasts'
-import type { AiBridge } from '../../../electron/ai-bridge'
-import type { McpBridge } from '../../../electron/mcp-bridge'
+import type { AiBridge } from '../../../electron/ai/bridge'
+import type { McpBridge } from '../../../electron/mcp/bridge'
 
 function AiPage({ ai, mcp }: { ai: AiBridge; mcp: McpBridge | undefined }) {
   const [editing, setEditing] = useState(false)

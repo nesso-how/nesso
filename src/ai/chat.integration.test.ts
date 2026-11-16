@@ -11,7 +11,7 @@ import {
   type AiResult,
   type AiToolReply,
 } from '@nesso-how/ai'
-import type { AiBridge } from '../../electron/ai-bridge.ts'
+import type { AiBridge } from '../../electron/ai/bridge.ts'
 import { createNessoStore } from '../store/create.ts'
 import { createAiChat } from './chat.ts'
 
