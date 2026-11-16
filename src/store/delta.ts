@@ -207,6 +207,7 @@ export const sameMember = (a: Member, b: Member): boolean =>
   a.color === b.color &&
   a.bold === b.bold &&
   a.italic === b.italic &&
+  a.strikethrough === b.strikethrough &&
   a.position.x === b.position.x &&
   a.position.y === b.position.y
 export const sameType = (

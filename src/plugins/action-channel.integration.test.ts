@@ -524,6 +524,24 @@ test('concept colors cross isolated snapshots and declared commands with atomic 
   assert.equal(color(), '#123456')
 })
 
+test('strikethrough requires its own declared plugin write', async (t) => {
+  const denied = fixture(false, undefined, ['concept.bold', 'concept.italic'])
+  t.after(denied.close)
+  await denied.start()
+  const unchanged = denied.host.store.getState()
+  await assert.rejects(denied.client.context.document.setConceptStrikethrough('urn:a', true), {
+    code: 'denied',
+  })
+  assert.equal(denied.host.store.getState(), unchanged)
+  const instance = fixture(false, undefined, ['concept.strikethrough'])
+  t.after(instance.close)
+  instance.host.store.setView(instance.target)
+  await instance.start()
+  const { document } = instance.client.context
+  await document.setConceptStrikethrough('urn:a', true)
+  assert.equal(document.getState().viewGraph.concepts[0].strikethrough, true)
+})
+
 test('declared writes reject relative graph identifiers atomically without changing snapshots or history', async (t) => {
   const instance = fixture(false, undefined, ['concept.add', 'concept.label', 'relation.connect'])
   t.after(instance.close)

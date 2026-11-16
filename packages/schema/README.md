@@ -43,7 +43,7 @@ Documents carry `schemaVersion: 1`, an inline `@context`, and `@graph` entries f
 
 Concepts have an optional `notes` string, serialized as `rdfs:comment`. The JSON-LD representation is independent of the in-memory property name.
 
-Views are optional `@graph` entries with `@type: 'View'`, an `rdfs:label` name, and `members`, each referencing a `concept` with its `position` and optional `color`, `bold`, and `italic`.
+Views are optional `@graph` entries with `@type: 'View'`, an `rdfs:label` name, and `members`, each referencing a `concept` with its `position` and optional `color`, `bold`, `italic`, and `strikethrough`.
 
 `parseGraph` accepts the current profile and supported legacy documents without modifying its input. `serializeGraph` always writes the current profile.
 

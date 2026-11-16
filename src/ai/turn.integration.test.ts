@@ -92,6 +92,7 @@ test('AI presentation edits are staged, view-local, resettable and undoable', as
       { kind: 'concept.color', id: 'urn:n0', value: '#e1ecde' },
       { kind: 'concept.bold', id: 'urn:n0', value: true },
       { kind: 'concept.italic', id: 'urn:n0', value: true },
+      { kind: 'concept.strikethrough', id: 'urn:n0', value: true },
     ],
   }) as AiEffects
   assert.equal(effects.views.updated, 1)
@@ -102,6 +103,7 @@ test('AI presentation edits are staged, view-local, resettable and undoable', as
     color: '#e1ecde',
     bold: true,
     italic: true,
+    strikethrough: true,
   })
   assert.equal((await turn.commit()).status, 'applied')
   const styled = host.store.getState()
@@ -114,11 +116,13 @@ test('AI presentation edits are staged, view-local, resettable and undoable', as
       { kind: 'concept.color', id: 'urn:n0', value: '' },
       { kind: 'concept.bold', id: 'urn:n0', value: false },
       { kind: 'concept.italic', id: 'urn:n0', value: false },
+      { kind: 'concept.strikethrough', id: 'urn:n0', value: false },
     ],
   })
   await reset.commit()
   const member = host.store.getState().viewGraph.concepts[0]
-  for (const key of ['color', 'bold', 'italic']) assert.equal(Object.hasOwn(member, key), false)
+  for (const key of ['color', 'bold', 'italic', 'strikethrough'])
+    assert.equal(Object.hasOwn(member, key), false)
   host.store.undo()
   assert.deepEqual(host.store.getState().workspace.savedViews, styled.workspace.savedViews)
   host.store.undo()

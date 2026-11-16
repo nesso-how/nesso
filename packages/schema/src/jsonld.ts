@@ -98,12 +98,13 @@ export function parseGraph(value: unknown): { graph: Graph; views: View[] } {
       views.push({
         id,
         name: view['rdfs:label'],
-        members: view.members.map(({ concept, position, color, bold, italic }) => ({
+        members: view.members.map(({ concept, position, color, bold, italic, strikethrough }) => ({
           id: concept['@id'],
           position,
           ...(color === undefined ? {} : { color: color.toLowerCase() }),
           ...(bold === undefined ? {} : { bold }),
           ...(italic === undefined ? {} : { italic }),
+          ...(strikethrough === undefined ? {} : { strikethrough }),
         })),
       })
       continue
@@ -172,12 +173,13 @@ export function serializeGraph(graph: Graph, views: readonly View[] = []): JsonO
         '@id': id,
         '@type': 'View',
         'rdfs:label': name,
-        members: members.map(({ id, position, color, bold, italic }) => ({
+        members: members.map(({ id, position, color, bold, italic, strikethrough }) => ({
           concept: { '@id': id },
           position: { x: position.x, y: position.y },
           ...(color === undefined ? {} : { color }),
           ...(bold === undefined ? {} : { bold }),
           ...(italic === undefined ? {} : { italic }),
+          ...(strikethrough === undefined ? {} : { strikethrough }),
         })),
       })),
     ],

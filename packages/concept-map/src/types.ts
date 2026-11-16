@@ -12,6 +12,7 @@ export type ConceptData = {
   color?: string
   bold?: boolean
   italic?: boolean
+  strikethrough?: boolean
   editable?: boolean
   maxLength?: number
   editing?: boolean

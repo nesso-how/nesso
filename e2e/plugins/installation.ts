@@ -198,7 +198,7 @@ async function buildFixture(state: InstallState, name: string, version: string) 
           }
         : {}),
       nesso: {
-        apiVersion: 4,
+        apiVersion: 5,
         kind,
         entry,
         writes: kind === 'actions' ? ['concept.label'] : [],
@@ -1141,7 +1141,7 @@ async function verifyLocalProposal(driver: Driver) {
     const manifest = {
       name,
       version: '1.0.0',
-      nesso: { apiVersion: 4, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+      nesso: { apiVersion: 5, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
       i18n: {
         metadata: {
           name: { en: 'Test local' },
