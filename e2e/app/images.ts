@@ -25,8 +25,12 @@ export async function verifyImages(context: CheckContext) {
     () => evaluate<boolean>(`!!document.querySelector('#canvas .react-flow__edge-path')`),
     Boolean,
   )
-  const before = await evaluate(
-    `({transform:document.querySelector('#canvas .react-flow__viewport').style.transform,selected:document.querySelectorAll('#canvas .selected').length})`,
+  const before = await waitFor(
+    () =>
+      evaluate<{ transform: string; selected: number }>(
+        `({transform:document.querySelector('#canvas .react-flow__viewport').style.transform,selected:document.querySelectorAll('#canvas .selected').length})`,
+      ),
+    ({ transform }) => !!transform && transform !== 'translate(0px, 0px) scale(1)',
   )
   const geometry = await evaluate<{
     rects: { x: number; y: number; width: number; height: number }[]
