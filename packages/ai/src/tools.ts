@@ -18,6 +18,13 @@ const operation = z.discriminatedUnion('kind', [
     value: z.string().max(aiTextLimits.conceptLabel),
   }),
   z.strictObject({ kind: z.literal('concept.notes'), id, value: z.string() }),
+  z.strictObject({
+    kind: z.literal('concept.color'),
+    id,
+    value: z.string().describe('Six-digit hex color (#rrggbb), or an empty string to reset.'),
+  }),
+  z.strictObject({ kind: z.literal('concept.bold'), id, value: z.boolean() }),
+  z.strictObject({ kind: z.literal('concept.italic'), id, value: z.boolean() }),
   z.strictObject({ kind: z.literal('concept.position'), id, value: position }),
   z.strictObject({
     kind: z.literal('concept.positions'),
@@ -83,7 +90,7 @@ export const aiTools = {
   },
   views: {
     description:
-      'List paginated saved-view summaries, or read a page of membership IDs with id. Overview is the complete graph, has id null and cannot be deleted. Deleting the active saved view falls back to Overview.',
+      'List paginated view summaries including Overview, or read a page of membership IDs with id. Overview is the complete graph, has id null and cannot be deleted. Creating a saved view makes it active. Deleting the active saved view falls back to Overview.',
     inputSchema: z.strictObject({ id: id.nullable().optional(), ...page }),
   },
   relation_types: {
@@ -98,7 +105,7 @@ export const aiTools = {
   },
   edit: {
     description:
-      'Stage ordered undoable graph and saved-view operations, not live writes. Supply unique absolute IRIs for new concepts and types. Positions, colors and text styles belong to the active saved view and are rejected in Overview or for concepts outside it. New concepts join the active saved view, or no view in Overview, and link to the concept selected when the turn began, if exactly one, using the default type; concepts added in the same turn do not link to each other. All edits in a turn apply together after validation and any required approval, as a single undoable batch. All edit calls in a turn merge into one batch that can only be undone together.',
+      'Stage ordered undoable graph and saved-view operations, not live writes. Supply unique absolute IRIs for new concepts and types. Position updates, colors and bold/italic styles belong to the active saved view and are rejected in Overview or for concepts outside it. Reset color with an empty string and bold/italic with false. Creating a saved view makes it active for subsequent operations. New concepts join the active saved view, or no view in Overview where their initial position is ignored, and link to the concept selected when the turn began, if exactly one, using the default type; concepts added in the same turn do not link to each other. All edits in a turn apply together after validation and any required approval, as a single undoable batch. All edit calls in a turn merge into one batch that can only be undone together.',
     inputSchema: z.strictObject({ operations: z.array(operation).min(1).max(500) }),
   },
   history: {
@@ -116,7 +123,7 @@ export const aiMcpTools = {
   },
   propose_plugin: {
     description:
-      'Propose installing a built local plugin package from directory, the absolute path of its root on this computer. Nesso reads only package.json and the nesso.entry file. Read the plugin documentation with read_docs first. To update a local plugin, pass its content ID as replacing; npm and bundled plugins cannot be replaced or shadowed. Nesso validates the package and installs it only after the user approves it in Nesso within the 120-second request timeout. Returns installed with the new content ID, cancelled, or failed with validation or load issues to fix before proposing again.',
+      'Propose installing a built local plugin package from directory, the absolute path of its root on this computer. Nesso reads only package.json, the nesso.entry file and any fonts referenced by a theme. Read the plugin documentation with read_docs first. To update a local plugin, pass its content ID as replacing; npm and bundled plugins cannot be replaced or shadowed. Nesso validates the package and installs it only after the user approves it in Nesso within the 120-second request timeout. Returns installed with the new content ID, cancelled, or failed with validation or load issues to fix before proposing again.',
     inputSchema: z.strictObject({
       directory: z.string().min(1).max(4096),
       replacing: z

@@ -12,12 +12,12 @@ const instructions = aiChatInstructions({ locale: 'en' })
 console.log(input, instructions)
 ```
 
-Tool schemas validate input; the host supplies execution. Assistants cannot reset the document, change selection, or navigate.
+Tool schemas validate input; the host supplies execution. Assistants cannot reset the document or directly set selection or activate an existing view.
 
 ## Tools
 
 - **Read**: `context` summarizes the active view, selection, vocabulary, and history. `concepts`, `relations`, `views`, `relation_types`, and `selection` provide paginated details; concept and relation queries default to the active view.
-- **Write**: `edit` stages ordered graph and saved-view operations. `history` stages shared undo or redo as the only write in a turn.
+- **Write**: `edit` stages graph and saved-view operations, including positions, colors, and bold/italic labels in the active saved view. `history` stages shared undo or redo as the only write in a turn.
 - **Documentation**: `read_docs` returns a bundled README for `nesso`, `ai`, `plugin`, `plugin-example`, `schema`, `concept-map`, `knowledge-graph`, or `ui`, without filesystem or network access.
 - **Plugins (MCP only)**: `aiMcpTools` adds `plugins`, which lists installed packages, their provenance, and the latest failure of local plugins as untrusted text, and `propose_plugin`, which submits the absolute path of a built package directory for in-app approval. Electron reads only `package.json`, the entry, and the fonts the theme references. A proposal can replace only an installed local plugin, never an npm or bundled one.
 

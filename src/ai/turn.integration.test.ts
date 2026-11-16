@@ -81,6 +81,50 @@ test('invalid operations and cancellation discard all staged writes', async () =
   assert.equal(host.store.getState(), before)
 })
 
+test('AI presentation edits are staged, view-local, resettable and undoable', async () => {
+  const host = fixture()
+  host.store.createView('Other', ['urn:n0', 'urn:n1'])
+  host.store.createView('Active', ['urn:n0', 'urn:n1'])
+  const before = host.store.getState()
+  const turn = createAiTurn(host)
+  const effects = turn.execute('edit', {
+    operations: [
+      { kind: 'concept.color', id: 'urn:n0', value: '#e1ecde' },
+      { kind: 'concept.bold', id: 'urn:n0', value: true },
+      { kind: 'concept.italic', id: 'urn:n0', value: true },
+    ],
+  }) as AiEffects
+  assert.equal(effects.views.updated, 1)
+  assert.equal(host.store.getState(), before)
+  const staged = turn.execute('concepts', { ids: ['urn:n0'] }) as AiToolResults['concepts']
+  assert.deepEqual(staged.items[0], {
+    ...before.viewGraph.concepts[0],
+    color: '#e1ecde',
+    bold: true,
+    italic: true,
+  })
+  assert.equal((await turn.commit()).status, 'applied')
+  const styled = host.store.getState()
+  assert.equal(styled.graph, before.graph)
+  assert.equal(styled.workspace.savedViews[0], before.workspace.savedViews[0])
+  assert.deepEqual(styled.viewGraph.concepts[0], staged.items[0])
+  const reset = createAiTurn(host)
+  reset.execute('edit', {
+    operations: [
+      { kind: 'concept.color', id: 'urn:n0', value: '' },
+      { kind: 'concept.bold', id: 'urn:n0', value: false },
+      { kind: 'concept.italic', id: 'urn:n0', value: false },
+    ],
+  })
+  await reset.commit()
+  const member = host.store.getState().viewGraph.concepts[0]
+  for (const key of ['color', 'bold', 'italic']) assert.equal(Object.hasOwn(member, key), false)
+  host.store.undo()
+  assert.deepEqual(host.store.getState().workspace.savedViews, styled.workspace.savedViews)
+  host.store.undo()
+  assert.deepEqual(host.store.getState().workspace.savedViews, before.workspace.savedViews)
+})
+
 test('edits apply directly without approval, including bulk updates and additions', async () => {
   const host = fixture(12)
   const begin = () => createAiTurn(host)
