@@ -56,7 +56,12 @@ export async function verifyCorruptRecords({ window, url }: CheckContext) {
   )
   connectPlugins(createTrustedRequest(appUrl(false)))
   const { saved, evaluate } = await openFixtureWorkspace({ window, url })
-  const document = structuredClone(saved.get('document'))
+  const document = structuredClone(
+    await waitFor(
+      async () => saved.get('document') as { workspace: { viewports: Record<string, unknown> } },
+      (record) => Object.keys(record?.workspace.viewports ?? {}).length > 0,
+    ),
+  )
   const corrupt = `${createHash('sha256').update('test-unreadable').digest('hex')}.json`
   const outdated = JSON.stringify({ name: 'test-unreadable', nesso: { apiVersion: 2 } })
   await writeFile(path.join(directory, corrupt), outdated)
