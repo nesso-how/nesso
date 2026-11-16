@@ -56,6 +56,28 @@ export async function verifyIntro({ window, url, name }: CheckContext) {
     await evaluate(`document.querySelector('.intro .react-flow__node.selected')?.textContent`),
     'Coffee',
   )
+  const drag = await evaluate<{ start: { x: number; y: number }; end: { x: number; y: number } }>(
+    `(()=>{
+      const handle=document.querySelector('[aria-label="Connect from Coffee"]').getBoundingClientRect();
+      const pane=document.querySelector('.intro .react-flow__pane').getBoundingClientRect();
+      return {start:{x:Math.round(handle.x+handle.width/2),y:Math.round(handle.y+handle.height/2)},end:{x:Math.round(pane.x+pane.width/2),y:Math.round(pane.bottom-100)}};
+    })()`,
+  )
+  await evaluate(
+    `document.querySelector('[aria-label="Connect from Coffee"]').dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0,clientX:${drag.start.x},clientY:${drag.start.y}}));document.dispatchEvent(new MouseEvent('mousemove',{bubbles:true,clientX:${drag.end.x},clientY:${drag.end.y}}))`,
+  )
+  await ready(`!!document.querySelector('.intro .react-flow__connection')`)
+  await evaluate(
+    `document.dispatchEvent(new MouseEvent('mouseup',{bubbles:true,button:0,clientX:${drag.end.x},clientY:${drag.end.y}}))`,
+  )
+  await ready(`!document.querySelector('.intro .react-flow__connection')`)
+  assert.equal(await evaluate(`document.querySelectorAll('.intro .react-flow__node').length`), 2)
+  assert.equal(await evaluate(`document.querySelectorAll('.intro .react-flow__edge').length`), 0)
+  assert.equal(
+    await evaluate(`!!document.querySelector('[aria-label="Edit concept label"]')`),
+    false,
+  )
+
   await handle('Connect from Coffee')
   await ready(
     `document.querySelector('[aria-label="Connect to Sleep"]')?.getAttribute('aria-hidden')==='false'`,
