@@ -19,6 +19,7 @@ const base = {
   contextId: 'context',
   locale: 'en' as const,
   theme: Object.fromEntries(themeTokens.map((token) => [token, ''])),
+  colorScheme: 'light' as const,
   conceptPlacementOffset: { x: 160, y: 100 },
 }
 const graph = {

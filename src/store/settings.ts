@@ -5,6 +5,7 @@ import { aiConversation, aiTextLimits } from '@nesso-how/ai'
 import { NessoError, validationIssues } from '@nesso-how/errors'
 import { viewMemberSchema } from '@nesso-how/schema'
 import { sectionIds } from './types.ts'
+import { appearances } from '../../shared/appearance.ts'
 
 export const defaultPanels: PanelSizes = { explorerWidth: 180, inspectorWidth: 210 }
 export const defaultCanvasTabOrder: readonly string[] = [
@@ -95,6 +96,7 @@ export const preferencesSchema = z.strictObject({
     inspectorWidth: z.number().min(panelLimits.inspectorWidth.min),
   }),
   inspectorTab: z.enum(['details', 'chat']).optional(),
+  appearance: z.enum(appearances).optional(),
   relationGroups: z.boolean().optional(),
   collapsedSections: z
     .array(z.enum(sectionIds))

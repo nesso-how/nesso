@@ -96,6 +96,7 @@ export function MarkdownInput({
         EditorView.theme({
           '&.cm-focused': { outline: 'none' },
           '.cm-scroller': { fontFamily: 'inherit', lineHeight: 'inherit', overflow: 'visible' },
+          '.cm-content': { caretColor: 'var(--foreground)' },
           '.cm-content, .cm-line': { padding: '0' },
           '.cm-line.nesso-markdown-list-item': {
             paddingInlineStart: 'var(--nesso-list-padding)',

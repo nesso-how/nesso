@@ -21,7 +21,10 @@ export const themeColors = [
   'node-border',
   'edge',
   'handle',
+  'shadow',
 ] as const
+export const colorSchemes = ['light', 'dark'] as const
+export type ColorScheme = (typeof colorSchemes)[number]
 const contributionId = z
   .string()
   .max(64)
@@ -39,47 +42,50 @@ const contrast = (left: string, right: string) =>
   (Math.max(luminance(left), luminance(right)) + 0.05) /
   (Math.min(luminance(left), luminance(right)) + 0.05)
 
-const themeDefinition = z
-  .strictObject({
-    id: contributionId,
-    colors: z.strictObject(
+const surface = {
+  light: { matches: (value: number) => value >= 0.8, message: 'Expected an opaque light surface' },
+  dark: { matches: (value: number) => value <= 0.05, message: 'Expected an opaque dark surface' },
+}
+const palette = (scheme: ColorScheme) =>
+  z
+    .strictObject(
       Object.fromEntries(themeColors.map((key) => [key, color])) as Record<
         (typeof themeColors)[number],
         typeof color
       >,
-    ),
-    metrics: z.strictObject({
-      'radius-control': z.number().min(0).max(16),
-      'radius-object': z.number().min(0).max(16),
-      'duration-state': z.number().int().min(0).max(300),
-    }),
-  })
-  .superRefine(({ colors }, context) => {
-    for (const key of ['background', 'canvas', 'sidebar'] as const) {
-      if (!opaque(colors[key]) || luminance(colors[key]) < 0.8)
-        context.addIssue({
-          code: 'custom',
-          path: ['colors', key],
-          message: 'Expected an opaque light surface',
-        })
-      if (!opaque(colors.foreground) || contrast(colors.foreground, colors[key]) < 4.5)
-        context.addIssue({
-          code: 'custom',
-          path: ['colors', 'foreground'],
-          message: 'Insufficient foreground contrast',
-        })
-    }
-    if (
-      !opaque(colors.primary) ||
-      !opaque(colors['primary-foreground']) ||
-      contrast(colors.primary, colors['primary-foreground']) < 4.5
     )
-      context.addIssue({
-        code: 'custom',
-        path: ['colors', 'primary-foreground'],
-        message: 'Insufficient primary contrast',
-      })
-  })
+    .superRefine((colors, context) => {
+      for (const key of ['background', 'canvas', 'sidebar'] as const) {
+        if (!opaque(colors[key]) || !surface[scheme].matches(luminance(colors[key])))
+          context.addIssue({ code: 'custom', path: [key], message: surface[scheme].message })
+        if (!opaque(colors.foreground) || contrast(colors.foreground, colors[key]) < 4.5)
+          context.addIssue({
+            code: 'custom',
+            path: ['foreground'],
+            message: 'Insufficient foreground contrast',
+          })
+      }
+      if (
+        !opaque(colors.primary) ||
+        !opaque(colors['primary-foreground']) ||
+        contrast(colors.primary, colors['primary-foreground']) < 4.5
+      )
+        context.addIssue({
+          code: 'custom',
+          path: ['primary-foreground'],
+          message: 'Insufficient primary contrast',
+        })
+    })
+
+const themeDefinition = z.strictObject({
+  id: contributionId,
+  colors: z.strictObject({ light: palette('light'), dark: palette('dark') }),
+  metrics: z.strictObject({
+    'radius-control': z.number().min(0).max(16),
+    'radius-object': z.number().min(0).max(16),
+    'duration-state': z.number().int().min(0).max(300),
+  }),
+})
 
 export const vocabRelationType = z.strictObject({
   id: z.string().min(1).max(2048),

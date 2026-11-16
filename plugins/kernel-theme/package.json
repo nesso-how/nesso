@@ -28,9 +28,9 @@
         "zh-CN": "通过 Kernel 主题呈现 Nesso 的视觉风格。"
       },
       "documentation": {
-        "en": "Kernel supplies the app's light theme tokens. It does not change your graph or views.",
-        "it": "Kernel fornisce i token del tema chiaro dell’app. Non modifica il grafo o le viste.",
-        "zh-CN": "Kernel 提供应用的浅色主题设计变量，不会改变你的图谱或视图。"
+        "en": "Kernel supplies the app's light and dark theme tokens. It does not change your graph or views.",
+        "it": "Kernel fornisce i token dei temi chiaro e scuro dell’app. Non modifica il grafo o le viste.",
+        "zh-CN": "Kernel 提供应用的浅色和深色主题设计变量，不会改变你的图谱或视图。"
       }
     }
   },

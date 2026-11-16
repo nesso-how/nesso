@@ -236,6 +236,8 @@ export function KnowledgeGraph({
       render()
     })
     resize.observe(element)
+    const restyle = new MutationObserver(invalidate)
+    restyle.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] })
     const local = (event: { clientX: number; clientY: number }) => {
       const rect = element.getBoundingClientRect()
       return { x: event.clientX - rect.left, y: event.clientY - rect.top }
@@ -419,6 +421,7 @@ export function KnowledgeGraph({
       forces.stop()
       unsubscribe()
       resize.disconnect()
+      restyle.disconnect()
       cancelAnimationFrame(frame)
       cancelAnimationFrame(motion)
       focus.current = () => {}

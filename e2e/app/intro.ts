@@ -20,7 +20,9 @@ export async function verifyIntro({ window, url, name }: CheckContext) {
     window.webContents.sendInputEvent({ type: 'keyUp', keyCode })
   }
   const handle = async (label: string) => {
-    await evaluate(`document.querySelector(${JSON.stringify(`[aria-label="${label}"]`)}).focus()`)
+    await ready(
+      `(element => (element.focus(), document.activeElement === element))(document.querySelector(${JSON.stringify(`[aria-label="${label}"]`)}))`,
+    )
     key('Enter')
   }
   const frames = () =>

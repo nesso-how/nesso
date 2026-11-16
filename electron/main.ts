@@ -4,6 +4,7 @@ import {
   BrowserWindow,
   dialog,
   ipcMain,
+  nativeTheme,
   protocol,
   screen,
   session,
@@ -29,6 +30,7 @@ import { connectPluginTermination } from './plugins/termination.ts'
 import { connectStartupCheck } from './startup-check.ts'
 import { createWindowState } from './shell/window-state.ts'
 import { connectWindowZoom } from './shell/zoom.ts'
+import { connectAppearance } from './shell/appearance.ts'
 import { createRecordReplacement } from './persistence/record-replacement.ts'
 import { connectMenu, connectTabShortcuts } from './shell/menu.ts'
 import { createAutomaticBackups } from './persistence/automatic-backups.ts'
@@ -88,7 +90,7 @@ const createWindow = async (connectPersistence: (window: BrowserWindow) => void)
   const window = new BrowserWindow({
     ...state.bounds,
     show: false,
-    backgroundColor: '#ffffff',
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#1c1d20' : '#ffffff',
     icon: path.join(root, 'icon-512.png'),
     webPreferences: {
       preload: path.join(import.meta.dirname, 'preload.cjs'),
@@ -115,6 +117,7 @@ app
   .then(async () => {
     const trusted = createTrustedRequest(rendererUrl)
     connectMenu(trusted, dev)
+    connectAppearance(ipcMain, trusted, nativeTheme, app.getPath('userData'))
     connectNotesLinks(ipcMain, trusted, (url) => shell.openExternal(url))
     connectFiles(trusted)
     connectPlugins(trusted)

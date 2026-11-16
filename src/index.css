@@ -16,7 +16,7 @@
   }
 
   html {
-    color-scheme: light;
+    color-scheme: light dark;
     font-family: var(--font-sans);
     background: var(--background);
     color: var(--foreground);
@@ -48,8 +48,8 @@
   border-radius: var(--radius-object);
   background: var(--background);
   box-shadow:
-    0 4px 20px #0000000c,
-    0 1px 3px #00000005;
+    0 4px 20px color-mix(in srgb, var(--shadow) 60%, transparent),
+    0 1px 3px color-mix(in srgb, var(--shadow) 25%, transparent);
   animation: workspace-boot-in 240ms ease-out;
 }
 .update-copy {
@@ -337,7 +337,7 @@
   z-index: 30;
   display: grid;
   place-items: center;
-  background: var(--background, #fff);
+  background: var(--background, Canvas);
 }
 .splash-logo {
   width: 240px;
@@ -382,14 +382,14 @@
   justify-content: center;
   gap: 16px;
   padding: 24px;
-  background: #fff;
-  color: #292929;
+  background: Canvas;
+  color: CanvasText;
   font: 14px system-ui;
   text-align: center;
 }
 .startup-recovery button {
   padding: 8px 16px;
-  border: 1px solid #dedede;
+  border: 1px solid color-mix(in srgb, CanvasText 15%, Canvas);
   border-radius: 3px;
   cursor: pointer;
 }
@@ -930,19 +930,19 @@
   color: var(--muted-foreground);
 }
 .chat-markdown :is(.hljs-keyword, .hljs-selector-tag, .hljs-doctag, .hljs-meta) {
-  color: #7c3c85;
+  color: color-mix(in srgb, #7c3c85 55%, var(--foreground));
 }
 .chat-markdown :is(.hljs-string, .hljs-regexp, .hljs-addition) {
-  color: #37643a;
+  color: color-mix(in srgb, #37643a 55%, var(--foreground));
 }
 .chat-markdown :is(.hljs-number, .hljs-literal, .hljs-built_in, .hljs-symbol) {
-  color: #854b23;
+  color: color-mix(in srgb, #854b23 55%, var(--foreground));
 }
 .chat-markdown :is(.hljs-title, .hljs-attr, .hljs-type, .hljs-name, .hljs-selector-class) {
-  color: #245985;
+  color: color-mix(in srgb, #245985 55%, var(--foreground));
 }
 .chat-markdown .hljs-deletion {
-  color: #934a35;
+  color: color-mix(in srgb, #934a35 55%, var(--foreground));
 }
 .chat-markdown a {
   text-decoration: underline;
@@ -1524,10 +1524,10 @@
   opacity: 0.5;
 }
 .mcp-status.running {
-  color: #427b53;
+  color: color-mix(in srgb, #427b53 60%, var(--foreground));
 }
 .mcp-status.running .mcp-status-dot {
-  background: #427b53;
+  background: color-mix(in srgb, #427b53 60%, var(--foreground));
   opacity: 1;
 }
 .mcp-credentials {

@@ -204,6 +204,7 @@ export const samePreferences = (left: Preferences, right: Preferences): boolean 
   left.panels.explorerWidth === right.panels.explorerWidth &&
   left.panels.inspectorWidth === right.panels.inspectorWidth &&
   (left.inspectorTab ?? 'details') === (right.inspectorTab ?? 'details') &&
+  (left.appearance ?? 'system') === (right.appearance ?? 'system') &&
   (left.relationGroups ?? true) === (right.relationGroups ?? true) &&
   sameItems(left.collapsedSections ?? [], right.collapsedSections ?? [], (a, b) => a === b)
 
@@ -720,6 +721,9 @@ export const applyStateOperations = (
       }
       case 'preferences.inspectorTab':
         preferences = { ...preferences, inspectorTab: operation.value }
+        break
+      case 'preferences.appearance':
+        preferences = { ...preferences, appearance: operation.value }
         break
       case 'preferences.relationGroups':
         preferences = { ...preferences, relationGroups: operation.value }

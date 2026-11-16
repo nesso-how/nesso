@@ -18,7 +18,14 @@ import type {
 } from '@nesso-how/core'
 import type { Locale } from '@nesso-how/i18n'
 import { parseOrThrow, PluginError, pluginErrorCodes } from './errors.ts'
-import { parseDefinition, themeColors, vocabRelationType, type Definition } from './definitions.ts'
+import {
+  colorSchemes,
+  parseDefinition,
+  themeColors,
+  vocabRelationType,
+  type ColorScheme,
+  type Definition,
+} from './definitions.ts'
 import {
   fileOpenOptions,
   fileOpenResult,
@@ -381,6 +388,7 @@ export type ActionState = {
   readonly contextId: string
   readonly locale: Locale
   readonly theme: Readonly<Record<string, string>>
+  readonly colorScheme: ColorScheme
   readonly conceptPlacementOffset: Readonly<{ x: number; y: number }>
   readonly viewGraph: ViewGraphSnapshot
   readonly selected: Selection
@@ -453,6 +461,7 @@ const actionStateSchema = z.strictObject({
       ]),
     ),
   ),
+  colorScheme: z.enum(colorSchemes),
   conceptPlacementOffset: position,
   viewGraph: viewGraphSchema,
   selected: selection,
@@ -711,8 +720,9 @@ export function createPluginClient(port: MessagePort, initial: unknown) {
   return {
     context,
     close,
-    getPresentation: (): Pick<ActionState, 'theme' | 'locale'> => ({
+    getPresentation: (): Pick<ActionState, 'theme' | 'colorScheme' | 'locale'> => ({
       theme: state.theme,
+      colorScheme: state.colorScheme,
       locale: state.locale,
     }),
   }

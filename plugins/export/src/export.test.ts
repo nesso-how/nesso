@@ -16,6 +16,7 @@ test('export uses only the supplied target graph and notifies after accepted sav
     contextId: 'export',
     locale: 'it',
     theme: Object.fromEntries(themeTokens.map((token) => [token, ''])),
+    colorScheme: 'light',
     conceptPlacementOffset: { x: 160, y: 100 },
     viewGraph: {
       concepts: [

@@ -3,14 +3,19 @@ import test from 'node:test'
 import { parseContribution, parseDefinition, PluginError } from '../src/runtime.ts'
 import theme from './theme.json' with { type: 'json' }
 
-test('theme definitions reject CSS authority, dark surfaces, unreadable text and plugin fonts', () => {
+test('theme definitions require matching light and dark palettes with readable text and no CSS authority or plugin fonts', () => {
   assert.deepEqual(parseDefinition('theme', theme), theme)
+  const { light, dark } = theme.colors
   for (const value of [
     { ...theme, css: 'body{}' },
-    { ...theme, colors: { ...theme.colors, canvas: 'var(--background)' } },
-    { ...theme, colors: { ...theme.colors, sidebar: '#ffffff00' } },
-    { ...theme, colors: { ...theme.colors, background: '#000000' } },
-    { ...theme, colors: { ...theme.colors, foreground: '#eeeeee' } },
+    { ...theme, colors: { light } },
+    { ...theme, colors: { light, dark: { ...dark, canvas: 'var(--background)' } } },
+    { ...theme, colors: { light: { ...light, sidebar: '#ffffff00' }, dark } },
+    { ...theme, colors: { light: { ...light, background: '#000000' }, dark } },
+    { ...theme, colors: { light, dark: { ...dark, sidebar: '#555555' } } },
+    { ...theme, colors: { light: { ...light, foreground: '#eeeeee' }, dark } },
+    { ...theme, colors: { light, dark: { ...dark, foreground: '#333333' } } },
+    { ...theme, colors: { light, dark: { ...dark, shadow: undefined } } },
     { ...theme, metrics: { ...theme.metrics, 'duration-state': 301 } },
     { ...theme, fonts: { sans: { faces: [] }, mono: { faces: [] } } },
     { ...theme, metrics: { ...theme.metrics, 'font-sans': 'Other' } },

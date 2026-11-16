@@ -374,9 +374,10 @@ async function verifyBundledThemeSwitch(driver: Driver, state: InstallState) {
   const fonts = await driver.evaluate<string[]>(
     `['sans','mono'].map(role => getComputedStyle(document.documentElement).getPropertyValue('--font-' + role).trim())`,
   )
+  const dark = await driver.evaluate<boolean>(`matchMedia('(prefers-color-scheme: dark)').matches`)
   for (const [id, primary] of [
-    ['paper-theme', '#934a35'],
-    ['kernel-theme', '#1a202b'],
+    ['paper-theme', dark ? '#e0907a' : '#934a35'],
+    ['kernel-theme', dark ? '#e6e8ec' : '#1a202b'],
   ]) {
     await driver.activateTheme(`@nesso-how/${id}`)
     await waitFor(
@@ -791,6 +792,7 @@ async function verifyUpdateFailure(driver: Driver, state: InstallState) {
       fields: [
         { label: 'Language', value: 'English', disabled: false },
         { label: 'Theme', value: 'Test theme', disabled: false },
+        { label: 'Appearance', value: 'System', disabled: false },
       ],
     },
     {
@@ -1196,6 +1198,7 @@ export async function verifyInstallation({ window, url }: CheckContext) {
       fields: [
         { label: 'Language', value: 'English', disabled: false },
         { label: 'Theme', value: 'Kernel', disabled: false },
+        { label: 'Appearance', value: 'System', disabled: false },
       ],
     },
     {

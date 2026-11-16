@@ -62,12 +62,18 @@ try {
   showPluginRecovery(t('pluginsFailed'), t('pluginsRetry'), () => location.reload())
   throw error
 }
-const stopTheme = connectTheme(host, (definition) => {
-  const theme = getThemePresentation(definition.id)!
-  for (const [key, value] of Object.entries(theme.tokens))
-    document.documentElement.style.setProperty(`--${key}`, value)
-  document.documentElement.setAttribute('data-theme', definition.id)
-})
+const stopTheme = connectTheme(
+  host,
+  matchMedia('(prefers-color-scheme: dark)'),
+  (definition, scheme, appearance) => {
+    const theme = getThemePresentation(definition.id)!
+    for (const [key, value] of Object.entries(theme.tokens[scheme]))
+      document.documentElement.style.setProperty(`--${key}`, value)
+    document.documentElement.style.colorScheme = scheme
+    document.documentElement.setAttribute('data-theme', definition.id)
+    window.nessoAppearance?.set(appearance)
+  },
+)
 const externalStartup = new AbortController()
 const stopExternalPlugins = await initializeExternalPlugins(externalStartup.signal)
 const persistence = startAutosave(stopPluginActions)

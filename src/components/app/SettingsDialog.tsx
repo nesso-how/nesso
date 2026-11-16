@@ -14,6 +14,7 @@ import { PluginSettings } from './PluginSettings'
 import { ToastsHost } from './Toasts'
 import type { AiBridge } from '../../../electron/ai/bridge'
 import type { McpBridge } from '../../../electron/mcp/bridge'
+import { appearances } from '../../../shared/appearance'
 
 function AiPage({ ai, mcp }: { ai: AiBridge; mcp: McpBridge | undefined }) {
   const [editing, setEditing] = useState(false)
@@ -42,6 +43,29 @@ function PluginPreference({ kind }: { kind: 'theme' | 'vocab' }) {
       value={preferences[key]}
       onChange={change}
       disabled={items.length < 2}
+    />
+  )
+}
+
+const appearanceLabels = {
+  system: 'appearanceSystem',
+  light: 'appearanceLight',
+  dark: 'appearanceDark',
+} as const
+
+function AppearancePreference() {
+  const t = translate(useNessoStore((state) => state.preferences.locale ?? defaultLocale))
+  const value = useNessoStore((state) => state.preferences.appearance ?? 'system')
+  return (
+    <PreferenceSelect
+      label={t('appearance')}
+      items={appearances.map((item) => ({ value: item, label: t(appearanceLabels[item]) }))}
+      value={value}
+      onChange={(next) => {
+        const appearance = appearances.find((item) => item === next)
+        if (appearance)
+          host.store.applyOperations([{ kind: 'preferences.appearance', value: appearance }])
+      }}
     />
   )
 }
@@ -186,6 +210,7 @@ export function SettingsDialog({
                     }}
                   />
                   <PluginPreference kind="theme" />
+                  <AppearancePreference />
                 </div>
               </section>
               <section className="settings-section" aria-labelledby="settings-vocabulary">

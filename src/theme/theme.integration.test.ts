@@ -4,13 +4,29 @@ import { createNessoStore } from '../store/create.ts'
 import { connectTheme } from './index.ts'
 import themeFixture from '../../packages/plugin/test/theme.json' with { type: 'json' }
 
+const createSystem = () => {
+  const listeners = new Set<() => void>()
+  const system = {
+    matches: false,
+    addEventListener: (_type: string, listener: () => void) => listeners.add(listener),
+    removeEventListener: (_type: string, listener: () => void) => listeners.delete(listener),
+    change: (matches: boolean) => {
+      system.matches = matches
+      for (const listener of listeners) listener()
+    },
+  }
+  return system as typeof system & MediaQueryList
+}
+
 test('the host applies only registered themes, tracks changes, and disconnects cleanly', () => {
   for (const registered of [false, true]) {
     const host = createNessoStore(null)
     const theme = themeFixture
     if (registered) host.registerTheme(theme)
     const applied: string[] = []
-    const disconnect = connectTheme(host, (definition) => applied.push(definition.id))
+    const disconnect = connectTheme(host, createSystem(), (definition) =>
+      applied.push(definition.id),
+    )
     assert.deepEqual(applied, registered ? ['light'] : [])
     if (!registered) host.registerTheme(theme)
     assert.deepEqual(applied, ['light'])
@@ -34,4 +50,33 @@ test('the host applies only registered themes, tracks changes, and disconnects c
     host.store.setActiveTheme('light')
     assert.equal(applied.length, 3)
   }
+})
+
+test('the host resolves the color scheme from the appearance preference or the system', () => {
+  const host = createNessoStore(null)
+  host.registerTheme(themeFixture)
+  const system = createSystem()
+  const applied: string[] = []
+  const disconnect = connectTheme(host, system, (_definition, scheme, appearance) =>
+    applied.push(`${appearance}:${scheme}`),
+  )
+  const setAppearance = (value: 'system' | 'light' | 'dark') =>
+    host.store.applyOperations([{ kind: 'preferences.appearance', value }])
+  system.change(true)
+  setAppearance('light')
+  system.change(false)
+  system.change(true)
+  setAppearance('dark')
+  setAppearance('system')
+  host.store.setConceptLabel(host.store.getState().graph.concepts[0].id, 'Renamed')
+  assert.deepEqual(applied, [
+    'system:light',
+    'system:dark',
+    'light:light',
+    'dark:dark',
+    'system:dark',
+  ])
+  disconnect()
+  system.change(false)
+  assert.equal(applied.length, 5)
 })
