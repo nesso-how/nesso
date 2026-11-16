@@ -12,6 +12,7 @@ import {
   SchemaError,
   serializeGraph,
   type Position,
+  type RelationBend,
 } from '@nesso-how/schema'
 
 export const graphSelection = (graph: GraphSnapshot): Selection => [
@@ -69,14 +70,23 @@ export function copyGraph(graph: ViewGraphSnapshot, selected: Selection): string
   const members = copied.flatMap(({ id, position, color, bold, italic, strikethrough }) =>
     position ? [{ id, position, color, bold, italic, strikethrough }] : [],
   )
+  const relationBends = relations.flatMap(({ bend, ...relation }): RelationBend[] =>
+    bend ? [{ ...relation, bend }] : [],
+  )
   return JSON.stringify(
     serializeGraph(
       {
         concepts: copied.map(({ id, label, notes }) => ({ id, label, notes })),
-        relations,
+        relations: relations.map(({ source, predicate, target }) => ({
+          source,
+          predicate,
+          target,
+        })),
         relationTypes: graph.relationTypes.filter((type) => types.has(type.id)),
       },
-      members.length ? [{ id: newIri(), name: '', members }] : [],
+      members.length
+        ? [{ id: newIri(), name: '', members, ...(relationBends.length ? { relationBends } : {}) }]
+        : [],
     ),
   )
 }
@@ -181,6 +191,17 @@ export function pasteOperations(
         target: relation.target,
         type: graph.relationTypes.find((type) => type.id === relation.predicate)!,
       })),
+    ...(inView
+      ? (views[0]?.relationBends ?? []).map((relation): NessoOperation => ({
+          kind: 'relation.bend',
+          id: relationKey({
+            source: ids.get(relation.source)!,
+            predicate: relation.predicate,
+            target: ids.get(relation.target)!,
+          }),
+          value: relation.bend,
+        }))
+      : []),
     {
       kind: 'selection.set',
       value: [

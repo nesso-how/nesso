@@ -1,6 +1,6 @@
 import { PluginError, type NessoOperation } from '@nesso-how/plugin'
 import type { ActionContribution } from '@nesso-how/plugin/runtime'
-import { newIri, parseGraph, type Concept, type Position } from '@nesso-how/schema'
+import { newIri, parseGraph, relationKey, type Concept, type Position } from '@nesso-how/schema'
 import source from '../package.json' with { type: 'json' }
 
 const { i18n } = source
@@ -35,6 +35,22 @@ export function buildImportOperations(
     )
     if (concept.notes !== undefined)
       operations.push({ kind: 'concept.notes', id, value: concept.notes })
+  }
+  const types = new Map(graph.relationTypes.map((type) => [type.id, type]))
+  const pending = new Set(graph.relations)
+  const connect = () => {
+    for (const relation of pending) {
+      if (!added.has(relation.source) || !added.has(relation.target)) continue
+      pending.delete(relation)
+      const type = types.get(relation.predicate)
+      if (type && relation.source !== relation.target)
+        operations.push({
+          kind: 'relation.connect',
+          source: ids.get(relation.source)!,
+          target: ids.get(relation.target)!,
+          type,
+        })
+    }
   }
   for (const concept of graph.concepts) {
     if (listed.has(concept.id)) continue
@@ -72,15 +88,19 @@ export function buildImportOperations(
       if (member.strikethrough !== undefined)
         operations.push({ kind: 'concept.strikethrough', id, value: member.strikethrough })
     }
+    connect()
+    for (const relation of view.relationBends ?? [])
+      operations.push({
+        kind: 'relation.bend',
+        id: relationKey({
+          source: ids.get(relation.source)!,
+          predicate: relation.predicate,
+          target: ids.get(relation.target)!,
+        }),
+        value: relation.bend,
+      })
   }
-  const types = new Map(graph.relationTypes.map((type) => [type.id, type]))
-  for (const relation of graph.relations) {
-    const source = ids.get(relation.source)
-    const target = ids.get(relation.target)
-    if (!source || !target || source === target) continue
-    const type = types.get(relation.predicate)
-    if (type) operations.push({ kind: 'relation.connect', source, target, type })
-  }
+  connect()
   operations.push({ kind: 'selection.set', value: [] })
   return operations
 }

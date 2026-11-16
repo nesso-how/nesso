@@ -1,4 +1,3 @@
-import type { GraphSnapshot } from '@nesso-how/core'
 import type { PresentedGraph } from './types.ts'
 import { relationKey } from '@nesso-how/schema'
 
@@ -34,7 +33,7 @@ export function groupRelations({
   kept = new Map(),
 }: {
   concepts: readonly Concept[]
-  relations: GraphSnapshot['relations']
+  relations: PresentedGraph['relations']
   sizes?: Readonly<Record<string, { width: number; height: number }>>
   kept?: KeptGroups
 }): RelationGroup[] {
@@ -46,6 +45,7 @@ export function groupRelations({
   )
   const candidates = new Map<string, Omit<RelationGroup, 'key' | 'bounds'>>()
   for (const relation of relations) {
+    if (relation.bend) continue
     for (const direction of ['out', 'in'] as const) {
       const anchor = direction === 'out' ? relation.source : relation.target
       const member = direction === 'out' ? relation.target : relation.source

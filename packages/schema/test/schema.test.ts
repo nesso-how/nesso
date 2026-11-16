@@ -42,7 +42,7 @@ test('a graph with compact and custom predicates survives a JSON-LD round trip',
   graph.relations.push(...targets.map((target) => ({ source: subject, predicate: custom, target })))
   const original = structuredClone(graph)
   const serialized = serializeGraph(graph)
-  assert.equal(serialized.schemaVersion, 2)
+  assert.equal(serialized.schemaVersion, 3)
   const entry = (serialized['@graph'] as Record<string, unknown>[]).find(
     (entry) => entry['@id'] === subject,
   )!
@@ -233,7 +233,7 @@ test('views keep their members presentation across a JSON-LD round trip', () => 
 
 test('versioned documents reject unknown versions, invalid mappings and legacy presentation', () => {
   const document = serializeGraph(parse(fixture))
-  for (const schemaVersion of [3, '2'])
+  for (const schemaVersion of [4, '3'])
     assert.throws(
       () => parseGraph({ ...document, schemaVersion }),
       (error: unknown) =>

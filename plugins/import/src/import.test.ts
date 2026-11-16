@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import type { NessoOperation } from '@nesso-how/plugin'
 import type { Graph, View } from '@nesso-how/schema'
+import { relationKey } from '@nesso-how/schema'
 import { buildImportOperations, deriveViewName } from './index.ts'
 
 const graph: Graph = {
@@ -37,6 +38,9 @@ const views: View[] = [
         strikethrough: true,
       },
       { id: 'urn:old-b', position: { x: 3, y: 4 } },
+    ],
+    relationBends: [
+      { source: 'urn:old-a', predicate: 'urn:knows', target: 'urn:old-b', bend: 0.25 },
     ],
   },
   { id: 'urn:other-view', name: 'Other', members: [{ id: 'urn:old-b', position: { x: 5, y: 6 } }] },
@@ -99,6 +103,19 @@ test('import recreates file views with presentation and remaps concept ids with 
     connects.map((operation) => operation.type?.id),
     ['urn:knows', 'urn:likes', 'urn:likes'],
   )
+  assert.deepEqual(
+    operations.filter((operation) => operation.kind === 'relation.bend'),
+    [
+      {
+        kind: 'relation.bend',
+        id: relationKey({ source: alpha, predicate: 'urn:knows', target: beta }),
+        value: 0.25,
+      },
+    ],
+  )
+  const bend = operations.findIndex(({ kind }) => kind === 'relation.bend')
+  assert.ok(bend > operations.findIndex(({ kind }) => kind === 'relation.connect'))
+  assert.ok(bend < operations.indexOf(created[1]))
   assert.deepEqual(operations.at(-1), { kind: 'selection.set', value: [] })
 })
 

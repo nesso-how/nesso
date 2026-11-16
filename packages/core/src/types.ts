@@ -3,6 +3,8 @@ import type {
   Graph,
   Position,
   Presentation,
+  Relation,
+  RelationBend,
   RelationType,
   ViewMember,
 } from '@nesso-how/schema'
@@ -19,7 +21,10 @@ export type Selection = readonly { readonly kind: 'concept' | 'relation'; readon
 export type GraphSnapshot = DeepReadonly<Graph>
 
 export type ViewGraphSnapshot = DeepReadonly<
-  Omit<Graph, 'concepts'> & { concepts: (Concept & Partial<Presentation>)[] }
+  Omit<Graph, 'concepts' | 'relations'> & {
+    concepts: (Concept & Partial<Presentation>)[]
+    relations: (Relation & { bend?: number })[]
+  }
 >
 
 export type NessoOperation =
@@ -56,6 +61,7 @@ export type NessoOperation =
       readonly label: string
     }
   | { readonly kind: 'relation.remove'; readonly id: string }
+  | { readonly kind: 'relation.bend'; readonly id: string; readonly value: number }
   | { readonly kind: 'document.reset'; readonly id: string }
   | { readonly kind: 'history.undo' }
   | { readonly kind: 'history.redo' }
@@ -102,6 +108,7 @@ export type SavedView = {
   readonly id: string
   readonly name: string
   readonly members: readonly DeepReadonly<ViewMember>[]
+  readonly relationBends?: readonly DeepReadonly<RelationBend>[]
   readonly pinned: boolean
 }
 
@@ -186,6 +193,7 @@ export type NessoStore = {
   readonly createRelationType: (id: string, label: string) => void
   readonly removeConcept: (id: string) => void
   readonly removeRelation: (id: string) => void
+  readonly setRelationBend: (id: string, value: number, historyGroup?: string) => void
   readonly applyOperations: (
     operations: readonly NessoOperation[],
     options?: { readonly historyGroup?: string },

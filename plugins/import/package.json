@@ -45,7 +45,7 @@
     }
   },
   "nesso": {
-    "apiVersion": 5,
+    "apiVersion": 6,
     "kind": "actions",
     "entry": "dist/index.js",
     "writes": [
@@ -59,6 +59,7 @@
       "concept.strikethrough",
       "concept.position",
       "relation.connect",
+      "relation.bend",
       "view.create",
       "view.membership"
     ],

@@ -34,6 +34,21 @@ test('groups fan-out and fan-in without changing positions or relations', () => 
   assert.deepEqual(out[0].members, ['urn:b', 'urn:c', 'urn:d'])
   assert.deepEqual(out[0].bounds, { x: -1012, y: -12, width: 364, height: 68 })
   assert.deepEqual(graph, original)
+  const bent = {
+    ...graph,
+    relations: graph.relations.map((relation, index) => ({
+      ...relation,
+      bend: index === 0 ? 0.2 : undefined,
+    })),
+  }
+  assert.deepEqual(groupRelations(bent)[0].members, ['urn:c', 'urn:d'])
+  assert.deepEqual(
+    groupRelations({
+      ...bent,
+      relations: bent.relations.map((relation) => ({ ...relation, bend: 0 })),
+    })[0].members,
+    out[0].members,
+  )
   graph.relations = graph.relations.map(({ source, target, predicate }) => ({
     source: target,
     target: source,

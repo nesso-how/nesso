@@ -39,13 +39,17 @@ console.log(validateGraph(restored.graph, restored.views), relationKey(graph.rel
 
 ## JSON-LD profile
 
-Documents carry `schemaVersion: 2`, an inline `@context`, and `@graph` entries for concepts and `rdf:Property` relation types, identified by absolute IRIs. The `rdf`, `rdfs`, `schemaVersion`, and `position` mappings must match `schemaContext`. `schemaVersion` identifies the Nesso profile, independently of app, storage, backup, and plugin versions; it is not the JSON-LD standard's `@version` keyword.
+Documents carry `schemaVersion: 3`, an inline `@context`, and `@graph` entries for concepts and `rdf:Property` relation types, identified by absolute IRIs. The `rdf`, `rdfs`, `schemaVersion`, and `position` mappings must match `schemaContext`. `schemaVersion` identifies the Nesso profile, independently of app, storage, backup, and plugin versions; it is not the JSON-LD standard's `@version` keyword.
 
 Concepts have an optional `notes` string, serialized as `rdfs:comment`. The JSON-LD representation is independent of the in-memory property name.
 
 Views are optional `@graph` entries with `@type: 'View'`, an `rdfs:label` name, and `members`, each referencing a `concept` with its `position` and optional `color`, `bold`, `italic`, and `strikethrough`. `color` is either a fixed `#rrggbb` value or one of the preset ids in `colorPresets` (`neutral`, `sand`, `peach`, `rose`, `sage`, `mint`, `sky`, `lavender`), whose value the active theme defines.
 
+Views may also carry `relationBends`, an array of `{ source, predicate, target, bend }` stored through the matching `@json` context term. Each entry references a unique, non-self relation whose endpoints belong to the view. `bend` is a finite, nonzero signed fraction of the directed endpoint segment's length: positive bends move the curve midpoint along its left normal in graph coordinates. Missing entries use the automatic curve. Presentation never changes semantic triples.
+
 `parseGraph` accepts the current profile and supported legacy documents without modifying its input. `serializeGraph` always writes the current profile.
+
+Profile 2 migrates to profile 3 unchanged, without manual curves.
 
 Relations use absolute predicate IRIs or local aliases mapped to known relation types with `@type: '@id'`. Relation types cannot use concept property keys such as `rdfs:label` or `rdfs:comment`. Remote contexts are not resolved; other non-predicate context terms are ignored. Unsupported document and graph-entry properties are rejected.
 

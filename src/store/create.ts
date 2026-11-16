@@ -14,6 +14,7 @@ import { createHistory } from './history.ts'
 import {
   applyStateOperations,
   checkGraph,
+  checkWorkspace,
   materialize,
   newDocument,
   newWorkspace,
@@ -45,10 +46,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
       : []
   const workspace =
     fresh?.workspace ?? (restored.workspace ? parseWorkspace(restored.workspace) : newWorkspace())
-  const initialIds = new Set(initial.concepts.map((concept) => concept.id))
-  if (workspace.savedViews.some((view) => view.members.some(({ id }) => !initialIds.has(id)))) {
-    fail('workspace.savedViews', 'Unknown concept in view')
-  }
+  checkWorkspace(initial, workspace)
   const preferences: Preferences = restored.preferences
     ? parsePreferences(restored.preferences)
     : {

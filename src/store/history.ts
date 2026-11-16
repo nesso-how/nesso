@@ -6,12 +6,13 @@ import {
   mergeChanges,
   sameConcept,
   sameMember,
+  sameBend,
   sameType,
   type Change,
   type DocumentDelta,
   type ViewChange,
 } from './delta.ts'
-import { checkGraph, materialize, reconcileSelection } from './operations.ts'
+import { checkGraph, checkWorkspace, materialize, reconcileSelection } from './operations.ts'
 import { parseWorkspace } from './settings.ts'
 
 export const historyLimit = 100
@@ -31,7 +32,11 @@ const mergeDelta = (left: DocumentDelta, right: DocumentDelta): DocumentDelta =>
     views.set(
       view.id,
       previous
-        ? { ...previous, members: mergeChanges(previous.members, view.members, sameMember) }
+        ? {
+            ...previous,
+            members: mergeChanges(previous.members, view.members, sameMember),
+            relationBends: mergeChanges(previous.relationBends, view.relationBends, sameBend),
+          }
         : view,
     )
   }
@@ -43,7 +48,9 @@ const mergeDelta = (left: DocumentDelta, right: DocumentDelta): DocumentDelta =>
       (a, b) => relationKey(a) === relationKey(b),
     ),
     relationTypes: mergeChanges(left.relationTypes, right.relationTypes, sameType),
-    views: [...views.values()].filter((view) => view.members.length > 0 || !sameMetadata(view)),
+    views: [...views.values()].filter(
+      (view) => view.members.length > 0 || view.relationBends.length > 0 || !sameMetadata(view),
+    ),
   }
 }
 
@@ -59,6 +66,12 @@ const restoreViews = (
   const existing = new Map(views.map((view) => [view.id, view]))
   const patches: Change<SavedView>[] = changes.map((change) => {
     const target = forward ? change.after : change.before
+    const relationBends = applyChanges(
+      existing.get(change.id)?.relationBends ?? [],
+      change.relationBends,
+      relationKey,
+      forward,
+    )
     const entry = target && {
       index: target.index,
       value: {
@@ -69,6 +82,7 @@ const restoreViews = (
           (member) => member.id,
           forward,
         ),
+        ...(relationBends.length ? { relationBends } : {}),
       },
     }
     return {
@@ -109,7 +123,10 @@ const restore = (state: NessoState, delta: DocumentDelta, forward: boolean): Nes
     savedViews === state.workspace.savedViews && activeViewId === state.workspace.activeViewId
       ? state.workspace
       : { ...state.workspace, savedViews, activeViewId }
-  if (workspace !== state.workspace) parseWorkspace(workspace)
+  if (workspace !== state.workspace) {
+    parseWorkspace(workspace)
+    checkWorkspace(graph, workspace)
+  }
   const viewGraph = materialize(graph, workspace, state)
   return {
     ...state,

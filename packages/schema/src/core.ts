@@ -10,6 +10,7 @@ export const schemaContext = {
   View: 'urn:uuid:266b403a-90c8-470f-b9e0-73c712ba2cf8',
   members: { '@id': 'urn:uuid:ea405e81-beae-4cb7-a13c-3b31c1f2c82f' },
   concept: { '@id': 'urn:uuid:011331b1-50a3-4d46-aa1a-9f87193f0844' },
+  relationBends: { '@id': 'urn:uuid:dab77135-0c36-448a-8b98-bc04b2cdb3b4', '@type': '@json' },
 } as const
 
 export const colorPresets = [

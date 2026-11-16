@@ -55,6 +55,29 @@
   outline: none;
 }
 
+.relation-bend-handle {
+  cursor: grab;
+  outline: none;
+  pointer-events: all;
+  touch-action: none;
+}
+
+.relation-bend-dot {
+  fill: var(--background);
+  stroke: var(--primary);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.relation-bend-handle circle {
+  scale: calc(1 / var(--graph-zoom, 1));
+}
+
+.relation-bend-handle:hover .relation-bend-dot,
+.relation-bend-handle:focus-visible .relation-bend-dot {
+  fill: var(--primary);
+}
+
 .react-flow .react-flow__nodesselection-rect {
   display: none;
 }

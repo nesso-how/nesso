@@ -182,6 +182,8 @@ const sameEdge = (previous: RelationEdge, edge: RelationEdge) =>
   previous.targetHandle === edge.targetHandle &&
   previous.data?.sourceOffset === edge.data?.sourceOffset &&
   previous.data?.targetOffset === edge.data?.targetOffset &&
+  previous.data?.bend === edge.data?.bend &&
+  previous.data?.editable === edge.data?.editable &&
   previous.label === edge.label &&
   previous.ariaLabel === edge.ariaLabel &&
   previous.selected === edge.selected &&
@@ -200,6 +202,7 @@ export function createGraphElements() {
     defaultTypeId,
     label,
     editing,
+    interactive = false,
     groups = [],
     preview = new Set(),
     onGroupSelect,
@@ -209,6 +212,7 @@ export function createGraphElements() {
     selected: Selection
     sizes: ConceptNodeSizes
     defaultTypeId?: string
+    interactive?: boolean
     label: (relation: RelationView) => string
     groups?: readonly RelationGroup[]
     preview?: ReadonlySet<string>
@@ -266,7 +270,7 @@ export function createGraphElements() {
       return count === 0 || count === group.relations.length
     })
     const grouped = new Set(visibleGroups.flatMap((group) => group.relations))
-    const edges = graph.relations
+    const edges: RelationEdge[] = graph.relations
       .filter((relation) => !grouped.has(relationKey(relation)))
       .map((relation) => ({
         ...relationEdge(
@@ -278,6 +282,7 @@ export function createGraphElements() {
           sizes,
         ),
         ariaLabel: label(relation),
+        data: { bend: relation.bend, editable: interactive },
       }))
     const boxes = new Map<string, ConceptBounds>(
       graph.concepts.map(({ id, position }) => [

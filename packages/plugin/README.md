@@ -80,7 +80,7 @@ Keep the example's build configuration and set these fields in `package.json`:
   "version": "1.0.0",
   "keywords": ["nesso-plugin"],
   "nesso": {
-    "apiVersion": 5,
+    "apiVersion": 6,
     "kind": "actions",
     "entry": "dist/index.js",
     "writes": ["concept.label"],
@@ -222,7 +222,7 @@ Runs in an isolated Worker with no action APIs and a 2-second calculation limit.
 
 The graph snapshot provides:
 
-- `viewGraph`: `{ concepts, relations, relationTypes }` for the invoked view. In a saved view, concepts carry its `position`, `color`, `bold`, `italic`, and `strikethrough`. `color` is a preset id such as `sand`, shown with `var(--preset-sand)`, or a fixed `#rrggbb` value.
+- `viewGraph`: `{ concepts, relations, relationTypes }` for the invoked view. In a saved view, concepts carry its `position`, `color`, `bold`, `italic`, and `strikethrough`; relations may carry a view-local `bend`. `color` is a preset id such as `sand`, shown with `var(--preset-sand)`, or a fixed `#rrggbb` value.
 - `selected`: the invoked view's selection.
 - `targetViewId`: the invoked view's ID, or `null` for All; fixed for each invocation. Headless actions keep their target during navigation; panels restart with a new invocation when the active view changes.
 - `activeVocab`: the current vocabulary, or `null`.
@@ -252,10 +252,13 @@ Call helpers on `document` and declare their operation kinds in `nesso.writes`:
 | `setRelationType(id, typeId)`                       | `relation.type`         |
 | `createRelationType(id, label)`                     | `relation.type.create`  |
 | `removeRelation(id)`                                | `relation.remove`       |
+| `setRelationBend(id, value)`                        | `relation.bend`         |
 | `setSelection([{ kind, id }])`                      | `selection.set`         |
 | `setViewMembership(viewId, conceptId, included)`    | `view.membership`       |
 
 Position, color, and style helpers edit the invoked saved view; they reject the batch in All, after navigation, or for concepts outside the view. `addConcept` returns the new IRI. New concepts join the active saved view, at the given position or near the single selected concept, and link to that concept, if any. These links and `connect` use the vocabulary's default relation type. `createRelationType` creates and assigns a type to the given relation. The selection keeps only concepts and relations visible in the active view.
+
+`setRelationBend` follows the same active-view guard. Its finite value is the signed midpoint displacement as a fraction of the endpoint segment's length; `0` restores the automatic curve. Both endpoints must belong to the active view, and self-relations cannot be bent. Removing or reconnecting a relation clears its bends; changing only its predicate preserves them.
 
 For related edits, use `document.applyOperations(operations)` as in the quickstart. The entire batch succeeds or changes nothing. Editing, reconnecting, retyping, or removing an unknown concept or relation rejects the batch, as does reconnecting or retyping onto an existing relation; removing an item already removed earlier in the same batch, such as a relation of a removed concept, is allowed. Separate calls are separate transactions. Raw `concept.add` operations require an explicit new absolute IRI.
 

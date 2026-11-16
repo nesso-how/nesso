@@ -380,6 +380,7 @@ export function Canvas({
     [store, editing, write],
   )
   const elements = adapt({
+    interactive,
     groups,
     preview: new Set(
       dragged
@@ -578,6 +579,17 @@ export function Canvas({
         kind: 'concept.positions',
         updates: [...positions].map(([id, position]) => ({ id, position })),
       },
+      ...relations
+        .filter(
+          (relation) =>
+            relation.bend &&
+            (chosen.size === 0 || chosen.has(relation.source) || chosen.has(relation.target)),
+        )
+        .map((relation) => ({
+          kind: 'relation.bend' as const,
+          id: relationKey(relation),
+          value: 0,
+        })),
     ])
   }
 
@@ -869,6 +881,22 @@ export function Canvas({
           return
         if (contextMenu) {
           event.stopPropagation()
+          return
+        }
+        const handle =
+          !event.altKey &&
+          !event.ctrlKey &&
+          !event.metaKey &&
+          !event.shiftKey &&
+          event.key.toLowerCase() === 'b' &&
+          selected.length === 1
+            ? canvas.current?.querySelector<SVGElement>(
+                `[data-bend-id="${CSS.escape(selected[0].id)}"]`,
+              )
+            : null
+        if (handle) {
+          event.preventDefault()
+          handle.focus()
           return
         }
         if (

@@ -14,6 +14,7 @@ const writes = {
   'concept.remove': 'pluginAccessRemove',
   'relation.connect': 'pluginAccessConnect',
   'relation.reconnect': 'pluginAccessReconnect',
+  'relation.bend': 'pluginAccessBend',
   'relation.type': 'pluginAccessType',
   'relation.type.create': 'pluginAccessCreateType',
   'relation.remove': 'pluginAccessRemoveRelation',

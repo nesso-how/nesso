@@ -7,6 +7,7 @@ import {
   conceptSchema,
   iriSchema,
   presentationSchema,
+  relationBendSchema,
   type Concept,
   type Graph,
   type Relation,
@@ -17,7 +18,7 @@ import {
 type JsonObject = Record<string, unknown>
 const jsonObject = z.record(z.string(), z.unknown())
 const jsonldDocument = z.strictObject({
-  schemaVersion: z.literal(2),
+  schemaVersion: z.literal(3),
   '@context': jsonObject,
   '@graph': z.array(jsonObject),
 })
@@ -38,6 +39,7 @@ const jsonldView = z.strictObject({
   '@type': z.literal('View'),
   'rdfs:label': z.string(),
   members: z.array(presentationSchema.extend({ concept: z.strictObject({ '@id': iriSchema }) })),
+  relationBends: z.array(relationBendSchema).optional(),
 })
 
 function object(value: unknown, path: string): JsonObject {
@@ -95,6 +97,7 @@ export function parseGraph(value: unknown): { graph: Graph; views: View[] } {
     if (entry['@type'] === 'View') {
       if (!views.length) checkTerms(context, ['View', 'members', 'concept'])
       const view = parseSchema(jsonldView, entry, path)
+      if (view.relationBends !== undefined) checkTerms(context, ['relationBends'])
       views.push({
         id,
         name: view['rdfs:label'],
@@ -106,6 +109,7 @@ export function parseGraph(value: unknown): { graph: Graph; views: View[] } {
           ...(italic === undefined ? {} : { italic }),
           ...(strikethrough === undefined ? {} : { strikethrough }),
         })),
+        ...(view.relationBends === undefined ? {} : { relationBends: view.relationBends }),
       })
       continue
     }
@@ -164,12 +168,12 @@ export function serializeGraph(graph: Graph, views: readonly View[] = []): JsonO
     else entry[relation.predicate] = [{ '@id': relation.target }]
   }
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     '@context': structuredClone(schemaContext),
     '@graph': [
       ...entries,
       ...concepts.values(),
-      ...views.map(({ id, name, members }) => ({
+      ...views.map(({ id, name, members, relationBends }) => ({
         '@id': id,
         '@type': 'View',
         'rdfs:label': name,
@@ -181,6 +185,9 @@ export function serializeGraph(graph: Graph, views: readonly View[] = []): JsonO
           ...(italic === undefined ? {} : { italic }),
           ...(strikethrough === undefined ? {} : { strikethrough }),
         })),
+        ...(relationBends?.length
+          ? { relationBends: relationBends.map((relation) => ({ ...relation })) }
+          : {}),
       })),
     ],
   }

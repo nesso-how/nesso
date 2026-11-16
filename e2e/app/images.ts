@@ -25,12 +25,23 @@ export async function verifyImages(context: CheckContext) {
     () => evaluate<boolean>(`!!document.querySelector('#canvas .react-flow__edge-path')`),
     Boolean,
   )
-  const before = await waitFor(
+  await waitFor(
     () =>
-      evaluate<{ transform: string; selected: number }>(
-        `({transform:document.querySelector('#canvas .react-flow__viewport').style.transform,selected:document.querySelectorAll('#canvas .selected').length})`,
-      ),
-    ({ transform }) => !!transform && transform !== 'translate(0px, 0px) scale(1)',
+      evaluate<string>(`document.querySelector('#canvas .react-flow__viewport').style.transform`),
+    (transform) => !!transform && transform !== 'translate(0px, 0px) scale(1)',
+  )
+  await evaluate(
+    `document.querySelector('#canvas .react-flow__edge-interaction').dispatchEvent(new MouseEvent('click',{bubbles:true}))`,
+  )
+  await waitFor(
+    () => evaluate<boolean>(`!!document.querySelector('#canvas [data-bend-id]')`),
+    Boolean,
+  )
+  await evaluate(
+    `document.querySelector('#canvas [data-bend-id]').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowUp',shiftKey:true,bubbles:true}));document.querySelector('#canvas .react-flow__pane').dispatchEvent(new MouseEvent('click',{bubbles:true}))`,
+  )
+  const before = await evaluate<{ transform: string; selected: number }>(
+    `({transform:document.querySelector('#canvas .react-flow__viewport').style.transform,selected:document.querySelectorAll('#canvas .selected').length})`,
   )
   const geometry = await evaluate<{
     rects: { x: number; y: number; width: number; height: number }[]

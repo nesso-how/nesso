@@ -58,6 +58,10 @@ export const scenarios: Record<string, Scenario> = {
     platforms: all,
     load: () => import('./app/creation.ts').then(({ verifyCreation }) => verifyCreation),
   },
+  bends: {
+    platforms: all,
+    load: () => import('./app/bends.ts').then(({ verifyBends }) => verifyBends),
+  },
   storage: {
     platforms: all,
     load: () => import('./app/storage.ts').then(({ verifyStorage }) => verifyStorage),
