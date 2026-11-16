@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.0.0-beta.22 — 2026-11-16
+
+### Breaking Changes
+
+- **concept-map:** Add concept strikethrough (#353)
+  plugin API 5 adds concept.strikethrough and
+  setConceptStrikethrough; API 4 plugins must update their manifest and
+  rebuild against the current SDK.
+- **themes:** Support dark themes (#354)
+  themes must provide `colors.light` and `colors.dark`
+  palettes, each with the new `shadow` token. Plugin API 5 also exposes
+  the resolved `colorScheme` to plugins. Theme plugins must update their
+  definitions and rebuild against the current SDK.
+- **themes:** Adapt preset concept colors to the theme (#357)
+  adapt preset concept colors to the theme (#357)
+
+### Features
+
+- **concept-map:** Create linked concepts on empty canvas drops (#352)
+
+### Fixes
+
+- **concept-map:** Frame the initial map only once the canvas has a size (#347)
+- **ai:** Expose saved-view presentation edits (#351)
+- **e2e:** Wait for initial framing before image export (#356)
+- **e2e:** Await saved framing before corrupt records reload (#358)
+
 ## 1.0.0-beta.21 — 2026-11-13
 
 ### Features
