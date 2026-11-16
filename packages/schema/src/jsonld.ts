@@ -17,7 +17,7 @@ import {
 type JsonObject = Record<string, unknown>
 const jsonObject = z.record(z.string(), z.unknown())
 const jsonldDocument = z.strictObject({
-  schemaVersion: z.literal(1),
+  schemaVersion: z.literal(2),
   '@context': jsonObject,
   '@graph': z.array(jsonObject),
 })
@@ -164,7 +164,7 @@ export function serializeGraph(graph: Graph, views: readonly View[] = []): JsonO
     else entry[relation.predicate] = [{ '@id': relation.target }]
   }
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     '@context': structuredClone(schemaContext),
     '@graph': [
       ...entries,

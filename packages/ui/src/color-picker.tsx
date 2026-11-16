@@ -46,7 +46,7 @@ export function ColorPicker({
     | 'resetColor',
     string
   >
-  presets: readonly { label: string; value: string }[]
+  presets: readonly { label: string; value: string; color: string }[]
   disabled?: boolean
   inputProps?: ComponentProps<'input'> & {
     [attribute: `data-${string}`]: string | boolean | undefined
@@ -56,7 +56,8 @@ export function ColorPicker({
   const hint = `${hexId}-hint`
   const copyTimer = useRef<number | undefined>(undefined)
   const colorGroup = useRef<string | undefined>(undefined)
-  const value = color ?? defaultColor
+  const selected = presets.find((preset) => preset.value === color)
+  const value = selected?.color ?? color ?? defaultColor
   const mixed = color === null
   const [picker, setPicker] = useState(() => ({ value, hsv: hexToHsv(value, 0) }))
   if (picker.value !== value) setPicker({ value, hsv: hexToHsv(value, picker.hsv.h) })
@@ -209,16 +210,19 @@ export function ColorPicker({
                   key={preset.value}
                   title={preset.label}
                   aria-label={preset.label}
-                  aria-pressed={!mixed && preset.value === value}
-                  onClick={() => apply(hexToHsv(preset.value, hsv.h))}
+                  aria-pressed={!mixed && preset.value === color}
+                  onClick={() => {
+                    colorGroup.current = undefined
+                    onValueChange(preset.value)
+                  }}
                   className="size-6 [&_svg]:size-3"
                 >
                   <span
                     className="grid size-4 place-items-center rounded-xs border border-foreground/15"
-                    style={{ background: preset.value }}
+                    style={{ background: preset.color }}
                     aria-hidden="true"
                   >
-                    {!mixed && preset.value === value && (
+                    {!mixed && preset.value === color && (
                       <Check className="text-foreground" aria-hidden="true" />
                     )}
                   </span>
@@ -269,7 +273,9 @@ export function ColorPicker({
           </PopoverPopup>
         </Popover.Root>
         <span className="min-w-0 flex-1 truncate font-mono text-[10px] leading-4 text-muted-foreground">
-          {mixed ? labels.mixed : color ? value.toUpperCase() : labels.default}
+          {mixed
+            ? labels.mixed
+            : (selected?.label ?? (color ? value.toUpperCase() : labels.default))}
         </span>
         <IconButton
           aria-label={labels.resetColor}

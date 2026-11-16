@@ -114,7 +114,7 @@ const savedStorage = () => {
   host.store.setChatMessages([{ id: 'user', role: 'user', content: 'Hello' }])
   const state = host.store.getState()
   storage.records.set('document', {
-    version: 4,
+    version: 5,
     documentId: state.documentId,
     graph: serializeGraph(state.graph as Graph),
     workspace: state.workspace,
@@ -225,10 +225,30 @@ test('legacy documents migrate view presentation and viewports and collect unsor
     version: number
     graph: { schemaVersion: number }
   }
-  assert.equal(saved.version, 4)
-  assert.equal(saved.graph.schemaVersion, 1)
+  assert.equal(saved.version, 5)
+  assert.equal(saved.graph.schemaVersion, 2)
   assert.deepEqual(parseGraph(saved.graph).views, [])
   await persistence.dispose()
+})
+
+test('document records replace legacy preset colors with preset ids', async () => {
+  const storage = savedStorage()
+  const saved = storage.records.get('document') as { workspace: WorkspaceState }
+  const [view] = saved.workspace.savedViews
+  const members = [
+    { ...view.members[0], color: '#F3EAD5' },
+    { ...view.members[1], color: '#123456' },
+  ]
+  storage.records.set('document', {
+    ...saved,
+    version: 4,
+    workspace: { ...saved.workspace, savedViews: [{ ...view, members }] },
+  })
+  const loaded = await loadPersistence(storage)
+  assert.deepEqual(
+    loaded.workspace!.savedViews[0].members.map(({ color }) => color),
+    ['sand', '#123456'],
+  )
 })
 
 test('each view and Overview retain their viewport across navigation and reopening', async () => {
@@ -642,7 +662,7 @@ test('malformed records stay protected while the other sections save', async () 
       {
         version: 3,
         documentId: state.documentId,
-        graph: { ...serializeGraph(fixture()), schemaVersion: 2 },
+        graph: { ...serializeGraph(fixture()), schemaVersion: 3 },
         workspace: state.workspace,
       },
       'document.schemaVersion',

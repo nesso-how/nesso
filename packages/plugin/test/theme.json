@@ -19,7 +19,15 @@
       "node-border": "#cdcdcd",
       "edge": "#adadad",
       "handle": "#858585",
-      "shadow": "#00000014"
+      "shadow": "#00000014",
+      "preset-neutral": "#ffffff",
+      "preset-sand": "#f3ead5",
+      "preset-peach": "#f5e3d5",
+      "preset-rose": "#f5dfe2",
+      "preset-sage": "#e1ecde",
+      "preset-mint": "#dceee8",
+      "preset-sky": "#dfeaf5",
+      "preset-lavender": "#e9e2f3"
     },
     "dark": {
       "background": "#1e1e1e",
@@ -39,8 +47,20 @@
       "node-border": "#474747",
       "edge": "#626262",
       "handle": "#8e8e8e",
-      "shadow": "#00000066"
+      "shadow": "#00000066",
+      "preset-neutral": "#303134",
+      "preset-sand": "#463e2e",
+      "preset-peach": "#47372e",
+      "preset-rose": "#473339",
+      "preset-sage": "#343e35",
+      "preset-mint": "#2f413f",
+      "preset-sky": "#303b4c",
+      "preset-lavender": "#3a364a"
     }
   },
-  "metrics": { "radius-control": 3, "radius-object": 4, "duration-state": 140 }
+  "metrics": {
+    "radius-control": 3,
+    "radius-object": 4,
+    "duration-state": 140
+  }
 }

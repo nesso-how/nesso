@@ -436,7 +436,7 @@
   "saturationHint": "左右方向键更改饱和度，上下方向键更改亮度。按住 Shift 可大幅调整。",
   "hue": "色相",
   "colorPresets": "颜色预设",
-  "presetWhite": "白色",
+  "presetNeutral": "中性",
   "presetSand": "米黄",
   "presetPeach": "蜜桃",
   "presetRose": "玫瑰",

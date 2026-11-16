@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { newIri, schemaContext } from './core.ts'
+import { newIri, schemaContext, type ColorPreset } from './core.ts'
 import { fail, parseSchema } from './errors.ts'
 import { iriSchema, presentationSchema } from './types.ts'
 
@@ -8,6 +8,23 @@ const jsonObject = z.record(z.string(), z.unknown())
 const legacyDocument = z.strictObject({ '@context': jsonObject, '@graph': z.array(jsonObject) })
 const legacyPresentation = presentationSchema.partial()
 const versionSchema = z.object({ schemaVersion: z.number().int().positive().optional() })
+const documentV1 = legacyDocument.extend({ schemaVersion: z.literal(1) })
+const presetHex = new Map<string, ColorPreset>([
+  ['#ffffff', 'neutral'],
+  ['#f3ead5', 'sand'],
+  ['#f5e3d5', 'peach'],
+  ['#f5dfe2', 'rose'],
+  ['#e1ecde', 'sage'],
+  ['#dceee8', 'mint'],
+  ['#dfeaf5', 'sky'],
+  ['#e9e2f3', 'lavender'],
+])
+
+export function migratePresetColor(member: unknown): unknown {
+  const color = jsonObject.safeParse(member).data?.color
+  const preset = typeof color === 'string' && presetHex.get(color.toLowerCase())
+  return preset ? { ...(member as JsonObject), color: preset } : member
+}
 
 function upgradeLegacy(document: z.infer<typeof legacyDocument>) {
   let legacy = false
@@ -60,8 +77,20 @@ export function migrateGraph(value: unknown): unknown {
   const { schemaVersion } = parseSchema(versionSchema, value)
   switch (schemaVersion) {
     case undefined:
-      return upgradeLegacy(parseSchema(legacyDocument, value))
-    case 1:
+      return migrateGraph(upgradeLegacy(parseSchema(legacyDocument, value)))
+    case 1: {
+      const document = parseSchema(documentV1, value)
+      return {
+        ...document,
+        schemaVersion: 2,
+        '@graph': document['@graph'].map((entry) =>
+          entry['@type'] === 'View' && Array.isArray(entry.members)
+            ? { ...entry, members: entry.members.map(migratePresetColor) }
+            : entry,
+        ),
+      }
+    }
+    case 2:
       return value
     default:
       return fail('schemaVersion', 'Unsupported JSON-LD schema version')

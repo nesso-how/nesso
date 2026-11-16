@@ -58,4 +58,4 @@ Undo/redo is local by default. Use `history={false}` for host-owned history or `
 
 Cmd/Ctrl-click calls `onOpenLink`; read-only fields use a regular click. The host validates and opens destinations.
 
-The package also exports `useMediaQuery`, `contrastColor`, `presetColors`, and the `ActionIconName` and `ToastItem` types. See the [public exports](https://github.com/nesso-how/nesso/blob/main/packages/ui/src/index.ts) and component source files for prop definitions; published TypeScript declarations provide editor completion.
+The package also exports `useMediaQuery`, `conceptColor`, and the `ActionIconName` and `ToastItem` types. See the [public exports](https://github.com/nesso-how/nesso/blob/main/packages/ui/src/index.ts) and component source files for prop definitions; published TypeScript declarations provide editor completion.

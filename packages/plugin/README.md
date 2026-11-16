@@ -222,7 +222,7 @@ Runs in an isolated Worker with no action APIs and a 2-second calculation limit.
 
 The graph snapshot provides:
 
-- `viewGraph`: `{ concepts, relations, relationTypes }` for the invoked view. In a saved view, concepts carry its `position`, `color`, `bold`, `italic`, and `strikethrough`.
+- `viewGraph`: `{ concepts, relations, relationTypes }` for the invoked view. In a saved view, concepts carry its `position`, `color`, `bold`, `italic`, and `strikethrough`. `color` is a preset id such as `sand`, shown with `var(--preset-sand)`, or a fixed `#rrggbb` value.
 - `selected`: the invoked view's selection.
 - `targetViewId`: the invoked view's ID, or `null` for All; fixed for each invocation. Headless actions keep their target during navigation; panels restart with a new invocation when the active view changes.
 - `activeVocab`: the current vocabulary, or `null`.
@@ -371,7 +371,7 @@ Set `nesso.kind` to `"theme"`, point `entry` to your JSON definition, and use em
 - `colors`: a `light` and a `dark` palette, each with every required token, using `#RRGGBB` or `#RRGGBBAA`. Start with [Paper's palettes](../../plugins/paper-theme/src/index.ts) or [Kernel's](../../plugins/kernel-theme/src/index.ts).
 - `metrics`: `radius-control` and `radius-object` in pixels, and `duration-state` in milliseconds.
 
-Users choose the appearance (system, light, or dark) separately, and Nesso applies the matching palette. Surfaces (`background`, `canvas`, `sidebar`) must be opaque, light in `light` and dark in `dark`, and text needs 4.5:1 contrast on them and on `primary`. `shadow` colors elevated surfaces such as menus and popovers. Arbitrary CSS and plugin fonts are unsupported. Theme packages ship only their JSON entry. Nesso owns `--font-sans` (Geist) and `--font-mono` (IBM Plex Mono), with system fallbacks for other scripts. Switching themes does not change typography.
+Users choose the appearance (system, light, or dark) separately, and Nesso applies the matching palette. Surfaces (`background`, `canvas`, `sidebar`) must be opaque, light in `light` and dark in `dark`, and text needs 4.5:1 contrast on them and on `primary`. `shadow` colors elevated surfaces such as menus and popovers. Each `preset-*` token sets the background of a concept color preset; concept text uses `foreground`, so it needs 4.5:1 contrast on every preset. Arbitrary CSS and plugin fonts are unsupported. Theme packages ship only their JSON entry. Nesso owns `--font-sans` (Geist) and `--font-mono` (IBM Plex Mono), with system fallbacks for other scripts. Switching themes does not change typography.
 
 ## API reference
 

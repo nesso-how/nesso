@@ -446,7 +446,7 @@
   "saturationHint": "Left and right arrows change saturation. Up and down arrows change brightness. Hold Shift for larger steps.",
   "hue": "Hue",
   "colorPresets": "Color presets",
-  "presetWhite": "White",
+  "presetNeutral": "Neutral",
   "presetSand": "Sand",
   "presetPeach": "Peach",
   "presetRose": "Rose",

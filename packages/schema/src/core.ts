@@ -12,6 +12,18 @@ export const schemaContext = {
   concept: { '@id': 'urn:uuid:011331b1-50a3-4d46-aa1a-9f87193f0844' },
 } as const
 
+export const colorPresets = [
+  'neutral',
+  'sand',
+  'peach',
+  'rose',
+  'sage',
+  'mint',
+  'sky',
+  'lavender',
+] as const
+export type ColorPreset = (typeof colorPresets)[number]
+
 export const conceptKeys = ['@id', 'rdfs:label', 'rdfs:comment']
 
 export const newIri = () => `urn:uuid:${crypto.randomUUID()}`

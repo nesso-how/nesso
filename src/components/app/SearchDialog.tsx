@@ -1,5 +1,13 @@
 import { useMemo, useRef, useState, type RefObject } from 'react'
-import { Button, Combobox, ComboboxItem, Dialog, DialogPopup, Kbd } from '@nesso-how/ui'
+import {
+  Button,
+  Combobox,
+  ComboboxItem,
+  Dialog,
+  DialogPopup,
+  Kbd,
+  conceptColor,
+} from '@nesso-how/ui'
 import { CornerDownLeft, Layers, Plus, Search } from 'lucide-react'
 import { useNessoStore } from '@/store'
 import { useTranslation } from '@/i18n'
@@ -181,7 +189,11 @@ export function SearchDialog({
                         ) : (
                           <span
                             className="size-3 rounded-[2px] border border-foreground/15"
-                            style={{ backgroundColor: result.color ?? 'var(--node-bg)' }}
+                            style={{
+                              backgroundColor: result.color
+                                ? conceptColor(result.color).background
+                                : 'var(--node-bg)',
+                            }}
                           />
                         )}
                       </span>
