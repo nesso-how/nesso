@@ -80,7 +80,7 @@ Keep the example's build configuration and set these fields in `package.json`:
   "version": "1.0.0",
   "keywords": ["nesso-plugin"],
   "nesso": {
-    "apiVersion": 4,
+    "apiVersion": 5,
     "kind": "actions",
     "entry": "dist/index.js",
     "writes": ["concept.label"],
@@ -190,7 +190,7 @@ Components receive `ActionContext` directly as props, with the same APIs and per
 
 #### Styling
 
-Nesso supplies React, the `@nesso-how/ui` component stylesheet, and theme CSS variables such as `var(--background)` and `var(--foreground)`. Import your own CSS normally; the [standalone example](example/) bundles and injects it. Bundle dependencies other than React/React DOM and inline assets; remote or separate assets are not supported. The host does not compile plugin Tailwind classes. Read `locale` from `document.getState()` for translated content. Label inputs and preserve Tab/Shift+Tab navigation.
+Nesso supplies React, the `@nesso-how/ui` component stylesheet, and theme CSS variables such as `var(--background)` and `var(--foreground)`. Import your own CSS normally; the [standalone example](example/) bundles and injects it. Bundle dependencies other than React/React DOM and inline assets; remote or separate assets are not supported. The host does not compile plugin Tailwind classes. Read `locale` from `document.getState()` for translated content. `colorScheme` (`light` or `dark`) reports the resolved appearance; Nesso applies it to the panel's `color-scheme`, so use theme variables instead of fixed colors. Label inputs and preserve Tab/Shift+Tab navigation.
 
 #### Lifecycle
 
@@ -367,10 +367,10 @@ Use stable absolute IRIs for relation types and choose a default from your own l
 Set `nesso.kind` to `"theme"`, point `entry` to your JSON definition, and use empty `writes` and `capabilities`. A `ThemeDefinition` contains:
 
 - `id`: a lowercase kebab-case contribution ID.
-- `colors`: every required token, using `#RRGGBB` or `#RRGGBBAA`. Start with [Paper's palette](../../plugins/paper-theme/src/index.ts) or [Kernel's](../../plugins/kernel-theme/src/index.ts).
+- `colors`: a `light` and a `dark` palette, each with every required token, using `#RRGGBB` or `#RRGGBBAA`. Start with [Paper's palettes](../../plugins/paper-theme/src/index.ts) or [Kernel's](../../plugins/kernel-theme/src/index.ts).
 - `metrics`: `radius-control` and `radius-object` in pixels, and `duration-state` in milliseconds.
 
-Only light themes are supported. Use readable text contrast; arbitrary CSS and plugin fonts are unsupported. Theme packages ship only their JSON entry. Nesso owns `--font-sans` (Geist) and `--font-mono` (IBM Plex Mono), with system fallbacks for other scripts. Switching themes does not change typography.
+Users choose the appearance (system, light, or dark) separately, and Nesso applies the matching palette. Surfaces (`background`, `canvas`, `sidebar`) must be opaque, light in `light` and dark in `dark`, and text needs 4.5:1 contrast on them and on `primary`. `shadow` colors elevated surfaces such as menus and popovers. Arbitrary CSS and plugin fonts are unsupported. Theme packages ship only their JSON entry. Nesso owns `--font-sans` (Geist) and `--font-mono` (IBM Plex Mono), with system fallbacks for other scripts. Switching themes does not change typography.
 
 ## API reference
 

@@ -141,6 +141,7 @@ export type Preferences = {
   readonly activeThemeId: string
   readonly panels: PanelSizes
   readonly inspectorTab?: 'details' | 'chat'
+  readonly appearance?: 'system' | 'light' | 'dark'
   readonly relationGroups?: boolean
   readonly collapsedSections?: readonly SectionId[]
 }

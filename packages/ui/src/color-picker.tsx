@@ -214,7 +214,7 @@ export function ColorPicker({
                   className="size-6 [&_svg]:size-3"
                 >
                   <span
-                    className="grid size-4 place-items-center rounded-xs border border-black/10"
+                    className="grid size-4 place-items-center rounded-xs border border-foreground/15"
                     style={{ background: preset.value }}
                     aria-hidden="true"
                   >

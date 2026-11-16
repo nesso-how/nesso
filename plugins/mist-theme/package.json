@@ -23,9 +23,9 @@
         "zh-CN": "Mist"
       },
       "description": {
-        "en": "A cool light theme with misty blue surfaces, slate text, and steel blue accents.",
-        "it": "Un tema chiaro e freddo con superfici azzurrate, testo ardesia e accenti blu acciaio.",
-        "zh-CN": "冷色浅色主题，雾蓝界面、石板文字和钢蓝色点缀。"
+        "en": "A cool theme with misty blue surfaces, slate text, and steel blue accents, in light and dark.",
+        "it": "Un tema freddo con superfici azzurrate, testo ardesia e accenti blu acciaio, chiaro e scuro.",
+        "zh-CN": "冷色主题，雾蓝界面、石板文字和钢蓝色点缀，提供浅色和深色。"
       },
       "documentation": {
         "en": "Mist brings a cool, calm palette to Nesso, with Geist and IBM Plex Mono fonts. It does not change your graph or views.",
@@ -35,7 +35,7 @@
     }
   },
   "nesso": {
-    "apiVersion": 4,
+    "apiVersion": 5,
     "kind": "theme",
     "entry": "dist/definition.json",
     "writes": [],

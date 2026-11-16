@@ -23,9 +23,9 @@
         "zh-CN": "Paper"
       },
       "description": {
-        "en": "A warm light theme with ivory surfaces, ink text, and terracotta accents.",
-        "it": "Un tema chiaro e caldo con superfici avorio, testo inchiostro e accenti terracotta.",
-        "zh-CN": "温暖的浅色主题，搭配象牙色界面、墨色文字和陶土色点缀。"
+        "en": "A warm theme with ivory surfaces, ink text, and terracotta accents, in light and dark.",
+        "it": "Un tema caldo con superfici avorio, testo inchiostro e accenti terracotta, chiaro e scuro.",
+        "zh-CN": "温暖的主题，搭配象牙色界面、墨色文字和陶土色点缀，提供浅色和深色。"
       },
       "documentation": {
         "en": "Paper brings an understated editorial palette to Nesso, with Geist and IBM Plex Mono fonts. It does not change your graph or views.",
@@ -35,7 +35,7 @@
     }
   },
   "nesso": {
-    "apiVersion": 4,
+    "apiVersion": 5,
     "kind": "theme",
     "entry": "dist/definition.json",
     "writes": [],

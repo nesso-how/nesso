@@ -70,6 +70,7 @@ export const actionState = (): ActionState => ({
   contextId: 'probe',
   locale: 'en',
   theme: Object.fromEntries(themeTokens.map((token) => [token, ''])),
+  colorScheme: 'light',
   conceptPlacementOffset: { x: 160, y: 100 },
   viewGraph: { concepts: [], relations: [], relationTypes: [] },
   targetViewId: null,

@@ -9,7 +9,7 @@ const source: ActionPackage = {
   name: 'nesso-plugin-panel',
   local: false,
   entry: createPluginEntry(new Uint8Array([1])),
-  manifest: { apiVersion: 4, kind: 'actions', entry: 'index.js', writes: [], capabilities: ['ui'] },
+  manifest: { apiVersion: 5, kind: 'actions', entry: 'index.js', writes: [], capabilities: ['ui'] },
   i18n: {
     metadata: {
       name: { en: 'Example' },

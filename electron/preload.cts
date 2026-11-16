@@ -9,6 +9,7 @@ import type { PluginBridge } from '../shared/plugins.js'
 import type { NotesLinkBridge } from '../shared/link-policy.js'
 import type { BackupBridge } from '../shared/backup.js'
 import type { MenuBridge, MenuCommand } from '../shared/menu.js'
+import type { AppearanceBridge } from '../shared/appearance.js'
 
 const { contextBridge, ipcRenderer } = require('electron') as typeof import('electron')
 const beforeSave = (request: string, reply: string, save: () => Promise<boolean>) => {
@@ -138,6 +139,10 @@ const menu: MenuBridge = {
   edit: (command) => ipcRenderer.send('menu:edit', command),
 }
 contextBridge.exposeInMainWorld('nessoMenu', menu)
+const appearance: AppearanceBridge = {
+  set: (value) => ipcRenderer.send('appearance:set', value),
+}
+contextBridge.exposeInMainWorld('nessoAppearance', appearance)
 let pluginSubscribers = 0
 const plugins: PluginBridge = {
   list: () => ipcRenderer.invoke('plugins:list'),

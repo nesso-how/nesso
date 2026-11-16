@@ -70,11 +70,14 @@ export function loadActions(
       cleanup()
       reject(new PluginError('cancelled', [{ path: 'action', message: 'Action cancelled' }]))
     }
-    const theme = () => {
+    const presentation = () => {
       const style = getComputedStyle(document.documentElement)
-      return Object.fromEntries(
-        themeTokens.map((token) => [token, style.getPropertyValue(`--${token}`).trim()]),
-      )
+      return {
+        theme: Object.fromEntries(
+          themeTokens.map((token) => [token, style.getPropertyValue(`--${token}`).trim()]),
+        ),
+        colorScheme: style.colorScheme === 'dark' ? ('dark' as const) : ('light' as const),
+      }
     }
     const frameRuntime = container.load(
       (port, failed) => {
@@ -100,11 +103,11 @@ export function loadActions(
           {
             contextId: crypto.randomUUID(),
             locale: store.getState().preferences.locale ?? defaultLocale,
-            theme: theme(),
+            ...presentation(),
             conceptPlacementOffset,
           },
           {
-            theme: panel ? theme : undefined,
+            presentation: panel ? presentation : undefined,
             renderImage: (viewId, options, signal) =>
               renderViewImage(store, viewId, options, signal),
             files: {

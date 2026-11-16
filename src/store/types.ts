@@ -43,6 +43,10 @@ export type HostOperation =
       readonly kind: 'preferences.inspectorTab'
       readonly value: NonNullable<Preferences['inspectorTab']>
     }
+  | {
+      readonly kind: 'preferences.appearance'
+      readonly value: NonNullable<Preferences['appearance']>
+    }
   | { readonly kind: 'conversation.messages'; readonly value: readonly AiChatMessage[] }
   | { readonly kind: 'conversation.append'; readonly id: string; readonly text: string }
   | { readonly kind: 'conversation.clear' }

@@ -45,7 +45,10 @@ export function connectActionChannel(
   port: MessagePort,
   store: HostStore,
   grant: Grant,
-  base: Pick<ActionState, 'contextId' | 'locale' | 'theme' | 'conceptPlacementOffset'>,
+  base: Pick<
+    ActionState,
+    'contextId' | 'locale' | 'theme' | 'colorScheme' | 'conceptPlacementOffset'
+  >,
   effects: {
     files: {
       open: (options: FileOpenOptions) => Promise<FileOpenResult>
@@ -58,7 +61,7 @@ export function connectActionChannel(
     unresponsive?: () => void
     complete: () => void
     failed: (error: PluginError) => void
-    theme?: () => Readonly<Record<string, string>>
+    presentation?: () => Pick<ActionState, 'theme' | 'colorScheme'>
     renderImage?: (
       viewId: string | null,
       options: ImageRenderOptions,
@@ -99,9 +102,9 @@ export function connectActionChannel(
     const relations = new Set(viewGraph.relations.map(relationKey))
     return {
       ...base,
+      ...effects.presentation?.(),
       revision,
       locale: state.preferences.locale ?? base.locale,
-      theme: effects.theme?.() ?? base.theme,
       workspace: {
         activeViewId: state.workspace.activeViewId,
         savedViews: state.workspace.savedViews.map(({ id, name, pinned }) => ({

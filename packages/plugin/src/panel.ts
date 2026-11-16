@@ -44,8 +44,9 @@ const bootstrap = (event: MessageEvent) => {
     try {
       client = createPluginClient(port, data.state)
       const applyTheme = () => {
-        const { theme, locale } = client!.getPresentation()
+        const { theme, colorScheme, locale } = client!.getPresentation()
         document.documentElement.lang = locale
+        document.documentElement.style.colorScheme = colorScheme
         for (const [token, value] of Object.entries(theme))
           document.documentElement.style.setProperty(`--${token}`, value)
       }
