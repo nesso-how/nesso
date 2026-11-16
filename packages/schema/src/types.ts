@@ -18,6 +18,7 @@ export const presentationSchema = z.strictObject({
     .optional(),
   bold: z.boolean().optional(),
   italic: z.boolean().optional(),
+  strikethrough: z.boolean().optional(),
 })
 export const viewMemberSchema = presentationSchema.extend({ id: iriSchema })
 export const relationTypeSchema = z.strictObject({

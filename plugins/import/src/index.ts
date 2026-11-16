@@ -69,6 +69,8 @@ export function buildImportOperations(
         operations.push({ kind: 'concept.bold', id, value: member.bold })
       if (member.italic !== undefined)
         operations.push({ kind: 'concept.italic', id, value: member.italic })
+      if (member.strikethrough !== undefined)
+        operations.push({ kind: 'concept.strikethrough', id, value: member.strikethrough })
     }
   }
   const types = new Map(graph.relationTypes.map((type) => [type.id, type]))

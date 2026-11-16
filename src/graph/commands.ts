@@ -66,8 +66,8 @@ export function copyGraph(graph: ViewGraphSnapshot, selected: Selection): string
   const copied = graph.concepts.filter((concept) => concepts.has(concept.id))
   if (!copied.length) return null
   const types = new Set(relations.map((relation) => relation.predicate))
-  const members = copied.flatMap(({ id, position, color, bold, italic }) =>
-    position ? [{ id, position, color, bold, italic }] : [],
+  const members = copied.flatMap(({ id, position, color, bold, italic, strikethrough }) =>
+    position ? [{ id, position, color, bold, italic, strikethrough }] : [],
   )
   return JSON.stringify(
     serializeGraph(
@@ -144,6 +144,15 @@ export function pasteOperations(
         ...(concept.italic === undefined
           ? []
           : [{ kind: 'concept.italic' as const, id: concept.id, value: concept.italic }]),
+        ...(concept.strikethrough === undefined
+          ? []
+          : [
+              {
+                kind: 'concept.strikethrough' as const,
+                id: concept.id,
+                value: concept.strikethrough,
+              },
+            ]),
       ]
       if (!kept.has(concept.id))
         return [

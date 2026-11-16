@@ -33,6 +33,7 @@ test('manifests and action descriptors reject unknown authority, duplicates and 
         'concept.label',
         'concept.notes',
         'concept.color',
+        'concept.strikethrough',
         'concept.position',
         'concept.positions',
         'concept.add',
@@ -47,7 +48,7 @@ test('manifests and action descriptors reject unknown authority, duplicates and 
         'view.membership',
       ],
     }).writes.length,
-    15,
+    16,
   )
   for (const value of [
     { ...manifest, apiVersion: 1 },

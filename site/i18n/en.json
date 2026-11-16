@@ -35,7 +35,7 @@
   "howItWorks": "How it works",
   "elementsTitle": "Just a few key elements",
   "concepts": "Concepts",
-  "conceptsDescription": "Ideas, with a color, bold or italic labels, and Markdown notes.",
+  "conceptsDescription": "Ideas, with a color, bold, italic or strikethrough labels, and Markdown notes.",
   "relations": "Relations",
   "relationsDescription": "Directed connections with a type that says how two ideas relate, like “sparks” or “builds on”. Use the built-in ones or name your own.",
   "views": "Views",

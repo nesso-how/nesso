@@ -64,6 +64,7 @@ export function conceptNode(
       color: concept.color,
       bold: concept.bold,
       italic: concept.italic,
+      strikethrough: concept.strikethrough,
     },
     ariaLabel: concept.label,
     selected,
@@ -183,6 +184,7 @@ export function createGraphElements() {
         previous.data.color === node.data.color &&
         previous.data.bold === node.data.bold &&
         previous.data.italic === node.data.italic &&
+        previous.data.strikethrough === node.data.strikethrough &&
         previous.data.editable === node.data.editable &&
         previous.data.editing === node.data.editing &&
         previous.data.maxLength === node.data.maxLength &&

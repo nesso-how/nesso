@@ -524,7 +524,7 @@ test('legacy records are read unchanged and upgrade only after their exact origi
   for (const [name, apiVersion, origin] of [
     ['nesso-legacy-local', 5, {}],
     ['nesso-legacy-npm', 5, { npmIntegrity }],
-    ['nesso-legacy-api4', 4, {}],
+    ['nesso-legacy-api3', 3, {}],
   ] as const) {
     const prepared = await preparePluginPackage({
       manifest: {
@@ -558,7 +558,7 @@ test('legacy records are read unchanged and upgrade only after their exact origi
   assert.deepEqual(new Set(listing.packages), new Set([local.record, npm.record]))
   assert.deepEqual(
     listing.incompatible.map(({ name, apiVersion }) => [name, apiVersion]),
-    [[outdated.prepared.name, 4]],
+    [[outdated.prepared.name, 3]],
   )
   assert.deepEqual(listing.issues, [])
   for (const { file, bytes } of legacy) assert.deepEqual(await readFile(file), bytes)

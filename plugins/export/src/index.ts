@@ -6,8 +6,8 @@ import source from '../package.json' with { type: 'json' }
 const { i18n } = source
 
 function serializeView(graph: ViewGraphSnapshot, name?: string) {
-  const members = graph.concepts.flatMap(({ id, position, color, bold, italic }) =>
-    position ? [{ id, position: { ...position }, color, bold, italic }] : [],
+  const members = graph.concepts.flatMap(({ id, position, color, bold, italic, strikethrough }) =>
+    position ? [{ id, position: { ...position }, color, bold, italic, strikethrough }] : [],
   )
   return serializeGraph(
     {

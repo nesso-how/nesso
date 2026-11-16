@@ -116,6 +116,7 @@ const operation = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('concept.color'), id, value: z.string() }),
   z.strictObject({ kind: z.literal('concept.bold'), id, value: z.boolean() }),
   z.strictObject({ kind: z.literal('concept.italic'), id, value: z.boolean() }),
+  z.strictObject({ kind: z.literal('concept.strikethrough'), id, value: z.boolean() }),
   z.strictObject({ kind: z.literal('concept.position'), id, value: position }),
   z.strictObject({
     kind: z.literal('concept.positions'),
@@ -206,6 +207,7 @@ const pluginWriteKinds = [
   'concept.color',
   'concept.bold',
   'concept.italic',
+  'concept.strikethrough',
   'concept.position',
   'concept.positions',
   'concept.add',

@@ -222,7 +222,7 @@ Runs in an isolated Worker with no action APIs and a 2-second calculation limit.
 
 The graph snapshot provides:
 
-- `viewGraph`: `{ concepts, relations, relationTypes }` for the invoked view. In a saved view, concepts carry its `position`, `color`, `bold`, and `italic`.
+- `viewGraph`: `{ concepts, relations, relationTypes }` for the invoked view. In a saved view, concepts carry its `position`, `color`, `bold`, `italic`, and `strikethrough`.
 - `selected`: the invoked view's selection.
 - `targetViewId`: the invoked view's ID, or `null` for All; fixed for each invocation. Headless actions keep their target during navigation; panels restart with a new invocation when the active view changes.
 - `activeVocab`: the current vocabulary, or `null`.
@@ -242,6 +242,7 @@ Call helpers on `document` and declare their operation kinds in `nesso.writes`:
 | `setConceptColor(id, value)`                        | `concept.color`         |
 | `setConceptBold(id, value)`                         | `concept.bold`          |
 | `setConceptItalic(id, value)`                       | `concept.italic`        |
+| `setConceptStrikethrough(id, value)`                | `concept.strikethrough` |
 | `setConceptPosition(id, { x, y })`                  | `concept.position`      |
 | `setConceptPositions([{ id, position: { x, y } }])` | `concept.positions`     |
 | `addConcept(position?)`                             | `concept.add`           |

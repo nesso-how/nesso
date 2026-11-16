@@ -457,8 +457,14 @@ export const applyStateOperations = (
         break
       case 'concept.bold':
       case 'concept.italic':
+      case 'concept.strikethrough':
         updateMembers(new Set([operation.id]), (member) => {
-          const key = operation.kind === 'concept.bold' ? 'bold' : 'italic'
+          const key =
+            operation.kind === 'concept.bold'
+              ? 'bold'
+              : operation.kind === 'concept.italic'
+                ? 'italic'
+                : 'strikethrough'
           if ((member[key] ?? false) === operation.value) return member
           const next = { ...member }
           if (!operation.value) delete next[key]

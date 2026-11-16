@@ -7,6 +7,7 @@ import {
   type FileSaveOptions,
 } from '@nesso-how/plugin/runtime'
 import { createWriteCommands } from '@nesso-how/core'
+import { parseGraph } from '@nesso-how/schema'
 import { create } from './index.ts'
 
 test('export uses only the supplied target graph and notifies after accepted saves, not cancellation or failure', async (context) => {
@@ -18,7 +19,9 @@ test('export uses only the supplied target graph and notifies after accepted sav
     colorScheme: 'light',
     conceptPlacementOffset: { x: 160, y: 100 },
     viewGraph: {
-      concepts: [{ id: 'urn:concept', label: 'One', position: { x: 0, y: 0 } }],
+      concepts: [
+        { id: 'urn:concept', label: 'One', position: { x: 0, y: 0 }, strikethrough: true },
+      ],
       relations: [],
       relationTypes: [],
     },
@@ -77,6 +80,7 @@ test('export uses only the supplied target graph and notifies after accepted sav
   assert.equal(save.mock.calls[0].arguments[0].mediaType, 'application/ld+json')
   const written = save.mock.calls[0].arguments[0]
   assert.ok('text' in written && written.text.includes('urn:concept'))
+  assert.equal(parseGraph(JSON.parse(written.text)).views[0].members[0].strikethrough, true)
   assert.deepEqual(notify.mock.calls[0].arguments[0].title, {
     en: 'View exported',
     it: 'Vista esportata',

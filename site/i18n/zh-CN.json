@@ -35,7 +35,7 @@
   "howItWorks": "使用方式",
   "elementsTitle": "只需几个基本元素",
   "concepts": "概念",
-  "conceptsDescription": "概念用来表示想法，可设置颜色、将标签加粗或设为斜体，并添加 Markdown 笔记。",
+  "conceptsDescription": "概念用来表示想法，可设置颜色、将标签加粗、设为斜体或添加删除线，并添加 Markdown 笔记。",
   "relations": "关系",
   "relationsDescription": "用带类型的有向连接描述两个想法之间的联系，例如“激发”或“基于”。使用内置类型，也可以自定义。",
   "views": "视图",

@@ -11,6 +11,7 @@ export function conceptMapShortcuts(locale: Locale) {
       { label: t('shortcutRename'), keys: [['Enter']] },
       { label: t('shortcutBold'), keys: [[modifier, 'B']] },
       { label: t('shortcutItalic'), keys: [[modifier, 'I']] },
+      { label: t('shortcutStrikethrough'), keys: [[modifier, 'Shift', 'X']] },
       { label: t('shortcutFitView'), keys: [['F']] },
       { label: t('groupRelations'), keys: [['G']] },
       { label: t('shortcutRearrange'), keys: [['L']] },

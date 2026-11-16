@@ -72,6 +72,7 @@ test('presentation edits require an active view that contains the concept', () =
     { kind: 'concept.color', id: 'urn:n1', value: '#e1ecde' },
     { kind: 'concept.bold', id: 'urn:n1', value: true },
     { kind: 'concept.italic', id: 'urn:n1', value: true },
+    { kind: 'concept.strikethrough', id: 'urn:n1', value: true },
     { kind: 'concept.position', id: 'urn:n1', value: { x: 1, y: 1 } },
     { kind: 'concept.positions', updates: [{ id: 'urn:n1', position: { x: 1, y: 1 } }] },
   ] as const)

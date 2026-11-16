@@ -114,7 +114,9 @@ export function ConceptNodeView({ id, data, selected, isConnectable }: NodeProps
           }}
         />
       ) : (
-        <span className="whitespace-nowrap text-center">{data.label}</span>
+        <span className={cn('whitespace-nowrap text-center', data.strikethrough && 'line-through')}>
+          {data.label}
+        </span>
       )}
       <Handle
         id="create"

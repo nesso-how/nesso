@@ -12,7 +12,13 @@ import {
 
 const graph: ViewGraphSnapshot = {
   concepts: [
-    { id: 'urn:a', label: 'Alpha', position: { x: 10, y: 20 }, color: '#ffeeee' },
+    {
+      id: 'urn:a',
+      label: 'Alpha',
+      position: { x: 10, y: 20 },
+      color: '#ffeeee',
+      strikethrough: true,
+    },
     { id: 'urn:b', label: 'Beta', position: { x: 110, y: 70 } },
     { id: 'urn:c', label: 'Gamma', position: { x: 210, y: 120 } },
   ],
@@ -39,7 +45,7 @@ test('copy includes internal relations or selected relation endpoints, but not u
     relations: graph.relations.slice(0, 1),
   })
   assert.deepEqual(views[0].members, [
-    { id: 'urn:a', position: { x: 10, y: 20 }, color: '#ffeeee' },
+    { id: 'urn:a', position: { x: 10, y: 20 }, color: '#ffeeee', strikethrough: true },
     { id: 'urn:b', position: { x: 110, y: 70 } },
   ])
   const read = (value: string) => {
@@ -76,10 +82,15 @@ test('paste positions the group at the requested point and rejects non-JSON clip
     pasted.filter((operation) => operation.kind === 'concept.color'),
     [{ kind: 'concept.color', id: added, value: '#ffeeee' }],
   )
+  assert.deepEqual(
+    pasted.filter((operation) => operation.kind === 'concept.strikethrough'),
+    [{ kind: 'concept.strikethrough', id: added, value: true }],
+  )
   assert.equal(
     pasteOperations(text, undefined, 40, false).some(
       (operation) =>
         operation.kind === 'concept.color' ||
+        operation.kind === 'concept.strikethrough' ||
         (operation.kind === 'concept.add' && operation.position !== undefined),
     ),
     false,

@@ -56,6 +56,7 @@
       "concept.color",
       "concept.bold",
       "concept.italic",
+      "concept.strikethrough",
       "concept.position",
       "relation.connect",
       "view.create",

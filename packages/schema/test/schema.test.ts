@@ -219,8 +219,8 @@ test('views keep their members presentation across a JSON-LD round trip', () => 
     id: 'https://example.org/view/project',
     name: 'Project',
     members: [
-      { id: targets[1], position: { x: -5, y: 7 }, bold: true, italic: true },
-      { ...views[0].members[0] },
+      { id: targets[1], position: { x: -5, y: 7 }, bold: true, italic: true, strikethrough: true },
+      { ...views[0].members[0], strikethrough: false },
     ],
   }
   const serialized = serializeGraph(graph, [view])

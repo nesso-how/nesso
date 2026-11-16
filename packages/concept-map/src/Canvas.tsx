@@ -23,6 +23,7 @@ import {
   Plus,
   Redo2,
   Scissors,
+  Strikethrough,
   Trash2,
   Undo2,
 } from 'lucide-react'
@@ -504,6 +505,8 @@ export function Canvas({
   const allBold = selectedConcepts.length > 0 && selectedConcepts.every((concept) => concept.bold)
   const allItalic =
     selectedConcepts.length > 0 && selectedConcepts.every((concept) => concept.italic)
+  const allStrikethrough =
+    selectedConcepts.length > 0 && selectedConcepts.every((concept) => concept.strikethrough)
   const canEmphasize = interactive && selectedConcepts.length > 0
   const toggleBold = () => {
     if (!canEmphasize) return
@@ -512,6 +515,16 @@ export function Canvas({
   const toggleItalic = () => {
     if (!canEmphasize) return
     write(selectedConcepts.map(({ id }) => ({ kind: 'concept.italic', id, value: !allItalic })))
+  }
+  const toggleStrikethrough = () => {
+    if (!canEmphasize) return
+    write(
+      selectedConcepts.map(({ id }) => ({
+        kind: 'concept.strikethrough',
+        id,
+        value: !allStrikethrough,
+      })),
+    )
   }
   const emphasizeModifier = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'
   const canUndo = useNesso((state) => state.history.canUndo)
@@ -906,13 +919,17 @@ export function Canvas({
           }
         }
         if (readOnly) return
-        if ((event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && !hasOverlay) {
+        if ((event.metaKey || event.ctrlKey) && !event.altKey && !hasOverlay) {
           const key = event.key.toLowerCase()
-          if (key === 'b' || key === 'i') {
+          if (
+            (!event.shiftKey && (key === 'b' || key === 'i')) ||
+            (event.shiftKey && key === 'x')
+          ) {
             if (!interactive || !canEmphasize || event.repeat) return
             event.preventDefault()
             if (key === 'b') toggleBold()
-            else toggleItalic()
+            else if (key === 'i') toggleItalic()
+            else toggleStrikethrough()
             return
           }
         }
@@ -1181,6 +1198,16 @@ export function Canvas({
                 aria-pressed={allItalic}
               >
                 <Italic aria-hidden="true" />
+              </ControlButton>
+              <ControlButton
+                onClick={toggleStrikethrough}
+                disabled={!canEmphasize}
+                title={`${t('strikethrough')} (${emphasizeModifier === '⌘' ? '⌘⇧X' : 'Ctrl+Shift+X'})`}
+                aria-label={t('strikethrough')}
+                aria-keyshortcuts="Control+Shift+x Meta+Shift+x"
+                aria-pressed={allStrikethrough}
+              >
+                <Strikethrough aria-hidden="true" />
               </ControlButton>
               <div
                 role="separator"
