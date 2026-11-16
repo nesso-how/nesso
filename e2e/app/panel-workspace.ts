@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { Menu } from 'electron'
 import source from '../../packages/plugin/example/package.json' with { type: 'json' }
-import { connectMenu, connectTabShortcuts } from '../../electron/menu.ts'
+import { connectMenu, connectTabShortcuts } from '../../electron/shell/menu.ts'
 import {
   chooseTab,
   listExamplePlugin,

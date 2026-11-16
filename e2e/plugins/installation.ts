@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict'
 import { once } from 'node:events'
 import { ipcMain, type BrowserWindow } from 'electron'
-import { connectPlugins } from '../../electron/plugins.ts'
+import { connectPlugins } from '../../electron/plugins/plugins.ts'
 import { appUrl, createTrustedRequest } from '../../electron/ipc.ts'
 import { ElectronError } from '../../electron/errors.ts'
-import { connectExternalLinks } from '../../electron/links.ts'
+import { connectExternalLinks } from '../../electron/shell/links.ts'
 import { preparePluginPackage, parsePackageIdentity } from '@nesso-how/plugin/package'
 import theme from '../../packages/plugin/test/theme.json' with { type: 'json' }
 import { connectFixtureStorage, countWorkers, waitFor, type CheckContext } from '../helpers.ts'

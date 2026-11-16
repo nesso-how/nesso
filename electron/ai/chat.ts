@@ -1,0 +1,175 @@
+import { createOpenAI } from '@ai-sdk/openai'
+import { createAnthropic } from '@ai-sdk/anthropic'
+import { createGoogleGenerativeAI } from '@ai-sdk/google'
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
+import { isStepCount, streamText, type ToolSet } from 'ai'
+import { z } from 'zod'
+import {
+  aiChatInstructions,
+  aiChatMessages,
+  aiChatLimits,
+  aiTools,
+  type AiChatRequest,
+  type AiChatResult,
+  type AiChatEvent,
+  type AiToolReply,
+} from '@nesso-how/ai'
+import type { createAiConnections } from './connections/index.ts'
+import { ElectronError } from '../errors.ts'
+
+type Connection = Awaited<ReturnType<ReturnType<typeof createAiConnections>['active']>>
+const errorCode = z.object({ code: z.string().nullish() })
+const providerError = errorCode.extend({
+  statusCode: z.number().optional(),
+  data: z
+    .object({
+      error: errorCode.optional(),
+      response: z.object({ error: errorCode.optional() }).optional(),
+    })
+    .optional(),
+})
+const failure = (error?: unknown) => {
+  const parsed = providerError.safeParse(error)
+  const code = parsed.success
+    ? (parsed.data.code ?? parsed.data.data?.error?.code ?? parsed.data.data?.response?.error?.code)
+    : undefined
+  if (
+    code === 'subscription_sharing_usage_limit_exceeded' ||
+    code === 'subscription_sharing_usage_unavailable'
+  ) {
+    return new ElectronError([{ path: 'chatgpt.usage', message: 'aiChatUsageUnavailable' }])
+  }
+  if (parsed.success && parsed.data.statusCode === 401)
+    return new ElectronError([{ path: 'chat', message: 'aiChatAuthenticationFailed' }])
+  return new ElectronError([{ path: 'chat', message: 'aiChatProviderFailed' }])
+}
+
+const modelFor = (entry: Connection, request: typeof fetch) => {
+  const options = { apiKey: entry.apiKey, baseURL: entry.endpoint, fetch: request }
+  switch (entry.provider) {
+    case 'openai':
+      return createOpenAI(options).responses(entry.model)
+    case 'anthropic':
+      return createAnthropic(options)(entry.model)
+    case 'gemini':
+      return createGoogleGenerativeAI(options)(entry.model.replace(/^models\//, ''))
+    default:
+      return createOpenAICompatible({ ...options, name: entry.provider }).chatModel(entry.model)
+  }
+}
+
+export function createAiChatRun(
+  entry: Connection,
+  input: AiChatRequest,
+  emit: (event: AiChatEvent) => void,
+  request: typeof fetch = fetch,
+) {
+  const controller = new AbortController()
+  const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(300_000)])
+  const pending = new Map<string, (result: AiToolReply['result']) => void>()
+  const tools: ToolSet = Object.fromEntries(
+    Object.entries(aiTools).map(([name, definition]) => [
+      name,
+      {
+        ...definition,
+        strict: false,
+        ...(entry.authentication === 'chatgpt'
+          ? {
+              providerOptions: {
+                openai: {
+                  namespace: { name: 'nesso', description: 'Explore and edit the Nesso document.' },
+                },
+              },
+            }
+          : {}),
+        execute: (value: unknown, { toolCallId: callId }) =>
+          new Promise<unknown>((resolve, reject) => {
+            signal.throwIfAborted()
+            const finish = (result?: AiToolReply['result']) => {
+              pending.delete(callId)
+              signal.removeEventListener('abort', abort)
+              if (!result || 'issues' in result) reject(failure())
+              else resolve(result.value)
+            }
+            const abort = () => finish()
+            pending.set(callId, finish)
+            signal.addEventListener('abort', abort, { once: true })
+            emit({ id: input.id, type: 'tool', callId, name, input: value })
+          }),
+      },
+    ]),
+  )
+  const result = (async (): Promise<AiChatResult> => {
+    try {
+      const safeRequest: typeof fetch = (url, options) =>
+        request(url, { ...options, redirect: 'error' })
+      const stream = streamText({
+        model: modelFor(entry, safeRequest),
+        tools,
+        abortSignal: signal,
+        stopWhen: isStepCount(12),
+        ...(entry.authentication === 'chatgpt'
+          ? {
+              providerOptions: {
+                openai: { store: false, instructions: aiChatInstructions(input) },
+              },
+            }
+          : { maxOutputTokens: 8192 }),
+        maxRetries: 0,
+        telemetry: { isEnabled: false },
+        onError: () => {},
+        instructions: entry.authentication === 'chatgpt' ? undefined : aiChatInstructions(input),
+        messages: aiChatMessages(input),
+      })
+      let length = 0
+      let complete = false
+      let totalTokens: number | undefined
+      const activeTools = new Map<string, keyof typeof aiTools>()
+      let activity: keyof typeof aiTools | null = null
+      const reportActivity = () => {
+        const tool = [...activeTools.values()].at(-1) ?? null
+        if (tool === activity) return
+        activity = tool
+        emit({ id: input.id, type: 'activity', tool })
+      }
+      for await (const part of stream.fullStream) {
+        signal.throwIfAborted()
+        if (part.type === 'tool-input-start' && Object.hasOwn(aiTools, part.toolName)) {
+          activeTools.set(part.id, part.toolName as keyof typeof aiTools)
+          reportActivity()
+        } else if (part.type === 'tool-result' && !part.preliminary) {
+          activeTools.delete(part.toolCallId)
+          reportActivity()
+        } else if (part.type === 'text-delta') {
+          length += part.text.length
+          if (length > aiChatLimits.messageLength) throw failure()
+          emit({ id: input.id, type: 'text', text: part.text })
+        } else if (part.type === 'error') throw failure(part.error)
+        else if (part.type === 'tool-error' || part.type === 'abort') throw failure()
+        else if (part.type === 'finish') {
+          complete = part.finishReason === 'stop'
+          const { inputTokens, outputTokens, totalTokens: reported } = part.totalUsage
+          totalTokens =
+            reported ??
+            (inputTokens !== undefined && outputTokens !== undefined
+              ? inputTokens + outputTokens
+              : undefined)
+        }
+      }
+      if (!complete || signal.aborted) throw failure()
+      return totalTokens === undefined ? {} : { totalTokens }
+    } catch (error) {
+      throw error instanceof ElectronError ? error : failure(error)
+    } finally {
+      controller.abort()
+    }
+  })()
+  return {
+    id: input.id,
+    result,
+    cancel: () => controller.abort(),
+    reply: (reply: AiToolReply) => {
+      if (reply.id === input.id) pending.get(reply.callId)?.(reply.result)
+    },
+  }
+}

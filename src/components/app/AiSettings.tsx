@@ -35,7 +35,7 @@ import {
   type AiProvider,
   type AiResult,
 } from '@nesso-how/ai/providers'
-import type { AiBridge } from '../../../electron/ai-bridge'
+import type { AiBridge } from '../../../electron/ai/bridge'
 import { useTranslation } from '@/i18n'
 import { notifications } from '@/notifications'
 

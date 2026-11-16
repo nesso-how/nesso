@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import path from 'node:path'
 import assert from 'node:assert/strict'
-import { serveAppAsset } from '../electron/asset-protocol.ts'
+import { serveAppAsset } from '../electron/shell/asset-protocol.ts'
 import { desktopHostCsp } from '../shared/plugin-policy.ts'
 import { scenarios, type Platform } from './scenarios.ts'
 
