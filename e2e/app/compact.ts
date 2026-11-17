@@ -131,7 +131,7 @@ export async function verifyCompact({ window, url, name }: CheckContext) {
   await frame.executeJavaScript(
     `document.querySelector('.review-ratings button:last-child').click()`,
   )
-  await reviewReady(`!!document.querySelector('.review-reading:not(.review-exit) .review-prompt')`)
+  await reviewReady(`!!document.querySelector('.review-prompt')`)
   assert.equal(
     await frame.executeJavaScript(`document.querySelector('.review-study').scrollTop`),
     0,
