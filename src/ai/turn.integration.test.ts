@@ -224,6 +224,24 @@ test('selection reads page through the full selection', () => {
   assert.equal(rest.nextOffset, null)
 })
 
+test('relation type reads use vocabulary translations for the active locale', () => {
+  const host = createNessoStore({
+    concepts: [{ id: 'urn:n0', label: 'Node' }],
+    relations: [],
+    relationTypes: [],
+  })
+  host.registerVocab({
+    id: 'vocab',
+    defaultTypeId: 'urn:part',
+    relationTypes: [{ id: 'urn:part', label: 'partOf', translations: { it: 'è parte di' } }],
+  })
+  host.store.setLocale('it')
+  assert.deepEqual(
+    (createAiTurn(host).execute('relation_types', {}) as AiToolResults['relation_types']).items,
+    [{ id: 'urn:part', label: 'è parte di' }],
+  )
+})
+
 test('changes during generation reject stale plans without overwriting user edits', async () => {
   const host = fixture()
   const generating = createAiTurn(host)
