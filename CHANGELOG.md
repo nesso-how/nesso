@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.0.0-beta.23 — 2026-11-17
+
+### Features
+
+- **concept-map:** Spread relation endpoints along node sides (#367)
+- **review:** Add rating undo and streamline practice controls (#368)
+
+### Fixes
+
+- **ai:** Localize relation type labels in reads (#365)
+- **electron:** Keep native window chrome on the system appearance (#366)
+- **knowledge-graph:** Support pinch-to-zoom on touch screens (#369)
+- **labels:** Show character limit feedback (#370)
+
 ## 1.0.0-beta.22 — 2026-11-16
 
 ### Breaking Changes
