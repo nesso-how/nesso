@@ -2,7 +2,7 @@ import { newIri, relationKey, type RelationType } from '@nesso-how/schema'
 import { resolveRelationTypeLabel } from '@nesso-how/core'
 import { defaultLocale } from '@nesso-how/i18n'
 import { maxConceptLabelLength, maxRelationLabelLength } from '@/store/settings'
-import { useMemo, useRef, useState, type RefObject } from 'react'
+import { useId, useMemo, useRef, useState, type RefObject } from 'react'
 import type { ConceptMapHandle } from '@nesso-how/concept-map'
 import {
   Autocomplete,
@@ -10,6 +10,7 @@ import {
   AutocompleteItem,
   AutocompletePopup,
   Button,
+  CharacterLimitHint,
   ContextLabel,
   Input,
   Label,
@@ -51,6 +52,7 @@ function RelationInput({
   autoFocus?: boolean
 }) {
   const t = useTranslation()
+  const hintId = useId()
   const [value, setValue] = useState(label)
   const [open, setOpen] = useState(false)
   const [error, setError] = useState(false)
@@ -58,6 +60,17 @@ function RelationInput({
   const query = value.trim().toLowerCase()
   const visible = relationTypes.filter(
     (item) => item.id !== typeId && !taken.has(item.id) && item.label.toLowerCase().includes(query),
+  )
+  const suggesting = !readonly && open && visible.length > 0
+  const hint = !readonly && (
+    <CharacterLimitHint
+      id={hintId}
+      length={value.length}
+      maxLength={maxRelationLabelLength}
+      remainingText={(count) => t('labelCharactersRemaining', { count })}
+      limitText={t('relationLabelLengthLimitReached', { limit: maxRelationLabelLength })}
+      className={suggesting ? 'sticky top-0 z-10 bg-popover px-2.5 py-1.5' : undefined}
+    />
   )
   const choose = (id: string, next: string) => {
     if (taken.has(id)) {
@@ -100,7 +113,7 @@ function RelationInput({
         filteredItems={visible}
         itemToStringValue={(item) => item.label}
         value={value}
-        open={!readonly && open && visible.length > 0}
+        open={suggesting}
         onOpenChange={setOpen}
         onValueChange={(next, details) => {
           if (readonly) return
@@ -119,6 +132,7 @@ function RelationInput({
             autoFocus={autoFocus}
             readOnly={readonly}
             maxLength={maxRelationLabelLength}
+            aria-describedby={readonly ? undefined : hintId}
             aria-invalid={Boolean(error)}
             render={<Input className="pr-7" />}
             onBlur={(event) => save(event.currentTarget.value)}
@@ -130,6 +144,7 @@ function RelationInput({
           <AutocompleteClear disabled={readonly} aria-label={t('clearRelation')} />
         </div>
         <AutocompletePopup>
+          {suggesting && hint}
           <Autocomplete.List>
             {(item: Readonly<RelationType>) => (
               <AutocompleteItem
@@ -147,6 +162,7 @@ function RelationInput({
           </Autocomplete.List>
         </AutocompletePopup>
       </Autocomplete.Root>
+      {!suggesting && hint}
       {error && (
         <p role="alert" className="text-xs text-destructive">
           {t('ambiguousRelation')}
@@ -170,6 +186,7 @@ export function Inspector({
   renderer?: RefObject<ConceptMapHandle | null>
 }) {
   const t = useTranslation(store)
+  const conceptLabelHintId = useId()
   const textGroup = useRef<string | undefined>(undefined)
   const [confirming, setConfirming] = useState(false)
   const graph = useNessoStore((state) => state.graph, store)
@@ -271,11 +288,12 @@ export function Inspector({
             <p className="text-xs text-muted-foreground">{t('outsideConcept')}</p>
           )}
           <div className="flex flex-col gap-1.5">
-            <Label>{t('label')}</Label>
+            <Label htmlFor="concept-label">{t('label')}</Label>
             <Input
               key={concept.id}
               id="concept-label"
               maxLength={maxConceptLabelLength}
+              aria-describedby={readonly ? undefined : conceptLabelHintId}
               data-document-edit
               value={concept.label}
               readOnly={readonly}
@@ -294,6 +312,15 @@ export function Inspector({
                   )
               }}
             />
+            {!readonly && (
+              <CharacterLimitHint
+                id={conceptLabelHintId}
+                length={concept.label.length}
+                maxLength={maxConceptLabelLength}
+                remainingText={(count) => t('labelCharactersRemaining', { count })}
+                limitText={t('labelLengthLimitReached', { limit: maxConceptLabelLength })}
+              />
+            )}
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="concept-notes">{t('notes')}</Label>
