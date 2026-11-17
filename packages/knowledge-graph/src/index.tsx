@@ -285,19 +285,49 @@ export function KnowledgeGraph({
       ])
     }
     const area = marquee.current!
+    const pointers = new Map<number, Point>()
+    let pinch: { start: Point; distance: number; origin: Transform } | null = null
     let gesture: {
+      pointerId: number
       bubble?: Bubble
       area: boolean
       start: Point
       origin: Transform
       moved: boolean
     } | null = null
+    const releaseGesture = () => {
+      if (gesture?.area) {
+        area.style.display = 'none'
+        pending = []
+        invalidate()
+      }
+      if (gesture?.bubble && gesture.moved) {
+        gesture.bubble.fx = gesture.bubble.fy = null
+        forces.alphaTarget(0)
+      }
+      gesture = null
+    }
+    const startPinch = () => {
+      const [first, second] = pointers.values()
+      pinch = {
+        start: { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 },
+        distance: Math.max(1, Math.hypot(second.x - first.x, second.y - first.y)),
+        origin: transform,
+      }
+    }
     const onPointerDown = (event: PointerEvent) => {
       if (event.button !== 0) return
       cancelAnimationFrame(motion)
       element.setPointerCapture(event.pointerId)
+      pointers.set(event.pointerId, local(event))
+      if (pointers.size > 1) {
+        releaseGesture()
+        startPinch()
+        return
+      }
       const bubble = hit(event)
       gesture = {
+        pointerId: event.pointerId,
         bubble,
         area: !bubble && event.shiftKey,
         start: local(event),
@@ -306,6 +336,23 @@ export function KnowledgeGraph({
       }
     }
     const onPointerMove = (event: PointerEvent) => {
+      const point = local(event)
+      if (pointers.has(event.pointerId)) {
+        pointers.set(event.pointerId, point)
+        if (pinch) {
+          const [first, second] = pointers.values()
+          const distance = Math.hypot(second.x - first.x, second.y - first.y)
+          const k = Math.min(4, Math.max(0.1, (pinch.origin.k * distance) / pinch.distance))
+          transform = {
+            k,
+            x: (first.x + second.x) / 2 - ((pinch.start.x - pinch.origin.x) * k) / pinch.origin.k,
+            y: (first.y + second.y) / 2 - ((pinch.start.y - pinch.origin.y) * k) / pinch.origin.k,
+          }
+          save()
+          invalidate()
+          return
+        }
+      }
       if (!gesture) {
         const next = hit(event)?.id ?? hitLine(event)?.id ?? null
         if (next === hovered) return
@@ -314,7 +361,7 @@ export function KnowledgeGraph({
         invalidate()
         return
       }
-      const point = local(event)
+      if (event.pointerId !== gesture.pointerId) return
       const dx = point.x - gesture.start.x
       const dy = point.y - gesture.start.y
       if (!gesture.moved && Math.hypot(dx, dy) < 4) return
@@ -350,6 +397,24 @@ export function KnowledgeGraph({
       invalidate()
     }
     const onPointerUp = (event: PointerEvent) => {
+      if (!pointers.delete(event.pointerId)) return
+      if (pinch) {
+        if (pointers.size > 1) startPinch()
+        else {
+          pinch = null
+          const [remaining] = pointers
+          gesture = remaining
+            ? {
+                pointerId: remaining[0],
+                area: false,
+                start: remaining[1],
+                origin: transform,
+                moved: true,
+              }
+            : null
+        }
+        return
+      }
       if (!gesture) return
       if (!gesture.moved && event.type === 'pointerup') {
         const line = gesture.bubble ? undefined : hitLine(event)
@@ -361,12 +426,9 @@ export function KnowledgeGraph({
         )
       }
       if (gesture.area && gesture.moved) {
-        area.style.display = 'none'
         const { selected } = store.getState()
         const chosen = new Set(selected.map(({ id }) => id))
         const added = pending.filter((id) => !chosen.has(id))
-        pending = []
-        invalidate()
         if (event.type === 'pointerup' && added.length)
           store.applyOperations([
             {
@@ -375,11 +437,7 @@ export function KnowledgeGraph({
             },
           ])
       }
-      if (gesture.bubble && gesture.moved) {
-        gesture.bubble.fx = gesture.bubble.fy = null
-        forces.alphaTarget(0)
-      }
-      gesture = null
+      releaseGesture()
     }
     const onDoubleClick = (event: MouseEvent) => {
       const bubble = hit(event)
@@ -413,6 +471,7 @@ export function KnowledgeGraph({
     element.addEventListener('pointermove', onPointerMove)
     element.addEventListener('pointerup', onPointerUp)
     element.addEventListener('pointercancel', onPointerUp)
+    element.addEventListener('lostpointercapture', onPointerUp)
     element.addEventListener('pointerleave', onLeave)
     element.addEventListener('dblclick', onDoubleClick)
     element.addEventListener('wheel', onWheel, { passive: false })
@@ -430,6 +489,7 @@ export function KnowledgeGraph({
       element.removeEventListener('pointermove', onPointerMove)
       element.removeEventListener('pointerup', onPointerUp)
       element.removeEventListener('pointercancel', onPointerUp)
+      element.removeEventListener('lostpointercapture', onPointerUp)
       element.removeEventListener('pointerleave', onLeave)
       element.removeEventListener('dblclick', onDoubleClick)
       element.removeEventListener('wheel', onWheel)
