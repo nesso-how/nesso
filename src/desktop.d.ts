@@ -8,7 +8,6 @@ import type { PluginBridge } from '../shared/plugins'
 import type { NotesLinkBridge } from '../shared/link-policy'
 import type { BackupBridge } from '../shared/backup'
 import type { MenuBridge } from '../shared/menu'
-import type { AppearanceBridge } from '../shared/appearance'
 
 declare global {
   interface Window {
@@ -22,6 +21,5 @@ declare global {
     nessoNotesLinks?: NotesLinkBridge
     nessoBackups?: BackupBridge
     nessoMenu?: MenuBridge
-    nessoAppearance?: AppearanceBridge
   }
 }

@@ -30,7 +30,6 @@ import { connectPluginTermination } from './plugins/termination.ts'
 import { connectStartupCheck } from './startup-check.ts'
 import { createWindowState } from './shell/window-state.ts'
 import { connectWindowZoom } from './shell/zoom.ts'
-import { connectAppearance } from './shell/appearance.ts'
 import { createRecordReplacement } from './persistence/record-replacement.ts'
 import { connectMenu, connectTabShortcuts } from './shell/menu.ts'
 import { createAutomaticBackups } from './persistence/automatic-backups.ts'
@@ -117,7 +116,6 @@ app
   .then(async () => {
     const trusted = createTrustedRequest(rendererUrl)
     connectMenu(trusted, dev)
-    connectAppearance(ipcMain, trusted, nativeTheme, app.getPath('userData'))
     connectNotesLinks(ipcMain, trusted, (url) => shell.openExternal(url))
     connectFiles(trusted)
     connectPlugins(trusted)
