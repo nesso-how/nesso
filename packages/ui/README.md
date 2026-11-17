@@ -45,7 +45,7 @@ Your build must compile this CSS; it is not a precompiled stylesheet. Supply the
 | Search and suggestions | `Combobox`, `ComboboxItem`, `ComboboxPopup`, `Autocomplete`, `AutocompleteClear`, `AutocompleteItem`, `AutocompletePopup` |
 | Dialogs                | `Dialog`, `DialogActions`, `DialogPopup`, `ConfirmDialog`, `TextPromptDialog`, `BottomSheet`                              |
 | Panels and disclosure  | `SidePanel`, `PanelHeader`, `PluginPage`, `PluginContent`, `SectionHeading`, `Collapsible`, `Tabs`                        |
-| Feedback               | `Banner`, `BannerRow`, `BannerDetails`, `ToastViewport`, `Spinner`                                                        |
+| Feedback               | `Banner`, `BannerRow`, `BannerDetails`, `ToastViewport`, `Spinner`, `CharacterLimitHint`                                  |
 | Labels and icons       | `Kbd`, `ContextLabel`, `ActionIcon`                                                                                       |
 
 `Button` supports `default`, `outline`, and `ghost` variants. `SidePanel` supports controlled resizing and collapse. `Spinner` accepts an accessible `label` and respects reduced motion. State, content, and event handling remain yours to provide.
