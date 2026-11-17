@@ -80,6 +80,14 @@
   scale: calc(1 / var(--graph-zoom, 1));
 }
 
+.react-flow__edgeupdater-source {
+  translate: var(--source-offset, 0 0);
+}
+
+.react-flow__edgeupdater-target {
+  translate: var(--target-offset, 0 0);
+}
+
 .graph-source-left .react-flow__edgeupdater-source,
 .graph-target-left .react-flow__edgeupdater-target {
   transform-origin: right;

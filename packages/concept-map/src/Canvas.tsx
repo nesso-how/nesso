@@ -53,6 +53,7 @@ import './styles.css'
 import { newIri, relationKey } from '@nesso-how/schema'
 import { ConceptNodeView } from './ConceptNodeView'
 import { GroupNodeView } from './GroupNodeView'
+import { RelationEdgeView } from './RelationEdgeView'
 import { arrange, type LayoutBounds } from './layout'
 import { groupRelations, keepGroups } from './groups'
 import type { RelationGroup } from './groups'
@@ -78,6 +79,7 @@ const nodeTypes: NodeTypes = {
   concept: ConceptNodeView,
   relationGroup: GroupNodeView,
 }
+const edgeTypes = { relation: RelationEdgeView }
 const fitViewOptions = { padding: 0.3, maxZoom: 1.2 }
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3)
 const multiSelectionKeys = ['Meta', 'Control', 'Shift']
@@ -955,6 +957,7 @@ export function Canvas({
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         ariaLabelConfig={ariaLabelConfig}
         nodesDraggable={interactive}
         elementsSelectable={selectable}

@@ -91,6 +91,7 @@ export function relationEdge(
     relation.source === relation.target ? Position.Top : facingSide(target, source)
   return {
     id: relationKey(relation),
+    type: 'relation',
     source: relation.source,
     target: relation.target,
     sourceHandle,
@@ -122,6 +123,69 @@ export function relationEdge(
     },
   }
 }
+
+const endpointGap = 14
+const cornerInset = 12
+
+function spreadEndpoints(
+  edges: readonly RelationEdge[],
+  boxes: ReadonlyMap<string, ConceptBounds>,
+): RelationEdge[] {
+  type Endpoint = { index: number; end: 'source' | 'target'; key: number }
+  const sides = new Map<string, { length: number; endpoints: Endpoint[] }>()
+  edges.forEach((edge, index) => {
+    for (const end of ['source', 'target'] as const) {
+      const side = edge[`${end}Handle`] as Position
+      const horizontal = side === Position.Top || side === Position.Bottom
+      const box = boxes.get(edge[end])!
+      const other = boxes.get(end === 'source' ? edge.target : edge.source)!
+      const key =
+        edge.source === edge.target
+          ? horizontal
+            ? Infinity
+            : -Infinity
+          : horizontal
+            ? other.position.x + other.width / 2
+            : other.position.y + other.height / 2
+      const id = `${side}:${edge[end]}`
+      const group = sides.get(id) ?? {
+        length: horizontal ? box.width : box.height,
+        endpoints: [],
+      }
+      group.endpoints.push({ index, end, key })
+      sides.set(id, group)
+    }
+  })
+  const offsets = edges.map(() => ({ sourceOffset: 0, targetOffset: 0 }))
+  for (const { length, endpoints } of sides.values()) {
+    if (endpoints.length < 2) continue
+    const step = Math.min(
+      endpointGap,
+      Math.max(0, length - 2 * cornerInset) / (endpoints.length - 1),
+    )
+    endpoints
+      .sort((a, b) => a.key - b.key || edges[a.index].id.localeCompare(edges[b.index].id))
+      .forEach(({ index, end }, order) => {
+        offsets[index][`${end}Offset`] = (order - (endpoints.length - 1) / 2) * step
+      })
+  }
+  return edges.map((edge, index) => {
+    const { sourceOffset, targetOffset } = offsets[index]
+    return sourceOffset || targetOffset
+      ? { ...edge, data: { ...edge.data, sourceOffset, targetOffset } }
+      : edge
+  })
+}
+
+const sameEdge = (previous: RelationEdge, edge: RelationEdge) =>
+  previous.sourceHandle === edge.sourceHandle &&
+  previous.targetHandle === edge.targetHandle &&
+  previous.data?.sourceOffset === edge.data?.sourceOffset &&
+  previous.data?.targetOffset === edge.data?.targetOffset &&
+  previous.label === edge.label &&
+  previous.ariaLabel === edge.ariaLabel &&
+  previous.selected === edge.selected &&
+  previous.reconnectable === edge.reconnectable
 
 export function createGraphElements() {
   let previousNodes = new Map<string, ConceptNode>()
@@ -204,29 +268,23 @@ export function createGraphElements() {
     const grouped = new Set(visibleGroups.flatMap((group) => group.relations))
     const edges = graph.relations
       .filter((relation) => !grouped.has(relationKey(relation)))
-      .map((relation) => {
-        const edge = {
-          ...relationEdge(
-            relation,
-            selectedRelationIds.has(relationKey(relation)),
-            reconnectable,
-            indexed,
-            defaultTypeId,
-            sizes,
-          ),
-          ariaLabel: label(relation),
-        }
-        const previous = previousEdges.get(edge.id)
-        return previous &&
-          previous.sourceHandle === edge.sourceHandle &&
-          previous.targetHandle === edge.targetHandle &&
-          previous.label === edge.label &&
-          previous.ariaLabel === edge.ariaLabel &&
-          previous.selected === edge.selected &&
-          previous.reconnectable === edge.reconnectable
-          ? previous
-          : edge
-      })
+      .map((relation) => ({
+        ...relationEdge(
+          relation,
+          selectedRelationIds.has(relationKey(relation)),
+          reconnectable,
+          indexed,
+          defaultTypeId,
+          sizes,
+        ),
+        ariaLabel: label(relation),
+      }))
+    const boxes = new Map<string, ConceptBounds>(
+      graph.concepts.map(({ id, position }) => [
+        id,
+        { position, ...(sizes[id] ?? conceptNodeMinSize) },
+      ]),
+    )
     for (const group of visibleGroups) {
       const id = `#group:${group.key}`
       const names = group.members.map((id) => indexed.concepts.get(id)!.label).join(', ')
@@ -261,6 +319,7 @@ export function createGraphElements() {
           ? before
           : node,
       )
+      boxes.set(id, { position: node.position, ...group.bounds })
       const concept = { id, label: names, position: node.position }
       const groupIndex = { ...indexed, concepts: new Map([...indexed.concepts, [id, concept]]) }
       const relation = {
@@ -269,7 +328,7 @@ export function createGraphElements() {
         predicate: group.predicate,
       }
       const endpoint = group.direction === 'out' ? 'source' : 'target'
-      const edge: RelationEdge = {
+      edges.push({
         ...relationEdge(
           relation,
           group.relations.every((id) => selectedRelationIds.has(id)),
@@ -288,27 +347,22 @@ export function createGraphElements() {
             }),
           )
           .join('; '),
-      }
-      const old = previousEdges.get(id)
-      edges.push(
-        old &&
-          old.sourceHandle === edge.sourceHandle &&
-          old.targetHandle === edge.targetHandle &&
-          old.label === edge.label &&
-          old.ariaLabel === edge.ariaLabel &&
-          old.selected === edge.selected &&
-          old.reconnectable === edge.reconnectable
-          ? old
-          : edge,
-      )
+      })
     }
+    const spread = spreadEndpoints(edges, boxes).map((edge) => {
+      const previous = previousEdges.get(edge.id)
+      return previous && sameEdge(previous, edge) ? previous : edge
+    })
     if (nodes.length !== nodeList.length || nodes.some((node, index) => node !== nodeList[index])) {
       nodeList = nodes
       previousNodes = new Map(nodes.map((node) => [node.id, node]))
     }
-    if (edges.length !== edgeList.length || edges.some((edge, index) => edge !== edgeList[index])) {
-      edgeList = edges
-      previousEdges = new Map(edges.map((edge) => [edge.id, edge]))
+    if (
+      spread.length !== edgeList.length ||
+      spread.some((edge, index) => edge !== edgeList[index])
+    ) {
+      edgeList = spread
+      previousEdges = new Map(spread.map((edge) => [edge.id, edge]))
     }
     return { nodes: nodeList, edges: edgeList }
   }

@@ -9,6 +9,7 @@ import {
 import { defaultLocale } from '@nesso-how/i18n'
 import { ConceptNodeView } from './ConceptNodeView'
 import { GroupNodeView } from './GroupNodeView'
+import { RelationEdgeView } from './RelationEdgeView'
 import { groupRelations } from './groups'
 import { conceptNode, conceptNodeMinSize, createGraphElements, indexGraph } from './adapters'
 import { StoreContext, type ConceptMapContext } from './store'
@@ -17,6 +18,7 @@ import { presentedGraph } from './types'
 import { ConceptMapImageError } from './image-bounds'
 
 const nodeTypes = { concept: ConceptNodeView, relationGroup: GroupNodeView }
+const edgeTypes = { relation: RelationEdgeView }
 type ImageProps = {
   store: ConceptMapContext['store']
   ready: (edges: number) => void
@@ -77,6 +79,7 @@ function ImageFlow({ store, ready, presentation }: ImageProps) {
       nodes={elements.nodes}
       edges={elements.edges}
       nodeTypes={nodeTypes}
+      edgeTypes={edgeTypes}
       connectionMode={ConnectionMode.Loose}
       onNodesChange={onNodesChange}
       nodesDraggable={false}

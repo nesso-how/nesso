@@ -24,4 +24,7 @@ export type ConceptData = {
 }
 export type ConceptNode = Node<ConceptData, 'concept' | 'relationGroup'>
 
-export type RelationEdge = Edge<{ relations?: readonly string[] }>
+export type RelationEdge = Edge<
+  { relations?: readonly string[]; sourceOffset?: number; targetOffset?: number },
+  'relation'
+>

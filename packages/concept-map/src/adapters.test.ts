@@ -295,3 +295,37 @@ test('selected relation groups expose only shared reconnect anchors and update c
     [true, true, false],
   )
 })
+
+test('endpoints sharing a node side spread in the order of their opposite nodes', () => {
+  const graph: Graph = {
+    concepts: [
+      { id: 'urn:t', label: 't', position: { x: 0, y: 300 } },
+      ...[-300, 300, 0].map((x, index) => ({
+        id: `urn:${index}`,
+        label: `${index}`,
+        position: { x, y: 0 },
+      })),
+    ],
+    relationTypes: [{ id: 'urn:links', label: 'links' }],
+    relations: ['urn:0', 'urn:1', 'urn:2'].map((source) => ({
+      source,
+      predicate: 'urn:links',
+      target: 'urn:t',
+    })),
+  }
+  const { edges } = createGraphElements()({
+    graph,
+    indexed: indexGraph(graph),
+    selected: [],
+    sizes: {},
+    label: () => '',
+  })
+  assert.deepEqual(
+    edges.map((edge) => [edge.type, edge.data?.sourceOffset, edge.data?.targetOffset]),
+    [
+      ['relation', 0, -14],
+      ['relation', 0, 14],
+      ['relation', undefined, undefined],
+    ],
+  )
+})
