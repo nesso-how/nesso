@@ -1,4 +1,5 @@
-import type { NessoState } from '@nesso-how/core'
+import { resolveRelationTypeLabel, type NessoState } from '@nesso-how/core'
+import { defaultLocale } from '@nesso-how/i18n'
 import { relationKey } from '@nesso-how/schema'
 import { aiTools, type AiToolResults } from '@nesso-how/ai'
 
@@ -7,6 +8,18 @@ const page = <T>(items: readonly T[], { offset, limit }: { offset: number; limit
   total: items.length,
   nextOffset: offset + limit < items.length ? offset + limit : null,
 })
+
+const relationTypes = (state: NessoState) => {
+  const vocab = state.vocabs.find(({ id }) => id === state.preferences.activeVocabId)
+  const types = new Map(
+    [...(vocab?.relationTypes ?? []), ...state.graph.relationTypes].map((type) => [type.id, type]),
+  )
+  const locale = state.preferences.locale ?? defaultLocale
+  return [...types.values()].map((type) => ({
+    id: type.id,
+    label: resolveRelationTypeLabel(type, state.vocabs, locale),
+  }))
+}
 
 export function readAiTool(
   state: NessoState,
@@ -89,17 +102,8 @@ export function readAiTool(
         ),
       }
     }
-    case 'relation_types': {
-      const query = aiTools.relation_types.inputSchema.parse(input)
-      const vocab = state.vocabs.find(({ id }) => id === state.preferences.activeVocabId)
-      const types = new Map(
-        [...(vocab?.relationTypes ?? []), ...state.graph.relationTypes].map((type) => [
-          type.id,
-          type,
-        ]),
-      )
-      return page([...types.values()], query)
-    }
+    case 'relation_types':
+      return page(relationTypes(state), aiTools.relation_types.inputSchema.parse(input))
     case 'selection': {
       const query = aiTools.selection.inputSchema.parse(input)
       return page(state.selected, query)
