@@ -65,13 +65,12 @@ try {
 const stopTheme = connectTheme(
   host,
   matchMedia('(prefers-color-scheme: dark)'),
-  (definition, scheme, appearance) => {
+  (definition, scheme) => {
     const theme = getThemePresentation(definition.id)!
     for (const [key, value] of Object.entries(theme.tokens[scheme]))
       document.documentElement.style.setProperty(`--${key}`, value)
     document.documentElement.style.colorScheme = scheme
     document.documentElement.setAttribute('data-theme', definition.id)
-    window.nessoAppearance?.set(appearance)
   },
 )
 const externalStartup = new AbortController()

@@ -57,9 +57,7 @@ test('the host resolves the color scheme from the appearance preference or the s
   host.registerTheme(themeFixture)
   const system = createSystem()
   const applied: string[] = []
-  const disconnect = connectTheme(host, system, (_definition, scheme, appearance) =>
-    applied.push(`${appearance}:${scheme}`),
-  )
+  const disconnect = connectTheme(host, system, (_definition, scheme) => applied.push(scheme))
   const setAppearance = (value: 'system' | 'light' | 'dark') =>
     host.store.applyOperations([{ kind: 'preferences.appearance', value }])
   system.change(true)
@@ -69,14 +67,8 @@ test('the host resolves the color scheme from the appearance preference or the s
   setAppearance('dark')
   setAppearance('system')
   host.store.setConceptLabel(host.store.getState().graph.concepts[0].id, 'Renamed')
-  assert.deepEqual(applied, [
-    'system:light',
-    'system:dark',
-    'light:light',
-    'dark:dark',
-    'system:dark',
-  ])
+  assert.deepEqual(applied, ['light', 'dark', 'light', 'dark'])
   disconnect()
   system.change(false)
-  assert.equal(applied.length, 5)
+  assert.equal(applied.length, 4)
 })
