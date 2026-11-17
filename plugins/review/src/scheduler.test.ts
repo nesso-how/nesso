@@ -23,7 +23,10 @@ function fixture() {
       records.set(scope!.id, structuredClone({ key, value, scope }))
       return true
     },
-    delete: async (_key, scope) => records.delete(scope!.id),
+    delete: async (_key, scope) => {
+      if (fail) throw new PluginError('stale-state', [{ path: 'storage', message: 'Conflict' }])
+      return records.delete(scope!.id)
+    },
   }
   return {
     records,
@@ -131,6 +134,83 @@ test('progress restores across views and repeated reviews update one schedule', 
   assert.deepEqual(reopened.getSnapshot().progress.get('urn:a')!.card, preview.card)
   assert.equal(reopened.getSnapshot().progress.get('urn:a')!.logs.length, 2)
   assert.equal(f.records.size, 1)
+})
+
+test('undo restores the round and progress rating by rating, including after completion', async () => {
+  const f = fixture()
+  const review = await createReview(f.storage, f.now)
+  review.setScope(['urn:a'])
+  review.start()
+  review.reveal()
+  await review.rate(3)
+  const before = review.getSnapshot().progress.get('urn:a')!
+  const stored = structuredClone(f.records.get('urn:a'))
+  f.advance(20 * 60_000)
+  review.setScope(['urn:a', 'urn:b'])
+  review.start()
+  assert.deepEqual(review.getSnapshot().history, [])
+  review.reveal()
+  await review.rate(1)
+  review.reveal()
+  await review.rate(4)
+  assert.deepEqual(review.getSnapshot().outcome, { reviewed: 2, complete: true })
+  await review.undo()
+  assert.deepEqual(review.getSnapshot().session, {
+    ids: ['urn:b', 'urn:a'],
+    index: 1,
+    revealed: true,
+  })
+  assert.equal(review.getSnapshot().outcome, null)
+  assert.equal(review.getSnapshot().progress.get('urn:a'), before)
+  assert.deepEqual(f.records.get('urn:a'), stored)
+  await review.undo()
+  assert.deepEqual(review.getSnapshot().session, {
+    ids: ['urn:b', 'urn:a'],
+    index: 0,
+    revealed: true,
+  })
+  assert.equal(f.records.has('urn:b'), false)
+  assert.equal(review.getSnapshot().progress.has('urn:b'), false)
+  const snapshot = review.getSnapshot()
+  await review.undo()
+  assert.equal(review.getSnapshot(), snapshot)
+  await review.rate(3)
+  review.finish()
+  await review.undo()
+  assert.equal(review.getSnapshot().session, null)
+  assert.ok(f.records.has('urn:b'))
+})
+
+test('undo skips concepts removed from scope and blocks after failed writes', async () => {
+  const f = fixture()
+  const review = await createReview(f.storage, f.now)
+  review.setScope(['urn:a', 'urn:b', 'urn:c'])
+  review.start()
+  review.reveal()
+  await review.rate(3)
+  review.setScope(['urn:b'])
+  await review.undo()
+  assert.deepEqual(review.getSnapshot().session, {
+    ids: ['urn:b'],
+    index: 0,
+    revealed: false,
+  })
+  assert.equal(f.records.size, 0)
+  review.reveal()
+  await review.rate(3)
+  review.setScope([])
+  await review.undo()
+  assert.equal(review.getSnapshot().session, null)
+  assert.deepEqual(review.getSnapshot().outcome, { reviewed: 0, complete: false })
+  review.setScope(['urn:a'])
+  review.start()
+  review.reveal()
+  await review.rate(3)
+  f.fail()
+  await review.undo()
+  assert.equal(review.getSnapshot().failed, true)
+  assert.equal(review.getSnapshot().history.length, 1)
+  assert.ok(review.getSnapshot().progress.has('urn:a'))
 })
 
 test('scope changes skip removed concepts and preserve progress without completion', async () => {

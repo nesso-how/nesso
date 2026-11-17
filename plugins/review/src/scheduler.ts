@@ -23,10 +23,12 @@ type Session = {
   readonly index: number
   readonly revealed: boolean
 }
+type Rating = { readonly session: Session; readonly previous: Progress | undefined }
 type Snapshot = {
   readonly progress: ReadonlyMap<string, Progress>
   readonly session: Session | null
   readonly outcome: { readonly reviewed: number; readonly complete: boolean } | null
+  readonly history: readonly Rating[]
   readonly busy: boolean
   readonly failed: boolean
 }
@@ -137,6 +139,7 @@ export async function createReview(
     progress,
     session: null,
     outcome: null,
+    history: [],
     busy: false,
     failed: false,
   }
@@ -156,6 +159,11 @@ export async function createReview(
       )
   const card = (id: string, time = now()) =>
     snapshot.progress.get(id)?.card ?? scheduler.newCard({ now: time, cardId: id })
+  const save = (id: string, value: Progress) =>
+    storage.set(storageKey, JSON.parse(JSON.stringify({ version: 2, ...value })), {
+      kind: 'concept',
+      id,
+    })
   return {
     getSnapshot: () => snapshot,
     subscribe: (listener: () => void) => {
@@ -185,7 +193,7 @@ export async function createReview(
     start() {
       const ids = due()
       if (!ids.length || snapshot.busy || snapshot.failed) return
-      publish({ session: { ids, index: 0, revealed: false }, outcome: null })
+      publish({ session: { ids, index: 0, revealed: false }, outcome: null, history: [] })
     },
     reveal() {
       if (snapshot.session && !snapshot.busy && !snapshot.failed)
@@ -193,7 +201,11 @@ export async function createReview(
     },
     finish() {
       if (snapshot.busy || !snapshot.session) return
-      publish({ session: null, outcome: { reviewed: snapshot.session.index, complete: false } })
+      publish({
+        session: null,
+        outcome: { reviewed: snapshot.session.index, complete: false },
+        history: [],
+      })
     },
     preview(id: string, time = now()) {
       return [...scheduler.preview({ card: card(id, time), now: time })]
@@ -203,6 +215,7 @@ export async function createReview(
       if (!session?.revealed || snapshot.busy || snapshot.failed) return
       const id = session.ids[session.index]
       if (!scope.includes(id)) return
+      const previous = snapshot.progress.get(id)
       publish({ busy: true })
       try {
         const time = now()
@@ -210,17 +223,15 @@ export async function createReview(
         const next: Progress = {
           model: 'FSRS-6',
           card: result.card,
-          logs: [...(snapshot.progress.get(id)?.logs ?? []), result.revlog].slice(-maxLogs),
+          logs: [...(previous?.logs ?? []), result.revlog].slice(-maxLogs),
         }
-        await storage.set(storageKey, JSON.parse(JSON.stringify({ version: 2, ...next })), {
-          kind: 'concept',
-          id,
-        })
+        await save(id, next)
         const progress = new Map(snapshot.progress).set(id, next)
         const remaining = session.ids.slice(session.index + 1).filter((id) => scope.includes(id))
         const reviewed = session.index + 1
         publish({
           progress,
+          history: [...snapshot.history, { session, previous }],
           busy: false,
           session: remaining.length
             ? {
@@ -232,6 +243,39 @@ export async function createReview(
           outcome: remaining.length
             ? null
             : { reviewed, complete: session.index + 1 === session.ids.length },
+        })
+      } catch {
+        publish({ busy: false, failed: true })
+      }
+    },
+    async undo() {
+      const last = snapshot.history.at(-1)
+      if (!last || snapshot.busy || snapshot.failed) return
+      const { session, previous } = last
+      const id = session.ids[session.index]
+      publish({ busy: true })
+      try {
+        if (previous) await save(id, previous)
+        else await storage.delete(storageKey, { kind: 'concept', id })
+        const progress = new Map(snapshot.progress)
+        if (previous) progress.set(id, previous)
+        else progress.delete(id)
+        const current = snapshot.session
+        const remaining = [id, ...(current ? current.ids.slice(current.index) : [])].filter((id) =>
+          scope.includes(id),
+        )
+        publish({
+          progress,
+          history: snapshot.history.slice(0, -1),
+          busy: false,
+          session: remaining.length
+            ? {
+                ids: [...session.ids.slice(0, session.index), ...remaining],
+                index: session.index,
+                revealed: remaining[0] === id,
+              }
+            : null,
+          outcome: remaining.length ? null : { reviewed: session.index, complete: false },
         })
       } catch {
         publish({ busy: false, failed: true })

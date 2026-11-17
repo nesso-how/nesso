@@ -6,6 +6,29 @@ import { messages } from '../i18n.ts'
 import { ConceptDot } from './concept-dot.tsx'
 import { formatInterval } from './format.ts'
 
+export function UndoButton({
+  t,
+  disabled,
+  onClick,
+}: {
+  t: (typeof messages)[keyof typeof messages]
+  disabled: boolean
+  onClick: () => void
+}) {
+  return (
+    <Button
+      className="review-end"
+      variant="ghost"
+      disabled={disabled}
+      aria-keyshortcuts="Backspace"
+      onClick={onClick}
+    >
+      {t.undo}
+      <Kbd>{t.backspace}</Kbd>
+    </Button>
+  )
+}
+
 export function Overview({
   state,
   review,
@@ -14,6 +37,7 @@ export function Overview({
   title,
   heading,
   onStart,
+  onUndo,
 }: {
   state: ActionState
   review: Review
@@ -22,6 +46,7 @@ export function Overview({
   title: string
   heading: RefObject<HTMLHeadingElement | null>
   onStart: (event: MouseEvent) => void
+  onUndo?: () => void
 }) {
   const { progress, outcome, busy, failed } = snapshot
   const t = messages[state.locale]
@@ -67,10 +92,19 @@ export function Overview({
         </div>
       ) : (
         <p className="review-intro">
-          {ready.size ? `${ready.size} ${ready.size === 1 ? t.readyOne : t.ready}` : t.nothingDue}
+          {!ordered.length
+            ? t.noConcepts
+            : ready.size
+              ? `${ready.size} ${ready.size === 1 ? t.readyOne : t.ready}`
+              : t.nothingDue}
         </p>
       )}
-      {ordered.length ? (
+      {outcome && onUndo && (
+        <div className="review-session-actions">
+          <UndoButton t={t} disabled={busy || failed} onClick={onUndo} />
+        </div>
+      )}
+      {ordered.length > 0 && (
         <ul className="review-list nesso-scroll" tabIndex={0} aria-label={t.concepts}>
           {ordered.map((concept) => {
             const record = progress.get(concept.id)
@@ -89,8 +123,6 @@ export function Overview({
             )
           })}
         </ul>
-      ) : (
-        <p className="review-empty">{t.noConcepts}</p>
       )}
       {ready.size > 0 && (
         <div className="review-start">
