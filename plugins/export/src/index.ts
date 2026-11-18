@@ -22,9 +22,7 @@ function serializeView(graph: ViewGraphSnapshot, name?: string) {
         target,
       })),
     },
-    name === undefined
-      ? []
-      : [{ id: newIri(), name, members, ...(relationBends.length ? { relationBends } : {}) }],
+    name === undefined ? [] : [{ id: newIri(), name, members, relationBends }],
   )
 }
 

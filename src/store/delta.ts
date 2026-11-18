@@ -1,5 +1,5 @@
 import type { GraphSnapshot, SavedView } from '@nesso-how/core'
-import { relationKey } from '@nesso-how/schema'
+import { relationKey, type RelationBend } from '@nesso-how/schema'
 
 type Entry<T> = { readonly index: number; readonly value: T }
 export type Change<T> = {
@@ -219,10 +219,12 @@ export const sameIds = (a: readonly string[], b: readonly string[]): boolean =>
   a === b || (a.length === b.length && a.every((id, index) => id === b[index]))
 export const sameMembers = (a: readonly Member[], b: readonly Member[]): boolean =>
   a === b || (a.length === b.length && a.every((member, index) => sameMember(member, b[index])))
-type Bend = NonNullable<SavedView['relationBends']>[number]
-export const sameBend = (a: Bend, b: Bend): boolean =>
+export const sameBend = (a: RelationBend, b: RelationBend): boolean =>
   relationKey(a) === relationKey(b) && a.bend === b.bend
-export const sameBends = (a: readonly Bend[] = [], b: readonly Bend[] = []): boolean =>
+export const sameBends = (
+  a: readonly RelationBend[] = [],
+  b: readonly RelationBend[] = [],
+): boolean =>
   a === b || (a.length === b.length && a.every((bend, index) => sameBend(bend, b[index])))
 export const sameView = (a: SavedView, b: SavedView): boolean =>
   a.id === b.id &&
@@ -234,7 +236,7 @@ export const sameView = (a: SavedView, b: SavedView): boolean =>
 type ViewMetadata = Omit<SavedView, 'members' | 'relationBends'>
 export type ViewChange = Change<ViewMetadata> & {
   readonly members: readonly Change<Member>[]
-  readonly relationBends: readonly Change<Bend>[]
+  readonly relationBends: readonly Change<RelationBend>[]
 }
 export type DocumentDelta = {
   readonly concepts: readonly Change<GraphSnapshot['concepts'][number]>[]

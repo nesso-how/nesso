@@ -1,7 +1,7 @@
 {
   "groupRelations": "Group relations",
-  "bendRelation": "Bend selected relation",
-  "bendInstructions": "Drag to bend. Arrow keys adjust it, with Shift for larger steps. Home or double-click restores the automatic curve.",
+  "resetCurve": "Reset curve",
+  "bendInstructions": "Drag to bend. Double-click restores the automatic curve.",
   "ungroupRelations": "Ungroup relations",
   "fitView": "Fit view",
   "lockInteractions": "Lock interactions",

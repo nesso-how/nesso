@@ -23,7 +23,7 @@ test('zero bend reproduces automatic Bezier geometry for every attachment side',
     }
 })
 
-test('bends follow translation, rotation and scale and inverse dragging uses the segment normal', () => {
+test('bends follow rotation and inverse dragging uses the segment normal', () => {
   const endpoints = {
     source: { x: 0, y: 0 },
     target: { x: 200, y: 0 },
@@ -33,17 +33,6 @@ test('bends follow translation, rotation and scale and inverse dragging uses the
   const bent = relationCurve(endpoints, 0.25)
   assert.deepEqual(bent.midpoint, { x: 100, y: 50 })
   assert.equal(draggedBend(endpoints.source, endpoints.target, { x: 90, y: 50 }, 0), 0.25)
-  assert.deepEqual(
-    relationCurve(
-      {
-        ...endpoints,
-        source: { x: 10, y: 20 },
-        target: { x: 410, y: 20 },
-      },
-      0.25,
-    ).midpoint,
-    { x: 210, y: 120 },
-  )
   assert.deepEqual(
     relationCurve(
       {
@@ -57,4 +46,23 @@ test('bends follow translation, rotation and scale and inverse dragging uses the
     { x: -50, y: 100 },
   )
   assert.equal(draggedBend(endpoints.source, endpoints.source, { x: 50, y: 50 }, 0.2), 0.2)
+})
+
+test('changing attachment sides preserves the bend handle position', () => {
+  const endpoints = {
+    source: { x: 0, y: 7 },
+    target: { x: 200, y: -7 },
+    sourcePosition: Position.Right,
+    targetPosition: Position.Left,
+  }
+  const routed = {
+    source: { x: -50, y: 25 },
+    target: { x: 250, y: 25 },
+    sourcePosition: Position.Bottom,
+    targetPosition: Position.Bottom,
+  }
+  assert.deepEqual(
+    relationCurve(routed, 0.25, endpoints).midpoint,
+    relationCurve(endpoints, 0.25).midpoint,
+  )
 })

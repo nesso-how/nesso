@@ -22,6 +22,7 @@ import {
   ClipboardPaste,
   Plus,
   Redo2,
+  RotateCcw,
   Scissors,
   Strikethrough,
   Trash2,
@@ -563,6 +564,11 @@ export function Canvas({
   }
 
   const canRearrange = interactive && (selectedConcepts.length > 0 || viewCount > 1)
+  const bentRelations = graph.relations.filter(
+    (relation) =>
+      relation.bend &&
+      selected.some(({ kind, id }) => kind === 'relation' && id === relationKey(relation)),
+  )
   const rearrangeLabel = t(selectedConcepts.length > 0 ? 'rearrangeSelection' : 'rearrangeView')
   const rearrange = () => {
     const { concepts, relations } = presentedGraph(store.getState())
@@ -881,22 +887,6 @@ export function Canvas({
           return
         if (contextMenu) {
           event.stopPropagation()
-          return
-        }
-        const handle =
-          !event.altKey &&
-          !event.ctrlKey &&
-          !event.metaKey &&
-          !event.shiftKey &&
-          event.key.toLowerCase() === 'b' &&
-          selected.length === 1
-            ? canvas.current?.querySelector<SVGElement>(
-                `[data-bend-id="${CSS.escape(selected[0].id)}"]`,
-              )
-            : null
-        if (handle) {
-          event.preventDefault()
-          handle.focus()
           return
         }
         if (
@@ -1325,6 +1315,23 @@ export function Canvas({
                   icon: Network,
                   onClick: rearrange,
                   disabled: !interactive || selectedConcepts.length === 0,
+                },
+              ]
+            : []),
+          ...(!readOnly && contextMenu?.target === 'relation'
+            ? [
+                {
+                  label: t('resetCurve'),
+                  icon: RotateCcw,
+                  onClick: () =>
+                    write(
+                      bentRelations.map((relation) => ({
+                        kind: 'relation.bend',
+                        id: relationKey(relation),
+                        value: 0,
+                      })),
+                    ),
+                  disabled: !interactive || bentRelations.length === 0,
                 },
               ]
             : []),

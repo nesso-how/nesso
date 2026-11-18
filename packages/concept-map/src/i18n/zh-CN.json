@@ -1,7 +1,7 @@
 {
   "groupRelations": "组合关系",
-  "bendRelation": "弯曲所选关系",
-  "bendInstructions": "拖动以弯曲。方向键可调整，按住 Shift 增大步长。按 Home 或双击可恢复自动曲线。",
+  "resetCurve": "重置曲线",
+  "bendInstructions": "拖动以弯曲。双击可恢复自动曲线。",
   "ungroupRelations": "取消关系组合",
   "fitView": "适应视图",
   "lockInteractions": "锁定交互",

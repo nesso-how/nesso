@@ -23,20 +23,36 @@ const control = (point: Point, other: Point, position: Position): Point => {
   }
 }
 
-export function relationCurve(
-  { source, target, sourcePosition, targetPosition }: Endpoints,
-  bend = 0,
-) {
-  const normal = { x: source.y - target.y, y: target.x - source.x }
-  const start = control(source, target, sourcePosition)
-  const end = control(target, source, targetPosition)
-  const first = { x: start.x + (normal.x * bend * 4) / 3, y: start.y + (normal.y * bend * 4) / 3 }
-  const second = { x: end.x + (normal.x * bend * 4) / 3, y: end.y + (normal.y * bend * 4) / 3 }
+const geometry = ({ source, target, sourcePosition, targetPosition }: Endpoints) => {
+  const first = control(source, target, sourcePosition)
+  const second = control(target, source, targetPosition)
   return {
-    path: `M${source.x},${source.y} C${first.x},${first.y} ${second.x},${second.y} ${target.x},${target.y}`,
+    first,
+    second,
     midpoint: {
       x: (source.x + target.x) / 8 + ((first.x + second.x) * 3) / 8,
       y: (source.y + target.y) / 8 + ((first.y + second.y) * 3) / 8,
+    },
+  }
+}
+
+export function relationCurve(endpoints: Endpoints, bend = 0, reference = endpoints) {
+  const { source, target } = endpoints
+  const { first, second, midpoint } = geometry(endpoints)
+  const anchor = reference === endpoints ? midpoint : geometry(reference).midpoint
+  const normal = {
+    x: reference.source.y - reference.target.y,
+    y: reference.target.x - reference.source.x,
+  }
+  const displacement = {
+    x: ((anchor.x - midpoint.x + normal.x * bend) * 4) / 3,
+    y: ((anchor.y - midpoint.y + normal.y * bend) * 4) / 3,
+  }
+  return {
+    path: `M${source.x},${source.y} C${first.x + displacement.x},${first.y + displacement.y} ${second.x + displacement.x},${second.y + displacement.y} ${target.x},${target.y}`,
+    midpoint: {
+      x: anchor.x + normal.x * bend,
+      y: anchor.y + normal.y * bend,
     },
   }
 }

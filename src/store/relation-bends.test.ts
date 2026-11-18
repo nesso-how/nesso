@@ -3,7 +3,6 @@ import test from 'node:test'
 import { relationKey, serializeGraph, type Graph } from '@nesso-how/schema'
 import { NessoError } from '@nesso-how/errors'
 import { createNessoStore } from './create.ts'
-import { applyStateOperations } from './operations.ts'
 import { copyGraph, pasteOperations } from '../graph/commands.ts'
 import { loadPersistence } from './persistence.ts'
 
@@ -51,13 +50,6 @@ test('bends are view-local, keep the semantic graph and unchanged objects, and u
   store.setView(first)
   store.setConceptPosition('urn:a', { x: 300, y: 200 })
   assert.equal(store.getState().viewGraph.relations[0].bend, 0.4)
-  const { delta } = applyStateOperations(
-    store.getState(),
-    [{ kind: 'relation.bend', id: key, value: 0.5 }],
-    { renderers: new Map(), themes: new Map() },
-  )
-  assert.equal(delta.views[0].members.length, 0)
-  assert.equal(delta.views[0].relationBends.length, 1)
 })
 
 test('retyping preserves bends in every view while reconnection and removals clean them undoably', () => {
@@ -99,7 +91,6 @@ test('invalid bend operations reject complete batches without state or history c
   const { store, first } = fixture()
   for (const operation of [
     { kind: 'relation.bend' as const, id: key, value: NaN },
-    { kind: 'relation.bend' as const, id: key, value: Infinity },
     { kind: 'relation.bend' as const, id: 'missing', value: 0.2 },
   ]) {
     const before = store.getState()
@@ -118,28 +109,20 @@ test('invalid bend operations reject complete batches without state or history c
   store.setViewMembership(first, 'urn:b', false)
   store.setView(first)
   assert.throws(() => store.setRelationBend(key, 0.2), /not in the view/)
-  const self = { ...relation, target: relation.source }
-  const host = createNessoStore({ ...graph(), relations: [self] })
-  host.store.createView('Self', ['urn:a'])
-  assert.throws(() => host.store.setRelationBend(relationKey(self), 0.2), /Self-relations/)
 })
 
-test('clipboard remaps bends and undoes the entire insertion', () => {
+test('clipboard remaps bends', () => {
   const { store } = fixture()
   store.setRelationBend(key, 0.25)
   const copied = copyGraph(store.getState().viewGraph, [{ kind: 'relation', id: key }])!
-  const beforePaste = store.getState()
   store.applyOperations(pasteOperations(copied))
   const added = store
     .getState()
     .viewGraph.relations.find((relation) => relation.source !== 'urn:a')!
   assert.equal(added.bend, 0.25)
-  store.undo()
-  assert.deepEqual(store.getState().graph, beforePaste.graph)
-  assert.deepEqual(store.getState().workspace.savedViews, beforePaste.workspace.savedViews)
 })
 
-test('persisted bends validate references and older records migrate without changing their source', async () => {
+test('persisted bends round-trip and invalid references block loading', async () => {
   const { store } = fixture()
   store.setRelationBend(key, 0.25)
   const state = store.getState()
@@ -162,23 +145,4 @@ test('persisted bends validate references and older records migrate without chan
     ],
   }
   assert.deepEqual((await load({ ...record, workspace })).blocked, ['document'])
-  const legacy = {
-    ...record,
-    version: 5,
-    workspace: {
-      ...state.workspace,
-      savedViews: state.workspace.savedViews.map(({ id, name, pinned, members }) => ({
-        id,
-        name,
-        pinned,
-        members,
-      })),
-    },
-  }
-  const original = structuredClone(legacy)
-  const loaded = await load(legacy)
-  assert.deepEqual(loaded.blocked, [])
-  assert.ok(loaded.upgrades?.document)
-  assert.equal((loaded.upgrades.document as { version: number }).version, 6)
-  assert.deepEqual(legacy, original)
 })

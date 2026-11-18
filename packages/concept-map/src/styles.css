@@ -57,7 +57,6 @@
 
 .relation-bend-handle {
   cursor: grab;
-  outline: none;
   pointer-events: all;
   touch-action: none;
 }
@@ -73,8 +72,7 @@
   scale: calc(1 / var(--graph-zoom, 1));
 }
 
-.relation-bend-handle:hover .relation-bend-dot,
-.relation-bend-handle:focus-visible .relation-bend-dot {
+.relation-bend-handle:hover .relation-bend-dot {
   fill: var(--primary);
 }
 
@@ -105,30 +103,12 @@
 
 .react-flow__edgeupdater-source {
   translate: var(--source-offset, 0 0);
+  transform-origin: var(--source-origin, center);
 }
 
 .react-flow__edgeupdater-target {
   translate: var(--target-offset, 0 0);
-}
-
-.graph-source-left .react-flow__edgeupdater-source,
-.graph-target-left .react-flow__edgeupdater-target {
-  transform-origin: right;
-}
-
-.graph-source-right .react-flow__edgeupdater-source,
-.graph-target-right .react-flow__edgeupdater-target {
-  transform-origin: left;
-}
-
-.graph-source-top .react-flow__edgeupdater-source,
-.graph-target-top .react-flow__edgeupdater-target {
-  transform-origin: bottom;
-}
-
-.graph-source-bottom .react-flow__edgeupdater-source,
-.graph-target-bottom .react-flow__edgeupdater-target {
-  transform-origin: top;
+  transform-origin: var(--target-origin, center);
 }
 
 .react-flow__edgeupdater:hover,

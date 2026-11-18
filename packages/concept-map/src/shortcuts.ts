@@ -15,7 +15,6 @@ export function conceptMapShortcuts(locale: Locale) {
       { label: t('shortcutFitView'), keys: [['F']] },
       { label: t('groupRelations'), keys: [['G']] },
       { label: t('shortcutRearrange'), keys: [['L']] },
-      { label: t('bendRelation'), keys: [['B']] },
     ],
   }
 }

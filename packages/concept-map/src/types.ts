@@ -29,6 +29,8 @@ export type RelationEdge = Edge<
     relations?: readonly string[]
     sourceOffset?: number
     targetOffset?: number
+    sourceReferenceOffset?: number
+    targetReferenceOffset?: number
     bend?: number
     editable?: boolean
   },

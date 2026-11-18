@@ -1,7 +1,7 @@
 {
   "groupRelations": "Raggruppa le relazioni",
-  "bendRelation": "Curva la relazione selezionata",
-  "bendInstructions": "Trascina per curvare. Le frecce regolano la curva, con Maiusc per passi maggiori. Home o doppio clic ripristinano la curva automatica.",
+  "resetCurve": "Ripristina curva",
+  "bendInstructions": "Trascina per curvare. Il doppio clic ripristina la curva automatica.",
   "ungroupRelations": "Separa le relazioni",
   "fitView": "Adatta alla vista",
   "lockInteractions": "Blocca interazioni",

@@ -84,9 +84,7 @@ export function copyGraph(graph: ViewGraphSnapshot, selected: Selection): string
         })),
         relationTypes: graph.relationTypes.filter((type) => types.has(type.id)),
       },
-      members.length
-        ? [{ id: newIri(), name: '', members, ...(relationBends.length ? { relationBends } : {}) }]
-        : [],
+      members.length ? [{ id: newIri(), name: '', members, relationBends }] : [],
     ),
   )
 }

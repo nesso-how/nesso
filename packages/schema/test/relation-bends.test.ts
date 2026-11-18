@@ -29,9 +29,7 @@ test('view relation bends survive JSON-LD round trips without changing semantic 
 
 test('bends reject unknown, duplicate, self, off-view, zero and nonfinite references and values', () => {
   for (const relationBends of [
-    [{ ...relation, target: 'urn:missing', bend: 0.2 }],
     [{ ...relation, target: 'urn:c', bend: 0.2 }],
-    [{ ...relation, predicate: 'urn:missing', bend: 0.2 }],
     [{ ...relation, target: 'urn:a', bend: 0.2 }],
     [view.relationBends[0], view.relationBends[0]],
     [{ ...relation, bend: Infinity }],

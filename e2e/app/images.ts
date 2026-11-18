@@ -37,8 +37,38 @@ export async function verifyImages(context: CheckContext) {
     () => evaluate<boolean>(`!!document.querySelector('#canvas [data-bend-id]')`),
     Boolean,
   )
+  const transform = `document.querySelector('#canvas [data-bend-id]').getAttribute('transform')`
+  const initial = await evaluate<string>(transform)
+  const point = await evaluate<{ x: number; y: number }>(
+    `(()=>{const box=document.querySelector('#canvas [data-bend-id]').getBoundingClientRect();return {x:Math.round(box.x+box.width/2),y:Math.round(box.y+box.height/2)}})()`,
+  )
+  const pointer = (type: 'mouseDown' | 'mouseMove' | 'mouseUp', x = point.x, y = point.y) =>
+    context.window.webContents.sendInputEvent({
+      type,
+      button: 'left',
+      modifiers: type === 'mouseMove' ? ['leftbuttondown'] : [],
+      clickCount: 1,
+      x,
+      y,
+    })
+  context.window.webContents.sendInputEvent({ type: 'mouseMove', x: point.x, y: point.y })
+  await waitFor(
+    () =>
+      evaluate<boolean>(
+        `!!document.elementFromPoint(${point.x},${point.y})?.closest('#canvas [data-bend-id]')`,
+      ),
+    Boolean,
+  )
   await evaluate(
-    `document.querySelector('#canvas [data-bend-id]').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowUp',shiftKey:true,bubbles:true}));document.querySelector('#canvas .react-flow__pane').dispatchEvent(new MouseEvent('click',{bubbles:true}))`,
+    `window.__released=false;addEventListener('pointerup',()=>{window.__released=true},{capture:true,once:true})`,
+  )
+  pointer('mouseDown')
+  pointer('mouseMove', point.x + 40, point.y + 50)
+  pointer('mouseUp', point.x + 40, point.y + 50)
+  await waitFor(() => evaluate<boolean>('window.__released'), Boolean)
+  assert.notEqual(await evaluate<string>(transform), initial)
+  await evaluate(
+    `document.querySelector('#canvas .react-flow__pane').dispatchEvent(new MouseEvent('click',{bubbles:true}))`,
   )
   const before = await evaluate<{ transform: string; selected: number }>(
     `({transform:document.querySelector('#canvas .react-flow__viewport').style.transform,selected:document.querySelectorAll('#canvas .selected').length})`,
