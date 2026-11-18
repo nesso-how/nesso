@@ -106,36 +106,21 @@ export function ViewDetails({
           </Button>
         </div>
       )}
-      {view && (
-        <Button
-          disabled={readonly}
-          variant="outline"
-          className="w-full justify-start"
-          onClick={() => store.deleteView(view.id)}
-        >
-          <Trash2 />
-          {t('deleteView')}
-        </Button>
-      )}
-      {!view && (
-        <>
-          <Button
-            ref={deleteTrigger}
-            disabled={readonly}
-            variant="outline"
-            className="w-full justify-start"
-            onClick={() => setConfirmingDelete(true)}
-          >
-            <Trash2 />
-            {t('deleteView')}
-          </Button>
-          <DeleteViewDialog
-            target={confirmingDelete ? 'complete-graph' : null}
-            onClose={() => setConfirmingDelete(false)}
-            finalFocus={() => deleteTrigger.current}
-          />
-        </>
-      )}
+      <Button
+        ref={deleteTrigger}
+        disabled={readonly}
+        variant="outline"
+        className="w-full justify-start"
+        onClick={() => setConfirmingDelete(true)}
+      >
+        <Trash2 />
+        {t('deleteView')}
+      </Button>
+      <DeleteViewDialog
+        target={confirmingDelete ? (view ?? 'complete-graph') : null}
+        onClose={() => setConfirmingDelete(false)}
+        finalFocus={() => deleteTrigger.current}
+      />
     </>
   )
 }
