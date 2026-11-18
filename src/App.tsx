@@ -57,7 +57,9 @@ export default function App({
   usePluginInstallNotifications(showPluginCommands)
   const [searchOpen, setSearchOpen] = useState(false)
   const openSearch = useCallback(() => setSearchOpen(true), [setSearchOpen])
-  const [introOpen, setIntroOpen] = useState(() => !host.store.getState().preferences.introSeen)
+  const [introOpen, setIntroOpen] = useState(
+    () => !import.meta.env.DEV && !host.store.getState().preferences.introSeen,
+  )
   const [settingsPage, setSettingsPage] = useState('general')
   const [deleting, setDeleting] = useState<SavedView | 'complete-graph' | null>(null)
   const [deletingConcepts, setDeletingConcepts] = useState(false)
