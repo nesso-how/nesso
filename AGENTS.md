@@ -7,8 +7,9 @@ See [README.md](README.md) for the product overview, architecture, and package d
 - Leave changes uncommitted and unpushed unless the user explicitly requests a commit or push.
 - Before opening a PR, fetch `origin` and ensure the branch includes the latest `origin/main`; resolve or report blockers before proceeding.
 - Complete applicable sections of `.github/pull_request_template.md` for PRs and the matching `.github/ISSUE_TEMPLATE/` template for issues, when available.
+- Before implementing an issue, resolve its open decisions with the user and record them in the issue body.
 - Enable auto-merge only on explicit request; watch the PR until merged or blocked, and report blockers.
-- Fetch `origin` before starting work and after a PR merges during the session. Fast-forward `main` to `origin/main` in the main clone, and start new branches, including in session worktrees, from `origin/main`. Report blockers; never discard changes or force updates.
+- Fetch `origin` before starting work and after a PR merges during the session. Fast-forward `main` to `origin/main` in the main clone, and start new branches from `origin/main` in a session worktree, creating one with the harness's worktree tool when the session runs in the main clone. Report blockers; never discard changes or force updates.
 - After a PR merges during the session, delete its local branch and remove the session's worktree once the merged PR head matches the local branch and the worktree is clean; use the harness's worktree tool when available, leaving the worktree first if the session runs in it. Leave other branches and worktrees untouched.
 - Centralize migration ladders in a dedicated `migrations.ts` file within the owning module, separate from current-format parsers. Create migration files only when a migration exists; avoid generic migration frameworks or scattered compatibility branches. Follow and maintain the [compatibility guide and data format index](docs/compatibility.md).
 - Keep `docs/compatibility.md` to durable policy and the format index; describe version-specific changes, such as plugin API bumps, in the commit's `BREAKING CHANGE:` footer, which feeds `CHANGELOG.md`.
