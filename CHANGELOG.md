@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.0.0-beta.24 — 2026-11-18
+
+### Breaking Changes
+
+- **concept-map:** Bend relations with a draggable handle (#361)
+  plugin API 6 adds view-local relation bends to
+  snapshots, the declared `relation.bend` write, and `setRelationBend`.
+  API 5 plugins must update their manifest and rebuild against the current
+  SDK; bend writes target only the active saved view. JSON-LD profile 3
+  and document record 6 preserve per-view bends and migrate older
+  supported data without manual curves. Older hosts cannot read the new
+  formats.
+
+### Documentation
+
+- **agents:** Clean up branch and worktree after merge (#372)
+
+### Fixes
+
+- **theme:** Apply color scheme before splash (#371)
+- **views:** Delete only concepts exclusive to the deleted view (#373)
+
 ## 1.0.0-beta.23 — 2026-11-17
 
 ### Features
