@@ -10,7 +10,7 @@ import {
 } from '@/plugins'
 import { notifications } from '@/notifications'
 import { host, startAutosave } from '@/store'
-import { connectTheme } from '@/theme'
+import { connectTheme, resolveColorScheme } from '@/theme'
 import { translate } from '@/i18n'
 import { aiPlugins, chat, documentation } from '@/ai'
 import { connectMcpHost } from '@/ai/mcp'
@@ -20,6 +20,8 @@ import App from './App'
 import { Splash } from '@/components/app/Splash'
 import { ErrorBoundary } from '@/components/app/ErrorBoundary'
 
+const systemDark = matchMedia(import.meta.env.DEV ? 'not all' : '(prefers-color-scheme: dark)')
+document.documentElement.style.colorScheme = resolveColorScheme(host, systemDark)
 const root = createRoot(document.getElementById('root')!)
 const animate =
   (performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined)
@@ -64,7 +66,7 @@ try {
 }
 const stopTheme = connectTheme(
   host,
-  matchMedia(import.meta.env.DEV ? 'not all' : '(prefers-color-scheme: dark)'),
+  systemDark,
   (definition, scheme) => {
     const theme = getThemePresentation(definition.id)!
     for (const [key, value] of Object.entries(theme.tokens[scheme]))
