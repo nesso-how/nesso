@@ -64,7 +64,7 @@ try {
 }
 const stopTheme = connectTheme(
   host,
-  matchMedia('(prefers-color-scheme: dark)'),
+  matchMedia(import.meta.env.DEV ? 'not all' : '(prefers-color-scheme: dark)'),
   (definition, scheme) => {
     const theme = getThemePresentation(definition.id)!
     for (const [key, value] of Object.entries(theme.tokens[scheme]))

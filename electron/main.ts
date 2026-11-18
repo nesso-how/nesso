@@ -37,6 +37,7 @@ import { createFileStorage } from './persistence/file-storage.ts'
 import { releasesUrl } from '../shared/link-policy.ts'
 
 const dev = !app.isPackaged && process.argv.includes('--dev')
+if (dev) nativeTheme.themeSource = 'light'
 const rendererUrl = appUrl(dev)
 const root = path.join(app.getAppPath(), 'dist')
 const startupCheckProfile = process.env.NESSO_STARTUP_CHECK_PROFILE
