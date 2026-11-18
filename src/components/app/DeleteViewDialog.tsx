@@ -1,8 +1,8 @@
 import type { SavedView } from '@nesso-how/core'
 import { ConfirmDialog } from '@nesso-how/ui'
 import { useRef, useState } from 'react'
-import { host } from '@/store'
-import { buildDeleteViewOperations } from '@/store/views'
+import { host, useNessoStore } from '@/store'
+import { buildDeleteViewOperations, exclusiveConceptIds } from '@/store/views'
 import { useTranslation } from '@/i18n'
 
 export function DeleteViewDialog({
@@ -16,10 +16,13 @@ export function DeleteViewDialog({
 }) {
   const t = useTranslation()
   const cancel = useRef<HTMLButtonElement>(null)
-  const [withConcepts, setWithConcepts] = useState(true)
+  const [keepConcepts, setKeepConcepts] = useState(false)
   const complete = target === 'complete-graph'
+  const exclusive = useNessoStore((state) =>
+    target && !complete ? exclusiveConceptIds(state, target.id).size : 0,
+  )
   const close = () => {
-    setWithConcepts(true)
+    setKeepConcepts(false)
     onClose()
   }
   return (
@@ -39,22 +42,22 @@ export function DeleteViewDialog({
           host.store.applyOperations(
             buildDeleteViewOperations(
               host.store.getState(),
-              target === 'complete-graph' ? null : target.id,
-              withConcepts,
+              complete ? null : target.id,
+              keepConcepts,
             ),
           )
         close()
       }}
     >
-      {!complete && target && (
+      {exclusive > 0 && (
         <label className="mt-4 flex cursor-pointer items-center gap-2 text-xs">
           <input
             type="checkbox"
-            checked={withConcepts}
-            onChange={(event) => setWithConcepts(event.target.checked)}
+            checked={keepConcepts}
+            onChange={(event) => setKeepConcepts(event.target.checked)}
             className="size-4 shrink-0 accent-primary"
           />
-          {t('deleteViewConcepts')}
+          {t('deleteViewKeepConcepts', { count: exclusive })}
         </label>
       )}
     </ConfirmDialog>

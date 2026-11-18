@@ -95,7 +95,7 @@ export const aiTools = {
   },
   views: {
     description:
-      'List paginated view summaries including Overview, or read a page of membership IDs with id. Overview is the complete graph, has id null and cannot be deleted. Creating a saved view makes it active. Deleting the active saved view falls back to Overview.',
+      'List paginated view summaries including Overview, or read a page of membership IDs with id. Overview is the complete graph, has id null and cannot be deleted. Creating a saved view makes it active. Deleting the active saved view falls back to Overview. Deleting a saved view keeps its concepts; to match the app, also remove concepts in no other saved view in the same batch.',
     inputSchema: z.strictObject({ id: id.nullable().optional(), ...page }),
   },
   relation_types: {

@@ -2,17 +2,23 @@ import type { NessoOperation, NessoState } from '@nesso-how/core'
 import { newIri } from '@nesso-how/schema'
 import { defaultViewName } from './operations.ts'
 
+export const exclusiveConceptIds = (state: NessoState, viewId: string): Set<string> => {
+  const views = state.workspace.savedViews
+  const ids = new Set(views.find((view) => view.id === viewId)?.members.map(({ id }) => id))
+  for (const view of views)
+    if (view.id !== viewId) for (const { id } of view.members) ids.delete(id)
+  return ids
+}
+
 export const buildDeleteViewOperations = (
   state: NessoState,
   viewId: string | null,
-  withConcepts: boolean,
+  keepConcepts = false,
 ): NessoOperation[] => {
   const view = state.workspace.savedViews.find((view) => view.id === viewId)
   if (viewId !== null && !view) return []
-  const ids = new Set(view?.members.map(({ id }) => id))
-  const concepts = state.graph.concepts.filter(
-    (concept) => viewId === null || (withConcepts && ids.has(concept.id)),
-  )
+  const ids = viewId === null || keepConcepts ? new Set() : exclusiveConceptIds(state, viewId)
+  const concepts = state.graph.concepts.filter((concept) => viewId === null || ids.has(concept.id))
   const views = view ? [view] : state.workspace.savedViews
   const operations: NessoOperation[] = [
     ...concepts.map((concept) => ({ kind: 'concept.remove' as const, id: concept.id })),
