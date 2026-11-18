@@ -38,6 +38,7 @@ const documentV2 = z.strictObject({
 const documentV3 = documentV2.extend({ version: z.literal(3) })
 const documentV4 = documentV2.extend({ version: z.literal(4) })
 const documentV5 = documentV2.extend({ version: z.literal(5) })
+const documentV6 = documentV2.extend({ version: z.literal(6) })
 const workspaceV2 = z.looseObject({
   savedViews: z.array(z.looseObject({ conceptIds: z.array(z.string()) })),
 })
@@ -150,7 +151,7 @@ export function migratePluginStorage(value: unknown): unknown {
   }
 }
 
-export function migrateDocument(value: unknown): z.infer<typeof documentV5> {
+export function migrateDocument(value: unknown): z.infer<typeof documentV6> {
   const { version } = parseSettings(versionSchema, value)
   switch (version) {
     case 1: {
@@ -206,7 +207,7 @@ export function migrateDocument(value: unknown): z.infer<typeof documentV5> {
       const saved = parseSettings(documentV4, value)
       const workspace =
         saved.workspace === null ? null : parseSettings(workspaceV4, saved.workspace)
-      return {
+      return migrateDocument({
         ...saved,
         version: 5,
         workspace: workspace && {
@@ -216,10 +217,12 @@ export function migrateDocument(value: unknown): z.infer<typeof documentV5> {
             members: view.members.map(migratePresetColor),
           })),
         },
-      }
+      })
     }
     case 5:
-      return parseSettings(documentV5, value)
+      return { ...parseSettings(documentV5, value), version: 6 }
+    case 6:
+      return parseSettings(documentV6, value)
     default:
       return fail('version', 'Unsupported storage version')
   }

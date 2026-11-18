@@ -1,5 +1,7 @@
 {
   "groupRelations": "Group relations",
+  "resetCurve": "Reset curve",
+  "bendInstructions": "Drag to bend. Double-click restores the automatic curve.",
   "ungroupRelations": "Ungroup relations",
   "fitView": "Fit view",
   "lockInteractions": "Lock interactions",

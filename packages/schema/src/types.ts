@@ -27,10 +27,14 @@ const relationSchema = z.strictObject({
   predicate: iriSchema,
   target: iriSchema,
 })
+export const relationBendSchema = relationSchema
+  .extend({ bend: z.number().refine((value) => value !== 0, 'Manual bend must be nonzero') })
+  .refine((relation) => relation.source !== relation.target, 'Self-relations cannot be bent')
 const viewSchema = z.strictObject({
   id: iriSchema,
   name: z.string(),
   members: z.array(viewMemberSchema),
+  relationBends: z.array(relationBendSchema).optional(),
 })
 
 const graphShape = {
@@ -93,12 +97,14 @@ export const viewGraphSchema = z
   .strictObject({
     ...graphShape,
     concepts: z.array(conceptSchema.extend(presentationSchema.partial().shape)),
+    relations: z.array(relationSchema.extend({ bend: z.number().optional() })),
   })
   .superRefine(checkReferences)
 
 export const viewsSchema = (graph: Graph) =>
   z.array(viewSchema).superRefine((views, context) => {
     const concepts = new Set(graph.concepts.map(({ id }) => id))
+    const relations = new Set(graph.relations.map(relationKey))
     const taken = new Set([...concepts, ...graph.relationTypes.map(({ id }) => id)])
     for (const [index, view] of views.entries()) {
       if (taken.has(view.id))
@@ -118,6 +124,22 @@ export const viewsSchema = (graph: Graph) =>
           })
         members.add(member.id)
       }
+      const bends = new Set<string>()
+      for (const [position, relation] of (view.relationBends ?? []).entries()) {
+        const key = relationKey(relation)
+        if (
+          bends.has(key) ||
+          !relations.has(key) ||
+          !members.has(relation.source) ||
+          !members.has(relation.target)
+        )
+          context.addIssue({
+            code: 'custom',
+            path: [index, 'relationBends', position],
+            message: 'Duplicate or invalid relation bend',
+          })
+        bends.add(key)
+      }
     }
   })
 
@@ -128,4 +150,5 @@ export type ViewMember = z.infer<typeof viewMemberSchema>
 export type View = z.infer<typeof viewSchema>
 export type RelationType = z.infer<typeof relationTypeSchema>
 export type Relation = z.infer<typeof relationSchema>
+export type RelationBend = z.infer<typeof relationBendSchema>
 export type Graph = z.infer<typeof graphSchema>

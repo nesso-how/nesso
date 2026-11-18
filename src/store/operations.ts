@@ -31,7 +31,15 @@ import {
   parseWorkspace,
 } from './settings.ts'
 import { sectionIds, type HostOperation, type HostState, type RendererDefinition } from './types.ts'
-import { ListEdit, sameConcept, sameMembers, sameType, sameView, viewChanges } from './delta.ts'
+import {
+  ListEdit,
+  sameBends,
+  sameConcept,
+  sameMembers,
+  sameType,
+  sameView,
+  viewChanges,
+} from './delta.ts'
 import { applyPluginStorage } from './plugin-storage.ts'
 
 export const conceptPlacementOffset = Object.freeze({ x: 160, y: 100 })
@@ -69,6 +77,27 @@ export const checkGraph = (graph: GraphSnapshot): void => {
   if (issues.length > 0) throw new SchemaError(issues)
 }
 
+export const checkWorkspace = (graph: GraphSnapshot, workspace: WorkspaceState): void => {
+  const concepts = new Set(graph.concepts.map(({ id }) => id))
+  const relations = new Set(graph.relations.map(relationKey))
+  for (const [index, view] of workspace.savedViews.entries()) {
+    const members = new Set(view.members.map(({ id }) => id))
+    if ([...members].some((id) => !concepts.has(id)))
+      fail(`workspace.savedViews[${index}].members`, 'Unknown concept')
+    const bends = (view.relationBends ?? []).map(relationKey)
+    if (
+      new Set(bends).size < bends.length ||
+      view.relationBends?.some(
+        (bend) =>
+          !relations.has(relationKey(bend)) ||
+          !members.has(bend.source) ||
+          !members.has(bend.target),
+      )
+    )
+      fail(`workspace.savedViews[${index}].relationBends`, 'Duplicate or invalid relation bend')
+  }
+}
+
 export const reconcileSelection = (graph: GraphSnapshot, selected: Selection): Selection => {
   if (selected.length === 0) return selected
   const available = {
@@ -85,14 +114,17 @@ export const materialize = (
   previous?: NessoState,
 ): ViewGraphSnapshot => {
   if (workspace.activeViewId === null) return graph
-  const members =
-    workspace.savedViews.find((view) => view.id === workspace.activeViewId)?.members ?? []
-  const previousMembers =
-    previous && previous.workspace.activeViewId === workspace.activeViewId
-      ? previous.workspace.savedViews.find((view) => view.id === workspace.activeViewId)?.members
+  const view = workspace.savedViews.find(({ id }) => id === workspace.activeViewId)
+  const previousView =
+    previous?.workspace.activeViewId === workspace.activeViewId
+      ? previous.workspace.savedViews.find(({ id }) => id === workspace.activeViewId)
       : undefined
+  const members = view?.members ?? []
+  const previousMembers = previousView?.members
   const samePresentation = !!previousMembers && sameMembers(members, previousMembers)
-  if (samePresentation && graph === previous!.graph) return previous!.viewGraph
+  const sameRelationPresentation = sameBends(view?.relationBends, previousView?.relationBends)
+  if (samePresentation && sameRelationPresentation && graph === previous!.graph)
+    return previous!.viewGraph
   const scoped =
     !!previousMembers &&
     members.length === previousMembers.length &&
@@ -103,6 +135,12 @@ export const materialize = (
   )
   const previousPresentation = new Map(previousMembers?.map((member) => [member.id, member]))
   const previousConcepts = new Map(previous?.graph.concepts.map((concept) => [concept.id, concept]))
+  const relationPresentation = new Map(
+    view?.relationBends?.map((relation) => [relationKey(relation), relation.bend]),
+  )
+  const previousRelations = new Map(
+    previous?.viewGraph.relations.map((relation) => [relationKey(relation), relation]),
+  )
   return {
     concepts:
       samePresentation && graph.concepts === previous!.graph.concepts
@@ -121,11 +159,18 @@ export const materialize = (
             return [{ ...concept, ...view }]
           }),
     relations:
-      scoped && graph.relations === previous!.graph.relations
+      scoped && sameRelationPresentation && graph.relations === previous!.graph.relations
         ? previous!.viewGraph.relations
-        : graph.relations.filter(
-            (relation) => presentation.has(relation.source) && presentation.has(relation.target),
-          ),
+        : graph.relations
+            .filter(
+              (relation) => presentation.has(relation.source) && presentation.has(relation.target),
+            )
+            .map((relation) => {
+              const bend = relationPresentation.get(relationKey(relation))
+              if (bend === undefined) return relation
+              const previous = previousRelations.get(relationKey(relation))
+              return previous?.bend === bend ? previous : { ...relation, bend }
+            }),
     relationTypes: graph.relationTypes,
   }
 }
@@ -173,15 +218,7 @@ export const sameGraph = (left: GraphSnapshot, right: GraphSnapshot): boolean =>
 
 export const sameWorkspace = (left: WorkspaceState, right: WorkspaceState): boolean =>
   left.activeViewId === right.activeViewId &&
-  sameItems(
-    left.savedViews,
-    right.savedViews,
-    (a, b) =>
-      a.id === b.id &&
-      a.name === b.name &&
-      a.pinned === b.pinned &&
-      sameMembers(a.members, b.members),
-  ) &&
+  sameItems(left.savedViews, right.savedViews, sameView) &&
   Object.keys(left.viewports).length === Object.keys(right.viewports).length &&
   Object.entries(left.viewports).every(([id, a]) => {
     const b = right.viewports[id]
@@ -343,6 +380,15 @@ export const applyStateOperations = (
     relationOrigins!.delete(id)
     if (origin !== undefined) relationOrigins!.set(triple, origin)
     relations.set(id, next)
+    if (next.source === relation.source && next.target === relation.target)
+      for (const view of views.items)
+        if (view.relationBends?.some((bend) => relationKey(bend) === id))
+          updateView(view.id, (view) => ({
+            ...view,
+            relationBends: view.relationBends!.map((bend) =>
+              relationKey(bend) === id ? { ...next, bend: bend.bend } : bend,
+            ),
+          }))
     selected = selected.some((item) => item.kind === 'relation' && item.id === id)
       ? selected.map((item) =>
           item.kind === 'relation' && item.id === id ? { kind: 'relation', id: triple } : item,
@@ -353,7 +399,8 @@ export const applyStateOperations = (
   const updateView = (id: string, update: (view: SavedView) => SavedView): void => {
     const view = views.get(id) ?? fail('view.id', 'Unknown view')
     const next = update(view)
-    views.set(id, next)
+    const { relationBends, ...metadata } = next
+    views.set(id, relationBends?.length === 0 ? metadata : next)
     if (views.items !== workspace.savedViews) workspace = { ...workspace, savedViews: views.items }
   }
 
@@ -581,6 +628,24 @@ export const applyStateOperations = (
           fail('relation.target', 'Relation must connect two different concepts')
         updateRelation(operation.id, { source: operation.source, target: operation.target })
         break
+      case 'relation.bend': {
+        const relation = relations.get(operation.id) ?? fail('relation.id', 'Unknown relation')
+        const viewId = workspace.activeViewId ?? fail('workspace.activeViewId', 'No active view')
+        updateView(viewId, (view) => {
+          if (
+            !view.members.some(({ id }) => id === relation.source) ||
+            !view.members.some(({ id }) => id === relation.target)
+          )
+            fail('relation.bend', 'Relation is not in the view')
+          const bend = { ...relation, bend: operation.value }
+          const bends = view.relationBends ?? []
+          const relationBends = bends.some((item) => relationKey(item) === operation.id)
+            ? bends.map((item) => (relationKey(item) === operation.id ? bend : item))
+            : [...bends, bend]
+          return { ...view, relationBends: relationBends.filter((item) => item.bend !== 0) }
+        })
+        break
+      }
       case 'document.reset': {
         const document = newDocument(operation.id, newIri())
         documentId = newIri()
@@ -762,6 +827,16 @@ export const applyStateOperations = (
     types.removeWhere((type) => removed.has(type.id))
   }
   const typeEdit = types.finish()
+  for (const view of views.items) {
+    if (!view.relationBends) continue
+    const members = new Set(view.members.map(({ id }) => id))
+    const kept = view.relationBends.filter(
+      (bend) =>
+        !!relations.get(relationKey(bend)) && members.has(bend.source) && members.has(bend.target),
+    )
+    if (kept.length < view.relationBends.length)
+      updateView(view.id, (view) => ({ ...view, relationBends: kept }))
+  }
   const viewEdit = views.finish()
   let candidate: GraphSnapshot = {
     concepts: conceptEdit.items,
@@ -782,12 +857,7 @@ export const applyStateOperations = (
     workspace = { ...workspace, savedViews: viewEdit.items }
   if (workspace !== state.workspace) {
     parseWorkspace(workspace)
-    if (
-      viewEdit.changes.some((change) =>
-        change.after?.value.members.some(({ id }) => !concepts.get(id)),
-      )
-    )
-      fail('view.members', 'Unknown concept')
+    checkWorkspace(candidate, workspace)
     if (sameWorkspace(workspace, state.workspace)) workspace = state.workspace
   }
   if (preferences !== state.preferences) {

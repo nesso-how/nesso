@@ -114,7 +114,7 @@ const savedStorage = () => {
   host.store.setChatMessages([{ id: 'user', role: 'user', content: 'Hello' }])
   const state = host.store.getState()
   storage.records.set('document', {
-    version: 5,
+    version: 6,
     documentId: state.documentId,
     graph: serializeGraph(state.graph as Graph),
     workspace: state.workspace,
@@ -225,8 +225,8 @@ test('legacy documents migrate view presentation and viewports and collect unsor
     version: number
     graph: { schemaVersion: number }
   }
-  assert.equal(saved.version, 5)
-  assert.equal(saved.graph.schemaVersion, 2)
+  assert.equal(saved.version, 6)
+  assert.equal(saved.graph.schemaVersion, 3)
   assert.deepEqual(parseGraph(saved.graph).views, [])
   await persistence.dispose()
 })
@@ -662,7 +662,7 @@ test('malformed records stay protected while the other sections save', async () 
       {
         version: 3,
         documentId: state.documentId,
-        graph: { ...serializeGraph(fixture()), schemaVersion: 3 },
+        graph: { ...serializeGraph(fixture()), schemaVersion: 4 },
         workspace: state.workspace,
       },
       'document.schemaVersion',

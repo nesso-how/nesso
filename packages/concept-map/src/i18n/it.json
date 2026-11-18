@@ -1,5 +1,7 @@
 {
   "groupRelations": "Raggruppa le relazioni",
+  "resetCurve": "Ripristina curva",
+  "bendInstructions": "Trascina per curvare. Il doppio clic ripristina la curva automatica.",
   "ungroupRelations": "Separa le relazioni",
   "fitView": "Adatta alla vista",
   "lockInteractions": "Blocca interazioni",

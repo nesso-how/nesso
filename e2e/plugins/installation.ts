@@ -198,7 +198,7 @@ async function buildFixture(state: InstallState, name: string, version: string) 
           }
         : {}),
       nesso: {
-        apiVersion: 5,
+        apiVersion: 6,
         kind,
         entry,
         writes: kind === 'actions' ? ['concept.label'] : [],
@@ -310,6 +310,7 @@ async function verifyBundledDetails(driver: Driver, state: InstallState, window:
                 'Style concepts',
                 'Move concepts',
                 'Connect relations',
+                'Adjust relation curves',
                 'Create views',
                 'Update view membership',
               ],
@@ -1143,7 +1144,7 @@ async function verifyLocalProposal(driver: Driver) {
     const manifest = {
       name,
       version: '1.0.0',
-      nesso: { apiVersion: 5, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+      nesso: { apiVersion: 6, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
       i18n: {
         metadata: {
           name: { en: 'Test local' },

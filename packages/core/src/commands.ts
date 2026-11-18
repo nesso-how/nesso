@@ -84,6 +84,11 @@ export function createWriteCommands<Commit, Created>(
       applyOperations([{ kind: 'relation.type.create', id, typeId: newIri(), label }]),
     removeConcept: (id) => applyOperations([{ kind: 'concept.remove', id }]),
     removeRelation: (id) => applyOperations([{ kind: 'relation.remove', id }]),
+    setRelationBend: (id, value, historyGroup) =>
+      applyOperations(
+        [{ kind: 'relation.bend', id, value }],
+        historyGroup ? { historyGroup } : undefined,
+      ),
     setActiveVocab: (id) => applyOperations([{ kind: 'preferences.vocab', id }]),
     setActiveTheme: (id) => applyOperations([{ kind: 'preferences.theme', id }]),
     setLocale: (value) => applyOperations([{ kind: 'preferences.locale', value }]),

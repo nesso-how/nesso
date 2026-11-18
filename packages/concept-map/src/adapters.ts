@@ -49,6 +49,21 @@ export const facingSide = (from: ConceptBounds, to: ConceptBounds): Position => 
       : Position.Top
 }
 
+export const relationSides = (source: ConceptBounds, target: ConceptBounds, bend = 0) => {
+  if (!bend) return { source: facingSide(source, target), target: facingSide(target, source) }
+  const from = { x: source.position.x + source.width / 2, y: source.position.y + source.height / 2 }
+  const to = { x: target.position.x + target.width / 2, y: target.position.y + target.height / 2 }
+  const apex = {
+    position: {
+      x: (from.x + to.x) / 2 + (from.y - to.y) * bend,
+      y: (from.y + to.y) / 2 + (to.x - from.x) * bend,
+    },
+    width: 0,
+    height: 0,
+  }
+  return { source: facingSide(source, apex), target: facingSide(target, apex) }
+}
+
 export function conceptNode(
   concept: ConceptView,
   selected: boolean,
@@ -85,18 +100,17 @@ export function relationEdge(
   })
   const source = bounds(relation.source)
   const target = bounds(relation.target)
-  const sourceHandle =
-    relation.source === relation.target ? Position.Right : facingSide(source, target)
-  const targetHandle =
-    relation.source === relation.target ? Position.Top : facingSide(target, source)
+  const sides =
+    relation.source === relation.target
+      ? { source: Position.Right, target: Position.Top }
+      : relationSides(source, target, relation.bend)
   return {
     id: relationKey(relation),
     type: 'relation',
     source: relation.source,
     target: relation.target,
-    sourceHandle,
-    targetHandle,
-    className: `graph-source-${sourceHandle} graph-target-${targetHandle}`,
+    sourceHandle: sides.source,
+    targetHandle: sides.target,
     label:
       relation.predicate === defaultTypeId
         ? undefined
@@ -182,6 +196,10 @@ const sameEdge = (previous: RelationEdge, edge: RelationEdge) =>
   previous.targetHandle === edge.targetHandle &&
   previous.data?.sourceOffset === edge.data?.sourceOffset &&
   previous.data?.targetOffset === edge.data?.targetOffset &&
+  previous.data?.sourceReferenceOffset === edge.data?.sourceReferenceOffset &&
+  previous.data?.targetReferenceOffset === edge.data?.targetReferenceOffset &&
+  previous.data?.bend === edge.data?.bend &&
+  previous.data?.editable === edge.data?.editable &&
   previous.label === edge.label &&
   previous.ariaLabel === edge.ariaLabel &&
   previous.selected === edge.selected &&
@@ -200,6 +218,7 @@ export function createGraphElements() {
     defaultTypeId,
     label,
     editing,
+    interactive = false,
     groups = [],
     preview = new Set(),
     onGroupSelect,
@@ -209,6 +228,7 @@ export function createGraphElements() {
     selected: Selection
     sizes: ConceptNodeSizes
     defaultTypeId?: string
+    interactive?: boolean
     label: (relation: RelationView) => string
     groups?: readonly RelationGroup[]
     preview?: ReadonlySet<string>
@@ -266,19 +286,19 @@ export function createGraphElements() {
       return count === 0 || count === group.relations.length
     })
     const grouped = new Set(visibleGroups.flatMap((group) => group.relations))
-    const edges = graph.relations
+    const edges: RelationEdge[] = graph.relations
       .filter((relation) => !grouped.has(relationKey(relation)))
-      .map((relation) => ({
-        ...relationEdge(
-          relation,
-          selectedRelationIds.has(relationKey(relation)),
-          reconnectable,
-          indexed,
-          defaultTypeId,
-          sizes,
-        ),
-        ariaLabel: label(relation),
-      }))
+      .map((relation) => {
+        const selected = selectedRelationIds.has(relationKey(relation))
+        return {
+          ...relationEdge(relation, selected, reconnectable, indexed, defaultTypeId, sizes),
+          ariaLabel: label(relation),
+          data: {
+            bend: relation.bend,
+            editable: interactive && selected && relation.source !== relation.target,
+          },
+        }
+      })
     const boxes = new Map<string, ConceptBounds>(
       graph.concepts.map(({ id, position }) => [
         id,
@@ -349,7 +369,24 @@ export function createGraphElements() {
           .join('; '),
       })
     }
-    const spread = spreadEndpoints(edges, boxes).map((edge) => {
+    const automatic = spreadEndpoints(
+      edges.map((edge) => {
+        if (!edge.data?.bend) return edge
+        const sides = relationSides(boxes.get(edge.source)!, boxes.get(edge.target)!)
+        return { ...edge, sourceHandle: sides.source, targetHandle: sides.target }
+      }),
+      boxes,
+    )
+    const routed = edges.some((edge) => edge.data?.bend) ? spreadEndpoints(edges, boxes) : automatic
+    const spread = routed.map((edge, index) => {
+      edge = {
+        ...edge,
+        data: {
+          ...edge.data,
+          sourceReferenceOffset: automatic[index].data?.sourceOffset ?? 0,
+          targetReferenceOffset: automatic[index].data?.targetOffset ?? 0,
+        },
+      }
       const previous = previousEdges.get(edge.id)
       return previous && sameEdge(previous, edge) ? previous : edge
     })

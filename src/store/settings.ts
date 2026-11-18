@@ -3,7 +3,7 @@ import type { PanelSizes, Preferences, WorkspaceState } from '@nesso-how/core'
 import { isLocale } from '@nesso-how/i18n'
 import { aiConversation, aiTextLimits } from '@nesso-how/ai'
 import { NessoError, validationIssues } from '@nesso-how/errors'
-import { viewMemberSchema } from '@nesso-how/schema'
+import { relationBendSchema, viewMemberSchema } from '@nesso-how/schema'
 import { sectionIds } from './types.ts'
 import { appearances } from '../../shared/appearance.ts'
 
@@ -54,6 +54,7 @@ const savedViewSchema = z.strictObject({
       'Duplicate concept id',
     ),
   pinned: z.boolean(),
+  relationBends: z.array(relationBendSchema).optional(),
 })
 const workspaceSchema = z
   .strictObject({

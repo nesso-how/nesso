@@ -13,6 +13,7 @@ import {
 import { createNessoStore } from '../store/create.ts'
 import { connectActionChannel } from './action-channel.ts'
 import type { NessoOperation } from '@nesso-how/core'
+import { relationKey } from '@nesso-how/schema'
 
 const descriptors: readonly ActionDescriptor[] = [{ id: 'example', label: { en: 'Example' } }]
 const base = {
@@ -541,6 +542,38 @@ test('strikethrough requires its own declared plugin write', async (t) => {
   const { document } = instance.client.context
   await document.setConceptStrikethrough('urn:a', true)
   assert.equal(document.getState().viewGraph.concepts[0].strikethrough, true)
+})
+
+test('relation bends cross isolated snapshots with declarations and active-view guards', async (t) => {
+  for (const allowed of [false, true]) {
+    const relation = { source: 'urn:a', predicate: 'urn:p', target: 'urn:b' }
+    const host = createNessoStore({
+      ...graph,
+      relationTypes: [{ id: 'urn:p', label: 'links' }],
+      relations: [relation],
+    })
+    const instance = fixture(false, undefined, allowed ? ['relation.bend'] : [], [], host)
+    t.after(instance.close)
+    host.store.setViewMembership(instance.target, 'urn:b', true)
+    host.store.setView(instance.target)
+    await instance.start()
+    const { document } = instance.client.context
+    if (!allowed) {
+      await assert.rejects(document.setRelationBend(relationKey(relation), 0.25), {
+        code: 'denied',
+      })
+      continue
+    }
+    const semantic = host.store.getState().graph
+    await document.setRelationBend(relationKey(relation), 0.25)
+    assert.equal(document.getState().viewGraph.relations[0].bend, 0.25)
+    assert.equal(host.store.getState().graph, semantic)
+    host.store.setView(null)
+    await document.refresh()
+    await assert.rejects(document.setRelationBend(relationKey(relation), 0.5), {
+      code: 'stale-context',
+    })
+  }
 })
 
 test('declared writes reject relative graph identifiers atomically without changing snapshots or history', async (t) => {

@@ -40,6 +40,7 @@
   "pluginAccessRemove": "移除概念",
   "pluginAccessConnect": "连接关系",
   "pluginAccessReconnect": "重新连接关系",
+  "pluginAccessBend": "调整关系曲线",
   "pluginAccessType": "更改关系类型",
   "pluginAccessCreateType": "创建关系类型",
   "pluginAccessRemoveRelation": "移除关系",

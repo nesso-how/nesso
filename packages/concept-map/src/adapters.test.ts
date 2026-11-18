@@ -209,7 +209,6 @@ test('native edges use facing borders, preserve predicates and keep the default 
     const edge = relationEdge(graph.relations[0], false, false, indexed, 'urn:links')
     assert.equal(edge.sourceHandle, source)
     assert.equal(edge.targetHandle, target)
-    assert.equal(edge.className, `graph-source-${source} graph-target-${target}`)
     assert.equal(edge.label, undefined)
     assert.equal(edge.interactionWidth, 18)
   }
@@ -235,6 +234,20 @@ test('native edges use facing borders, preserve predicates and keep the default 
   const pointer = { position: { x: 600, y: 125 }, width: 0, height: 0 }
   assert.equal(facingSide(source, pointer), Position.Bottom)
   assert.equal(facingSide(pointer, source), Position.Left)
+  graph.concepts[1].position = { x: 176, y: -100 }
+  const box = { width: 100, height: 44 }
+  const sizes = { 'urn:a': box, 'urn:b': box }
+  const straight = relationEdge(graph.relations[0], false, false, indexed, undefined, sizes)
+  assert.deepEqual([straight.sourceHandle, straight.targetHandle], [Position.Top, Position.Bottom])
+  const bent = relationEdge(
+    { ...graph.relations[0], bend: 0.3 },
+    false,
+    false,
+    indexed,
+    undefined,
+    sizes,
+  )
+  assert.deepEqual([bent.sourceHandle, bent.targetHandle], [Position.Right, Position.Bottom])
 })
 
 test('selected relation groups expose only shared reconnect anchors and update cached edges', () => {
@@ -313,13 +326,15 @@ test('endpoints sharing a node side spread in the order of their opposite nodes'
       target: 'urn:t',
     })),
   }
-  const { edges } = createGraphElements()({
+  const adapt = createGraphElements()
+  const options = {
     graph,
     indexed: indexGraph(graph),
     selected: [],
     sizes: {},
     label: () => '',
-  })
+  }
+  const { edges } = adapt(options)
   assert.deepEqual(
     edges.map((edge) => [edge.type, edge.data?.sourceOffset, edge.data?.targetOffset]),
     [
@@ -327,5 +342,20 @@ test('endpoints sharing a node side spread in the order of their opposite nodes'
       ['relation', 0, 14],
       ['relation', undefined, undefined],
     ],
+  )
+  const bent = adapt({
+    ...options,
+    graph: {
+      ...graph,
+      relations: graph.relations.map((relation, index) => ({
+        ...relation,
+        bend: index === 0 ? 1 : undefined,
+      })),
+    },
+  }).edges
+  assert.notEqual(bent[0].targetHandle, edges[0].targetHandle)
+  assert.deepEqual(
+    bent.map((edge) => [edge.data?.sourceReferenceOffset, edge.data?.targetReferenceOffset]),
+    edges.map((edge) => [edge.data?.sourceOffset ?? 0, edge.data?.targetOffset ?? 0]),
   )
 })

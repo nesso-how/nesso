@@ -40,6 +40,7 @@ const presentationKinds = new Set<NessoOperation['kind']>([
   'concept.bold',
   'concept.italic',
   'concept.strikethrough',
+  'relation.bend',
 ])
 
 export function connectActionChannel(

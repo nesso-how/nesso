@@ -42,6 +42,7 @@
   "pluginAccessRemove": "Rimuovere concetti",
   "pluginAccessConnect": "Collegare relazioni",
   "pluginAccessReconnect": "Ricollegare relazioni",
+  "pluginAccessBend": "Modificare le curve delle relazioni",
   "pluginAccessType": "Cambiare tipo alle relazioni",
   "pluginAccessCreateType": "Creare tipi di relazione",
   "pluginAccessRemoveRelation": "Rimuovere relazioni",

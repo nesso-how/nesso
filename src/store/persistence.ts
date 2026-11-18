@@ -10,7 +10,13 @@ import {
   type PersistenceSection as Section,
   type PersistenceStorage,
 } from '../../shared/persistence.ts'
-import { checkGraph, sameGraph, samePreferences, sameWorkspace } from './operations.ts'
+import {
+  checkGraph,
+  checkWorkspace,
+  sameGraph,
+  samePreferences,
+  sameWorkspace,
+} from './operations.ts'
 import { parsePluginStorage } from './plugin-storage.ts'
 import {
   migrateConversation,
@@ -93,11 +99,7 @@ export const loadPersistence = async (
           if (views.length) fail('graph', 'Concept presentation belongs to the workspace')
           checkGraph(graph)
           const workspace = parseWorkspace(saved.workspace)
-          const ids = new Set(graph.concepts.map((concept) => concept.id))
-          for (const [index, view] of workspace.savedViews.entries()) {
-            if (view.members.some(({ id }) => !ids.has(id)))
-              fail(`workspace.savedViews[${index}].members`, 'Unknown concept')
-          }
+          checkWorkspace(graph, workspace)
           loaded.graph = graph
           loaded.workspace = workspace
         }
@@ -200,7 +202,7 @@ export const connectPersistence = (
           const saved =
             section === 'document'
               ? {
-                  version: 5,
+                  version: 6,
                   documentId: state.documentId,
                   graph: serializedGraph!.value,
                   workspace: state.workspace,

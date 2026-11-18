@@ -1,9 +1,9 @@
-import type { DeepReadonly, NessoState } from '@nesso-how/core'
-import type { Concept, Graph, Presentation } from '@nesso-how/schema'
+import type { DeepReadonly, NessoState, ViewGraphSnapshot } from '@nesso-how/core'
+import type { Concept, Presentation } from '@nesso-how/schema'
 import type { Edge, Node } from '@xyflow/react'
 
 export type PresentedGraph = DeepReadonly<
-  Omit<Graph, 'concepts'> & { concepts: (Concept & Presentation)[] }
+  Omit<ViewGraphSnapshot, 'concepts'> & { concepts: (Concept & Presentation)[] }
 >
 export const presentedGraph = (state: NessoState) => state.viewGraph as PresentedGraph
 
@@ -25,6 +25,14 @@ export type ConceptData = {
 export type ConceptNode = Node<ConceptData, 'concept' | 'relationGroup'>
 
 export type RelationEdge = Edge<
-  { relations?: readonly string[]; sourceOffset?: number; targetOffset?: number },
+  {
+    relations?: readonly string[]
+    sourceOffset?: number
+    targetOffset?: number
+    sourceReferenceOffset?: number
+    targetReferenceOffset?: number
+    bend?: number
+    editable?: boolean
+  },
   'relation'
 >

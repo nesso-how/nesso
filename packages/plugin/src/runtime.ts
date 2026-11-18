@@ -134,6 +134,7 @@ const operation = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('relation.type'), id, typeId: id }),
   z.strictObject({ kind: z.literal('relation.type.create'), id, typeId: id, label: z.string() }),
   z.strictObject({ kind: z.literal('relation.remove'), id }),
+  z.strictObject({ kind: z.literal('relation.bend'), id, value: z.number() }),
   z.strictObject({ kind: z.literal('document.reset'), id }),
   z.strictObject({ kind: z.literal('history.undo') }),
   z.strictObject({ kind: z.literal('history.redo') }),
@@ -189,7 +190,7 @@ export function parsePluginI18n(value: unknown): PluginI18n {
   return parseOrThrow(pluginI18n, value, 'i18n.')
 }
 
-export const pluginApiVersion = 5
+export const pluginApiVersion = 6
 const manifestFields = {
   apiVersion: z.literal(pluginApiVersion),
 }
@@ -217,6 +218,7 @@ const pluginWriteKinds = [
   'relation.type',
   'relation.type.create',
   'relation.remove',
+  'relation.bend',
   'selection.set',
   'view.create',
   'view.membership',

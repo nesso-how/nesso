@@ -21,9 +21,12 @@ test('export uses only the supplied target graph and notifies after accepted sav
     viewGraph: {
       concepts: [
         { id: 'urn:concept', label: 'One', position: { x: 0, y: 0 }, strikethrough: true },
+        { id: 'urn:other', label: 'Two', position: { x: 160, y: 0 } },
       ],
-      relations: [],
-      relationTypes: [],
+      relations: [
+        { source: 'urn:concept', predicate: 'urn:links', target: 'urn:other', bend: 0.25 },
+      ],
+      relationTypes: [{ id: 'urn:links', label: 'links' }],
     },
     targetViewId: 'urn:view',
     selected: [],
@@ -80,7 +83,12 @@ test('export uses only the supplied target graph and notifies after accepted sav
   assert.equal(save.mock.calls[0].arguments[0].mediaType, 'application/ld+json')
   const written = save.mock.calls[0].arguments[0]
   assert.ok('text' in written && written.text.includes('urn:concept'))
-  assert.equal(parseGraph(JSON.parse(written.text)).views[0].members[0].strikethrough, true)
+  const exported = parseGraph(JSON.parse(written.text))
+  assert.equal(exported.views[0].members[0].strikethrough, true)
+  assert.deepEqual(exported.graph.relations, [
+    { source: 'urn:concept', predicate: 'urn:links', target: 'urn:other' },
+  ])
+  assert.deepEqual(exported.views[0].relationBends, state.viewGraph.relations)
   assert.deepEqual(notify.mock.calls[0].arguments[0].title, {
     en: 'View exported',
     it: 'Vista esportata',

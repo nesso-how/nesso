@@ -1,6 +1,6 @@
 import type { ViewGraphSnapshot } from '@nesso-how/plugin'
 import type { ActionContribution } from '@nesso-how/plugin/runtime'
-import { newIri, serializeGraph } from '@nesso-how/schema'
+import { newIri, serializeGraph, type RelationBend } from '@nesso-how/schema'
 import source from '../package.json' with { type: 'json' }
 
 const { i18n } = source
@@ -9,13 +9,20 @@ function serializeView(graph: ViewGraphSnapshot, name?: string) {
   const members = graph.concepts.flatMap(({ id, position, color, bold, italic, strikethrough }) =>
     position ? [{ id, position: { ...position }, color, bold, italic, strikethrough }] : [],
   )
+  const relationBends = graph.relations.flatMap(({ bend, ...relation }): RelationBend[] =>
+    bend ? [{ ...relation, bend }] : [],
+  )
   return serializeGraph(
     {
       concepts: graph.concepts.map(({ id, label, notes }) => ({ id, label, notes })),
       relationTypes: graph.relationTypes.map((type) => ({ ...type })),
-      relations: graph.relations.map((relation) => ({ ...relation })),
+      relations: graph.relations.map(({ source, predicate, target }) => ({
+        source,
+        predicate,
+        target,
+      })),
     },
-    name === undefined ? [] : [{ id: newIri(), name, members }],
+    name === undefined ? [] : [{ id: newIri(), name, members, relationBends }],
   )
 }
 

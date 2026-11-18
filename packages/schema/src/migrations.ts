@@ -80,7 +80,7 @@ export function migrateGraph(value: unknown): unknown {
       return migrateGraph(upgradeLegacy(parseSchema(legacyDocument, value)))
     case 1: {
       const document = parseSchema(documentV1, value)
-      return {
+      return migrateGraph({
         ...document,
         schemaVersion: 2,
         '@graph': document['@graph'].map((entry) =>
@@ -88,9 +88,11 @@ export function migrateGraph(value: unknown): unknown {
             ? { ...entry, members: entry.members.map(migratePresetColor) }
             : entry,
         ),
-      }
+      })
     }
     case 2:
+      return { ...(value as JsonObject), schemaVersion: 3 }
+    case 3:
       return value
     default:
       return fail('schemaVersion', 'Unsupported JSON-LD schema version')
