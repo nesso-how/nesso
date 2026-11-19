@@ -29,18 +29,18 @@ export function readAiTool(
   switch (name) {
     case 'context': {
       aiTools.context.inputSchema.parse(input)
-      const view = state.workspace.savedViews.find(({ id }) => id === state.workspace.activeViewId)
+      const map = state.workspace.maps.find(({ id }) => id === state.workspace.activeMapId)
       const vocab = state.vocabs.find(({ id }) => id === state.preferences.activeVocabId)
       return {
-        activeView: { id: view?.id ?? null, name: view?.name ?? 'Overview' },
+        activeMap: { id: map?.id ?? null, name: map?.name ?? 'Graph' },
         counts: {
           concepts: state.graph.concepts.length,
           relations: state.graph.relations.length,
-          views: state.workspace.savedViews.length,
+          maps: state.workspace.maps.length,
         },
         visible: {
-          concepts: state.viewGraph.concepts.length,
-          relations: state.viewGraph.relations.length,
+          concepts: state.mapGraph.concepts.length,
+          relations: state.mapGraph.relations.length,
         },
         selection: state.selected.slice(0, 100),
         selectionCount: state.selected.length,
@@ -50,7 +50,7 @@ export function readAiTool(
     }
     case 'concepts': {
       const query = aiTools.concepts.inputSchema.parse(input)
-      const graph = query.scope === 'all' ? state.graph : state.viewGraph
+      const graph = query.scope === 'all' ? state.graph : state.mapGraph
       return page(
         graph.concepts.filter(
           (concept) =>
@@ -62,7 +62,7 @@ export function readAiTool(
     }
     case 'relations': {
       const query = aiTools.relations.inputSchema.parse(input)
-      const graph = query.scope === 'all' ? state.graph : state.viewGraph
+      const graph = query.scope === 'all' ? state.graph : state.mapGraph
       return page(
         graph.relations
           .filter(
@@ -76,28 +76,28 @@ export function readAiTool(
         query,
       )
     }
-    case 'views': {
-      const query = aiTools.views.inputSchema.parse(input)
+    case 'maps': {
+      const query = aiTools.maps.inputSchema.parse(input)
       if (query.id === undefined)
         return page(
           [
-            { id: null, name: 'Overview', concepts: state.graph.concepts.length, pinned: true },
-            ...state.workspace.savedViews.map((view) => ({
-              id: view.id,
-              name: view.name,
-              concepts: view.members.length,
-              pinned: view.pinned,
+            { id: null, name: 'Graph', concepts: state.graph.concepts.length, pinned: true },
+            ...state.workspace.maps.map((map) => ({
+              id: map.id,
+              name: map.name,
+              concepts: map.members.length,
+              pinned: map.pinned,
             })),
           ],
           query,
         )
-      const view = state.workspace.savedViews.find(({ id }) => id === query.id)
-      if (query.id !== null && !view) return undefined
+      const map = state.workspace.maps.find(({ id }) => id === query.id)
+      if (query.id !== null && !map) return undefined
       return {
-        id: view?.id ?? null,
-        name: view?.name ?? 'Overview',
+        id: map?.id ?? null,
+        name: map?.name ?? 'Graph',
         members: page(
-          (view?.members ?? state.graph.concepts).map(({ id }) => id),
+          (map?.members ?? state.graph.concepts).map(({ id }) => id),
           query,
         ),
       }

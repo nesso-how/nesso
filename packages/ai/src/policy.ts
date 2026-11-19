@@ -1,4 +1,4 @@
-export const aiTextLimits = { conceptLabel: 60, relationLabel: 30, viewName: 70 } as const
+export const aiTextLimits = { conceptLabel: 60, relationLabel: 30, mapName: 70 } as const
 
 export const aiChatLimits = {
   messageLength: 100_000,

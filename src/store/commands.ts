@@ -4,12 +4,12 @@ import { conceptPlacementOffset } from './operations.ts'
 
 export const createCommands = (
   applyOperations: NessoStore['applyOperations'],
-): Omit<NessoStore, 'getState' | 'subscribe' | 'getViewGraph'> => ({
+): Omit<NessoStore, 'getState' | 'subscribe' | 'getMapGraph'> => ({
   ...createWriteCommands(applyOperations, (id) => id),
   conceptPlacementOffset,
   applyOperations,
-  setViewport: (rendererId, value, viewId) =>
-    applyOperations([{ kind: 'viewport.set', rendererId, value, viewId }]),
+  setViewport: (rendererId, value, mapId) =>
+    applyOperations([{ kind: 'viewport.set', rendererId, value, mapId }]),
   setActiveRenderer: (id) => applyOperations([{ kind: 'preferences.renderer', id }]),
   resetGraph: () => applyOperations([{ kind: 'document.reset', id: newIri() }]),
 })

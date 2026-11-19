@@ -85,7 +85,7 @@ export const loadPersistence = async (
         if (saved.documentId !== loaded.documentId)
           fail('documentId', 'Plugin storage belongs to another document')
         loaded.pluginStorage = saved.plugins
-        if ((value as { version: number }).version !== 3)
+        if ((value as { version: number }).version !== 4)
           (loaded.upgrades ??= {})['plugin-storage'] = migrated
         continue
       }
@@ -95,8 +95,8 @@ export const loadPersistence = async (
           if (saved.workspace !== null) fail('workspace', 'Expected no workspace without a graph')
           loaded.graph = null
         } else {
-          const { graph, views } = parseGraph(saved.graph)
-          if (views.length) fail('graph', 'Concept presentation belongs to the workspace')
+          const { graph, maps } = parseGraph(saved.graph)
+          if (maps.length) fail('graph', 'Concept presentation belongs to the workspace')
           checkGraph(graph)
           const workspace = parseWorkspace(saved.workspace)
           checkWorkspace(graph, workspace)
@@ -202,16 +202,16 @@ export const connectPersistence = (
           const saved =
             section === 'document'
               ? {
-                  version: 6,
+                  version: 7,
                   documentId: state.documentId,
                   graph: serializedGraph!.value,
                   workspace: state.workspace,
                 }
               : section === 'preferences'
-                ? { version: 3, preferences: state.preferences }
+                ? { version: 4, preferences: state.preferences }
                 : section === 'conversation'
                   ? { version: 2, messages: state.conversation.messages }
-                  : { version: 3, documentId: state.documentId, plugins: state.pluginStorage }
+                  : { version: 4, documentId: state.documentId, plugins: state.pluginStorage }
           await storage.write(section, saved)
           if (section === 'document') savedDocumentId = state.documentId
           if (replace) {

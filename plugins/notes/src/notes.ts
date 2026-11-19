@@ -4,15 +4,15 @@ import { PluginError, type PluginStorage } from '@nesso-how/plugin'
 const noteSchema = z.strictObject({ version: z.literal(1), text: z.string() })
 type NotesSnapshot = { readonly text: string; readonly failed: boolean }
 
-export async function createNotes(storage: PluginStorage, viewId: string | null) {
-  const scope = viewId === null ? undefined : { kind: 'view' as const, id: viewId }
+export async function createNotes(storage: PluginStorage, mapId: string | null) {
+  const scope = mapId === null ? undefined : { kind: 'map' as const, id: mapId }
   const records = await storage.list()
   const record = records.find(
     (record) =>
       record.key === 'notes' &&
       (scope === undefined
         ? record.scope === undefined
-        : record.scope?.kind === 'view' && record.scope.id === scope.id),
+        : record.scope?.kind === 'map' && record.scope.id === scope.id),
   )
   const parsed = record === undefined ? undefined : noteSchema.safeParse(record.value)
   if (parsed && !parsed.success)

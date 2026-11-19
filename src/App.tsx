@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ConceptMapHandle } from '@nesso-how/concept-map'
-import type { SavedView } from '@nesso-how/core'
+import type { WorkspaceMap } from '@nesso-how/core'
 import { defaultLocale } from '@nesso-how/i18n'
 import { Inspector } from '@/components/app/Inspector'
 import { ToastsHost } from '@/components/app/Toasts'
@@ -17,7 +17,7 @@ import { AssistantPanel } from '@/components/app/AssistantPanel'
 import { DataTransferDialog } from '@/components/app/LocalDataSettings'
 import { Intro } from '@/components/app/Intro'
 import { completeIntro } from '@/store/intro'
-import { DeleteViewDialog } from '@/components/app/DeleteViewDialog'
+import { DeleteMapDialog } from '@/components/app/DeleteMapDialog'
 import { DeleteConceptsDialog } from '@/components/app/DeleteConceptsDialog'
 import { GraphWorkspace } from '@/components/app/GraphWorkspace'
 import { useAppCommands } from '@/app-commands'
@@ -25,11 +25,11 @@ import { PluginApprovalDialog } from '@/components/app/PluginApprovalDialog'
 import { UpdateBar } from '@/components/app/UpdateBar'
 import { PluginContent } from '@/components/app/PluginPanel'
 import { pluginPanel as activePluginPanel, openCanvasTabAt, usePluginPanel } from '@/plugins'
-import { ViewHeader } from '@/components/app/ViewHeader'
-import { CanvasTabBar, ViewSwitcher } from '@/components/app/CompactNavigation'
+import { MapHeader } from '@/components/app/MapHeader'
+import { CanvasTabBar, MapSwitcher } from '@/components/app/CompactNavigation'
 import { ConceptSheet } from '@/components/app/ConceptSheet'
 import { SearchDialog } from '@/components/app/SearchDialog'
-import { addToActiveView, openSearchResult } from '@/graph/search'
+import { addToActiveMap, openSearchResult } from '@/graph/search'
 import { usePluginInstallNotifications } from '@/components/app/usePluginInstallNotifications'
 
 const compactQuery = '(max-width: 767px)'
@@ -61,7 +61,7 @@ export default function App({
     () => !import.meta.env.DEV && !host.store.getState().preferences.introSeen,
   )
   const [settingsPage, setSettingsPage] = useState('general')
-  const [deleting, setDeleting] = useState<SavedView | 'complete-graph' | null>(null)
+  const [deleting, setDeleting] = useState<WorkspaceMap | 'complete-graph' | null>(null)
   const [deletingConcepts, setDeletingConcepts] = useState(false)
   const canvas = useRef<HTMLDivElement>(null)
   const renderer = useRef<ConceptMapHandle>(null)
@@ -75,12 +75,12 @@ export default function App({
       ? state.selected[0].id
       : null,
   )
-  const deleteView = () => {
+  const deleteMap = () => {
     const { workspace } = host.store.getState()
     setDeleting(
-      workspace.activeViewId === null
+      workspace.activeMapId === null
         ? 'complete-graph'
-        : (workspace.savedViews.find((view) => view.id === workspace.activeViewId) ?? null),
+        : (workspace.maps.find((map) => map.id === workspace.activeMapId) ?? null),
     )
   }
 
@@ -135,9 +135,9 @@ export default function App({
             <div className="flex min-h-0 flex-1">
               <div id="canvas" className="relative flex min-h-0 min-w-0 flex-1 flex-col">
                 {compact ? (
-                  <ViewSwitcher />
+                  <MapSwitcher />
                 ) : (
-                  <ViewHeader
+                  <MapHeader
                     readonly={readonly}
                     actionsOpen={actionsOpen}
                     onActionsOpenChange={setActionsOpen}
@@ -158,7 +158,7 @@ export default function App({
                       readOnly={readonly}
                       suspended={!!pluginPanel}
                       bottomInset={sheetCover}
-                      onDeleteView={deleteView}
+                      onDeleteMap={deleteMap}
                       onConfirmDelete={() => setDeletingConcepts(true)}
                       focusRef={canvas}
                     />
@@ -220,7 +220,7 @@ export default function App({
         }}
         onAdd={(id) => {
           activePluginPanel.close()
-          addToActiveView(host.store, renderer.current, id)
+          addToActiveMap(host.store, renderer.current, id)
           renderer.current?.focusConcept(id)
         }}
       />
@@ -240,7 +240,7 @@ export default function App({
       </Dialog.Root>
       {window.nessoPlugins && <PluginApprovalDialog bridge={window.nessoPlugins} />}
       {window.nessoDataLocation && <DataTransferDialog bridge={window.nessoDataLocation} />}
-      <DeleteViewDialog
+      <DeleteMapDialog
         target={deleting}
         onClose={() => setDeleting(null)}
         finalFocus={() => canvas.current}

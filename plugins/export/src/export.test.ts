@@ -18,7 +18,7 @@ test('export uses only the supplied target graph and notifies after accepted sav
     theme: Object.fromEntries(themeTokens.map((token) => [token, ''])),
     colorScheme: 'light',
     conceptPlacementOffset: { x: 160, y: 100 },
-    viewGraph: {
+    mapGraph: {
       concepts: [
         { id: 'urn:concept', label: 'One', position: { x: 0, y: 0 }, strikethrough: true },
         { id: 'urn:other', label: 'Two', position: { x: 160, y: 0 } },
@@ -28,13 +28,13 @@ test('export uses only the supplied target graph and notifies after accepted sav
       ],
       relationTypes: [{ id: 'urn:links', label: 'links' }],
     },
-    targetViewId: 'urn:view',
+    targetMapId: 'urn:map',
     selected: [],
     activeVocab: null,
     history: { canUndo: false, canRedo: false },
     workspace: {
-      activeViewId: 'urn:another',
-      savedViews: [{ id: 'urn:view', name: 'Test view', pinned: false }],
+      activeMapId: 'urn:another',
+      maps: [{ id: 'urn:map', name: 'Test map', pinned: false }],
     },
   }
   let finish: (value: { saved: boolean }) => void = () => {}
@@ -49,7 +49,7 @@ test('export uses only the supplied target graph and notifies after accepted sav
   )
   const noStorage = async () => assert.fail('Export must not access plugin storage')
   const api: ActionContext = {
-    viewId: 'urn:view',
+    mapId: 'urn:map',
     document: {
       ...createWriteCommands(
         async () => assert.fail('Export must not write'),
@@ -64,7 +64,7 @@ test('export uses only the supplied target graph and notifies after accepted sav
       applyOperations: async () => assert.fail('Export must not write'),
     },
     files: { open: async () => assert.fail('Export must not open files'), save },
-    images: { renderView: async () => assert.fail('JSON-LD export must not render images') },
+    images: { renderMap: async () => assert.fail('JSON-LD export must not render images') },
     storage: { list: noStorage, set: noStorage, delete: noStorage },
     notifications: { notify },
     signal: new AbortController().signal,
@@ -79,20 +79,20 @@ test('export uses only the supplied target graph and notifies after accepted sav
   assert.equal(notify.mock.callCount(), 0)
   finish({ saved: true })
   await exporting
-  assert.equal(save.mock.calls[0].arguments[0].name, 'nesso-test-view.jsonld')
+  assert.equal(save.mock.calls[0].arguments[0].name, 'nesso-test-map.jsonld')
   assert.equal(save.mock.calls[0].arguments[0].mediaType, 'application/ld+json')
   const written = save.mock.calls[0].arguments[0]
   assert.ok('text' in written && written.text.includes('urn:concept'))
   const exported = parseGraph(JSON.parse(written.text))
-  assert.equal(exported.views[0].members[0].strikethrough, true)
+  assert.equal(exported.maps[0].members[0].strikethrough, true)
   assert.deepEqual(exported.graph.relations, [
     { source: 'urn:concept', predicate: 'urn:links', target: 'urn:other' },
   ])
-  assert.deepEqual(exported.views[0].relationBends, state.viewGraph.relations)
+  assert.deepEqual(exported.maps[0].relationBends, state.mapGraph.relations)
   assert.deepEqual(notify.mock.calls[0].arguments[0].title, {
-    en: 'View exported',
-    it: 'Vista esportata',
-    'zh-CN': '视图已导出',
+    en: 'Map exported',
+    it: 'Mappa esportata',
+    'zh-CN': '导图已导出',
   })
   save.mock.mockImplementationOnce(async () => ({ saved: false }))
   await action.run(api)

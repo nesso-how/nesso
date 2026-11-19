@@ -2,14 +2,14 @@
 
 Two actions built with the Nesso SDK:
 
-- **Uppercase labels** changes concept labels in the current view. See [`src/index.ts`](src/index.ts).
-- **Concept Quiz** uses React to quiz you on the view's relations and saves your progress. See [`src/Quiz.tsx`](src/Quiz.tsx).
+- **Uppercase labels** changes concept labels in the current map. See [`src/index.ts`](src/index.ts).
+- **Concept Quiz** uses React to quiz you on the map's relations and saves your progress. See [`src/Quiz.tsx`](src/Quiz.tsx).
 
 ## Install and try
 
 In the desktop app, open Settings → Plugins, search for `@nesso-how/plugin-example`, and install it. Approve access to concept labels, panels, and private storage.
 
-Run either action from a view's context menu in the Explorer, or from its actions in the Inspector with nothing selected.
+Run either action from a map's context menu in the Explorer, or from its actions in the Inspector with nothing selected.
 
 ## Build your own
 

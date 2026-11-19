@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import type { NessoOperation } from '@nesso-how/plugin'
-import type { Graph, View } from '@nesso-how/schema'
+import type { ConceptMap, Graph } from '@nesso-how/schema'
 import { relationKey } from '@nesso-how/schema'
-import { buildImportOperations, deriveViewName } from './index.ts'
+import { buildImportOperations, deriveMapName } from './index.ts'
 
 const graph: Graph = {
   concepts: [
@@ -24,9 +24,9 @@ const graph: Graph = {
     { source: 'urn:old-a', predicate: 'urn:knows', target: 'urn:old-a' },
   ],
 }
-const views: View[] = [
+const maps: ConceptMap[] = [
   {
-    id: 'urn:old-view',
+    id: 'urn:old-map',
     name: '',
     members: [
       {
@@ -43,14 +43,14 @@ const views: View[] = [
       { source: 'urn:old-a', predicate: 'urn:knows', target: 'urn:old-b', bend: 0.25 },
     ],
   },
-  { id: 'urn:other-view', name: 'Other', members: [{ id: 'urn:old-b', position: { x: 5, y: 6 } }] },
+  { id: 'urn:other-map', name: 'Other', members: [{ id: 'urn:old-b', position: { x: 5, y: 6 } }] },
 ]
 
 const conceptIds = (operations: readonly NessoOperation[]) =>
   operations.flatMap((operation) => (operation.kind === 'concept.add' ? [operation.id] : []))
 
-test('import recreates file views with presentation and remaps concept ids with original types', () => {
-  const operations = buildImportOperations({ graph, views }, 'urn:active', 'My view')
+test('import recreates file maps with presentation and remaps concept ids with original types', () => {
+  const operations = buildImportOperations({ graph, maps }, 'urn:active', 'My map')
   const ids = conceptIds(operations)
   assert.equal(ids.length, 3)
   assert.ok(ids.every((id) => !id.startsWith('urn:old-')))
@@ -63,19 +63,19 @@ test('import recreates file views with presentation and remaps concept ids with 
     operations.filter((operation) => operation.kind === 'concept.notes'),
     [{ kind: 'concept.notes', id: alpha, value: 'Definition\nExample' }],
   )
-  const created = operations.filter((operation) => operation.kind === 'view.create')
+  const created = operations.filter((operation) => operation.kind === 'map.create')
   assert.deepEqual(
     created.map(({ name, conceptIds }) => [name, conceptIds]),
     [
-      ['My view', []],
+      ['My map', []],
       ['Other', []],
     ],
   )
   assert.deepEqual(
-    operations.filter((operation) => operation.kind === 'view.membership'),
+    operations.filter((operation) => operation.kind === 'map.membership'),
     [
-      { kind: 'view.membership', viewId: 'urn:active', conceptId: gamma, included: false },
-      { kind: 'view.membership', viewId: created[1].id, conceptId: beta, included: true },
+      { kind: 'map.membership', mapId: 'urn:active', conceptId: gamma, included: false },
+      { kind: 'map.membership', mapId: created[1].id, conceptId: beta, included: true },
     ],
   )
   assert.deepEqual(
@@ -119,9 +119,9 @@ test('import recreates file views with presentation and remaps concept ids with 
   assert.deepEqual(operations.at(-1), { kind: 'selection.set', value: [] })
 })
 
-for (const activeViewId of [null, 'urn:active'])
-  test(`graph-only files import without views or layout from ${activeViewId ?? 'Overview'}`, () => {
-    const operations = buildImportOperations({ graph, views: [] }, activeViewId, 'My view')
+for (const activeMapId of [null, 'urn:active'])
+  test(`graph-only files import without maps or layout from ${activeMapId ?? 'the graph'}`, () => {
+    const operations = buildImportOperations({ graph, maps: [] }, activeMapId, 'My map')
     const ids = conceptIds(operations)
     assert.equal(ids.length, graph.concepts.length)
     assert.ok(ids.every((id) => !id.startsWith('urn:old-')))
@@ -136,7 +136,7 @@ for (const activeViewId of [null, 'urn:active'])
       [{ kind: 'concept.notes', id: ids[0], value: 'Definition\nExample' }],
     )
     assert.deepEqual(
-      operations.filter((operation) => operation.kind === 'view.create'),
+      operations.filter((operation) => operation.kind === 'map.create'),
       [],
     )
     assert.deepEqual(
@@ -146,12 +146,12 @@ for (const activeViewId of [null, 'urn:active'])
       [undefined, undefined, undefined],
     )
     assert.deepEqual(
-      operations.filter((operation) => operation.kind === 'view.membership'),
-      activeViewId === null
+      operations.filter((operation) => operation.kind === 'map.membership'),
+      activeMapId === null
         ? []
         : ids.map((conceptId) => ({
-            kind: 'view.membership',
-            viewId: activeViewId,
+            kind: 'map.membership',
+            mapId: activeMapId,
             conceptId,
             included: false,
           })),
@@ -170,17 +170,17 @@ for (const activeViewId of [null, 'urn:active'])
 test('empty snapshots are no-ops', () => {
   assert.deepEqual(
     buildImportOperations(
-      { graph: { concepts: [], relationTypes: [], relations: [] }, views: [] },
-      'urn:view',
-      'My view',
+      { graph: { concepts: [], relationTypes: [], relations: [] }, maps: [] },
+      'urn:map',
+      'My map',
     ),
     [],
   )
 })
 
-test('view names derive from file names', () => {
-  assert.equal(deriveViewName('nesso-my-view.jsonld'), 'My view')
-  assert.equal(deriveViewName('Graph.json'), 'Graph')
-  assert.equal(deriveViewName('nesso-Shopping_List.JSON'), 'Shopping List')
-  assert.equal(deriveViewName('.json'), 'Import')
+test('map names derive from file names', () => {
+  assert.equal(deriveMapName('nesso-my-map.jsonld'), 'My map')
+  assert.equal(deriveMapName('Graph.json'), 'Graph')
+  assert.equal(deriveMapName('nesso-Shopping_List.JSON'), 'Shopping List')
+  assert.equal(deriveMapName('.json'), 'Import')
 })

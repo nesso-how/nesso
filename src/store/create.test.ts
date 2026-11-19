@@ -23,11 +23,11 @@ const fixture = (): Graph => ({
   ],
 })
 const viewed = (graph: Graph = fixture()): WorkspaceState => ({
-  activeViewId: 'urn:view',
-  savedViews: [
+  activeMapId: 'urn:map',
+  maps: [
     {
-      id: 'urn:view',
-      name: 'View',
+      id: 'urn:map',
+      name: 'Map',
       pinned: false,
       members: graph.concepts.map(({ id }, x) => ({ id, position: { x, y: 0 } })),
     },
@@ -37,11 +37,11 @@ const viewed = (graph: Graph = fixture()): WorkspaceState => ({
 
 test('concept colors normalize hex, reject invalid batches atomically and reset with undo', () => {
   const { store } = createNessoStore(fixture(), { workspace: viewed() })
-  const colors = () => store.getState().workspace.savedViews[0].members.map(({ color }) => color)
+  const colors = () => store.getState().workspace.maps[0].members.map(({ color }) => color)
   store.setConceptColor('urn:n1', '#E1ECDE')
   store.setConceptColor('urn:n2', '#e9e2f3')
   const before = store.getState()
-  assert.equal(before.viewGraph.concepts[0].color, '#e1ecde')
+  assert.equal(before.mapGraph.concepts[0].color, '#e1ecde')
   assert.throws(
     () =>
       store.applyOperations([
@@ -55,9 +55,7 @@ test('concept colors normalize hex, reject invalid batches atomically and reset 
     ['urn:n1', 'urn:n2'].map((id) => ({ kind: 'concept.color', id, value: '' })),
   )
   assert.ok(
-    store
-      .getState()
-      .workspace.savedViews[0].members.every((member) => !Object.hasOwn(member, 'color')),
+    store.getState().workspace.maps[0].members.every((member) => !Object.hasOwn(member, 'color')),
   )
   store.undo()
   assert.deepEqual(colors(), ['#e1ecde', '#e9e2f3', undefined])
@@ -65,7 +63,7 @@ test('concept colors normalize hex, reject invalid batches atomically and reset 
   assert.deepEqual(colors(), [undefined, undefined, undefined])
 })
 
-test('presentation edits require an active view that contains the concept', () => {
+test('presentation edits require an active map that contains the concept', () => {
   const graph = fixture()
   const { store } = createNessoStore(graph)
   for (const operation of [
@@ -76,24 +74,21 @@ test('presentation edits require an active view that contains the concept', () =
     { kind: 'concept.position', id: 'urn:n1', value: { x: 1, y: 1 } },
     { kind: 'concept.positions', updates: [{ id: 'urn:n1', position: { x: 1, y: 1 } }] },
   ] as const)
-    assert.throws(() => store.applyOperations([operation]), /No active view/)
+    assert.throws(() => store.applyOperations([operation]), /No active map/)
   const workspace = viewed({ ...graph, concepts: graph.concepts.slice(0, 2) })
-  const view = createNessoStore(graph, { workspace }).store
-  assert.throws(
-    () => view.setConceptColor('urn:n3', '#e1ecde'),
-    /Concept is not in the active view/,
-  )
+  const map = createNessoStore(graph, { workspace }).store
+  assert.throws(() => map.setConceptColor('urn:n3', '#e1ecde'), /Concept is not in the active map/)
 })
 
 test('bulk color drags publish once per batch and undo to the original mixed colors', () => {
   const workspace = viewed()
-  const members = workspace.savedViews[0].members
+  const members = workspace.maps[0].members
   const { store } = createNessoStore(fixture(), {
     workspace: {
       ...workspace,
-      savedViews: [
+      maps: [
         {
-          ...workspace.savedViews[0],
+          ...workspace.maps[0],
           members: [{ ...members[0], color: '#e1ecde' }, ...members.slice(1)],
         },
       ],
@@ -110,16 +105,16 @@ test('bulk color drags publish once per batch and undo to the original mixed col
   }
   assert.equal(publications, 2)
   assert.deepEqual(
-    store.getState().viewGraph.concepts.map(({ color }) => color),
+    store.getState().mapGraph.concepts.map(({ color }) => color),
     ['#e9e2f3', '#e9e2f3', undefined],
   )
   assert.equal(store.getState().graph, before.graph)
   store.undo()
-  assert.deepEqual(store.getState().viewGraph, before.viewGraph)
+  assert.deepEqual(store.getState().mapGraph, before.mapGraph)
   assert.equal(store.getState().history.canUndo, false)
   store.redo()
   assert.deepEqual(
-    store.getState().viewGraph.concepts.map(({ color }) => color),
+    store.getState().mapGraph.concepts.map(({ color }) => color),
     ['#e9e2f3', '#e9e2f3', undefined],
   )
 })
@@ -476,7 +471,7 @@ test('provider replacement is atomic, restores saved choices once, and falls bac
   const fallback = host.store.getState()
   assert.equal(fallback.preferences.activeVocabId, vocabA.id)
   assert.equal(fallback.preferences.activeThemeId, baseTheme.id)
-  for (const key of ['graph', 'viewGraph', 'workspace', 'selected', 'history'] as const)
+  for (const key of ['graph', 'mapGraph', 'workspace', 'selected', 'history'] as const)
     assert.equal(fallback[key], current[key])
   assert.equal(host.getTheme(externalTheme.id), undefined)
   host.replacePluginDefinitions([vocabA, vocabB, baseTheme, externalTheme])
@@ -488,98 +483,98 @@ test('provider replacement is atomic, restores saved choices once, and falls bac
   assert.equal(host.store.getState().graph.concepts[0].label, 'One')
 })
 
-test('saved views materialize shared subsets, reconcile membership and never change the graph', () => {
+test('maps materialize shared subsets, reconcile membership and never change the graph', () => {
   const host = createNessoStore(fixture())
   host.registerVocab(vocabA)
   let state = host.store.getState()
-  assert.equal(state.workspace.activeViewId, null)
+  assert.equal(state.workspace.activeMapId, null)
   assert.deepEqual(
-    state.viewGraph.concepts.map((concept) => concept.id),
+    state.mapGraph.concepts.map((concept) => concept.id),
     ['urn:n1', 'urn:n2', 'urn:n3'],
   )
   const graph = state.graph
-  const id = host.store.createView('Pair', ['urn:n1', 'urn:n2'])
+  const id = host.store.createMap('Pair', ['urn:n1', 'urn:n2'])
   state = host.store.getState()
-  assert.equal(state.workspace.activeViewId, id)
+  assert.equal(state.workspace.activeMapId, id)
   assert.equal(state.graph, graph)
   assert.deepEqual(
-    state.viewGraph.concepts.map((concept) => concept.id),
+    state.mapGraph.concepts.map((concept) => concept.id),
     ['urn:n1', 'urn:n2'],
   )
-  assert.deepEqual(state.viewGraph.relations, [
+  assert.deepEqual(state.mapGraph.relations, [
     { source: 'urn:n1', predicate: 'urn:links', target: 'urn:n2' },
   ])
-  assert.deepEqual(state.viewGraph.relationTypes, [{ id: 'urn:links', label: 'links' }])
+  assert.deepEqual(state.mapGraph.relationTypes, [{ id: 'urn:links', label: 'links' }])
   const selected: Selection = [
     { kind: 'concept', id: 'urn:n1' },
     { kind: 'concept', id: 'urn:n2' },
   ]
   host.store.setSelection(selected)
-  host.store.setViewMembership(id, 'urn:n2', false)
+  host.store.setMapMembership(id, 'urn:n2', false)
   assert.deepEqual(host.store.getState().selected, [selected[0]])
-  assert.deepEqual(host.store.getState().viewGraph.relations, [])
+  assert.deepEqual(host.store.getState().mapGraph.relations, [])
   host.store.setSelection(selected)
   assert.deepEqual(host.store.getState().selected, [selected[0]])
   host.store.undo()
   assert.deepEqual(host.store.getState().selected, [selected[0]])
   host.store.redo()
-  host.store.setViewMembership(id, 'urn:n2', true)
+  host.store.setMapMembership(id, 'urn:n2', true)
   const beforePin = host.store.getState()
-  host.store.setViewPinned(id, true)
-  assert.equal(host.store.getState().viewGraph, beforePin.viewGraph)
+  host.store.setMapPinned(id, true)
+  assert.equal(host.store.getState().mapGraph, beforePin.mapGraph)
   const added = host.store.addConcept()
   const member = (conceptId: string) =>
-    host.store.getState().workspace.savedViews[0].members.some(({ id }) => id === conceptId)
+    host.store.getState().workspace.maps[0].members.some(({ id }) => id === conceptId)
   assert.ok(member(added))
   host.store.removeConcept(added)
   assert.equal(member(added), false)
-  const empty = host.store.createView('Empty', [])
-  assert.deepEqual(host.store.getViewGraph(empty).concepts, [])
+  const empty = host.store.createMap('Empty', [])
+  assert.deepEqual(host.store.getMapGraph(empty).concepts, [])
   assert.equal(
-    host.store.getViewGraph(empty).relationTypes,
+    host.store.getMapGraph(empty).relationTypes,
     host.store.getState().graph.relationTypes,
   )
   assert.deepEqual(
-    host.store.getViewGraph(id).concepts.map(({ id }) => id),
+    host.store.getMapGraph(id).concepts.map(({ id }) => id),
     ['urn:n1', 'urn:n2'],
   )
-  host.store.deleteView(empty)
-  assert.equal(host.store.getState().workspace.activeViewId, null)
-  assert.equal(host.store.getState().viewGraph, host.store.getState().graph)
+  host.store.deleteMap(empty)
+  assert.equal(host.store.getState().workspace.activeMapId, null)
+  assert.equal(host.store.getState().mapGraph, host.store.getState().graph)
 })
 
-test('switching views preserves visible selections, including every selection in the complete graph', () => {
+test('switching maps preserves visible selections, including every selection in the complete graph', () => {
   const host = createNessoStore(fixture())
-  const pair = host.store.createView('Pair', ['urn:n1', 'urn:n2'])
-  const other = host.store.createView('Other', ['urn:n1', 'urn:n3'])
+  const pair = host.store.createMap('Pair', ['urn:n1', 'urn:n2'])
+  const other = host.store.createMap('Other', ['urn:n1', 'urn:n3'])
   const graph = host.store.getState().graph
   const selected: Selection = [
     { kind: 'concept', id: 'urn:n1' },
     { kind: 'concept', id: 'urn:n2' },
     { kind: 'relation', id: relationKey(graph.relations[0]) },
   ]
-  host.store.setView(null)
+  host.store.setMap(null)
   host.store.setSelection(selected)
-  host.store.setView(pair)
+  host.store.setMap(pair)
   assert.deepEqual(host.store.getState().selected, selected)
-  host.store.setView(null)
+  host.store.setMap(null)
   assert.deepEqual(host.store.getState().selected, selected)
-  assert.equal(host.store.getState().viewGraph, graph)
-  host.store.setView(other)
+  assert.equal(host.store.getState().mapGraph, graph)
+  host.store.setMap(other)
   assert.deepEqual(host.store.getState().selected, [selected[0]])
   assert.equal(host.store.getState().graph, graph)
   host.store.setSelection([{ kind: 'concept', id: 'urn:n3' }])
-  host.store.setView(pair)
+  host.store.setMap(pair)
   assert.deepEqual(host.store.getState().selected, [])
 })
 
-test('new concepts link to and inherit color only from a single selected concept and join the active view atomically', () => {
+test('new concepts link to and inherit color only from a single selected concept and join the active map atomically', () => {
   for (const subset of [false, true]) {
     for (const kind of ['concept', 'relation', 'concepts', 'mixed', null] as const) {
       const host = createNessoStore(fixture(), { workspace: viewed() })
       host.registerVocab(vocabB)
       host.store.setConceptColor('urn:n2', '#e1ecde')
-      if (subset) host.store.createView('Pair', ['urn:n1', 'urn:n2'])
+      if (subset) host.store.createMap('Pair', ['urn:n1', 'urn:n2'])
       const relation = {
         kind: 'relation' as const,
         id: relationKey(host.store.getState().graph.relations[0]),
@@ -606,18 +601,18 @@ test('new concepts link to and inherit color only from a single selected concept
       assert.equal(notifications, 1)
       assert.deepEqual(after.selected, [{ kind: 'concept', id }])
       assert.equal(after.graph.concepts.length, before.graph.concepts.length + 1)
-      assert.deepEqual(after.viewGraph.concepts.at(-1)?.position, {
+      assert.deepEqual(after.mapGraph.concepts.at(-1)?.position, {
         x: kind === 'concept' ? 161 : 160,
         y: 100,
       })
       assert.equal(
-        after.viewGraph.concepts.at(-1)?.color,
+        after.mapGraph.concepts.at(-1)?.color,
         kind === 'concept' ? '#e1ecde' : undefined,
       )
       if (kind === 'concept') {
         const relation = { source: 'urn:n2', predicate: vocabB.defaultTypeId, target: id }
         assert.deepEqual(after.graph.relations.at(-1), relation)
-        assert.deepEqual(after.viewGraph.relations.at(-1), relation)
+        assert.deepEqual(after.mapGraph.relations.at(-1), relation)
         assert.equal(after.graph.relations.length, before.graph.relations.length + 1)
         assert.deepEqual(after.graph.relationTypes.at(-1), vocabB.relationTypes[0])
       } else {
@@ -625,7 +620,7 @@ test('new concepts link to and inherit color only from a single selected concept
         assert.equal(after.graph.relationTypes, before.graph.relationTypes)
       }
       assert.deepEqual(
-        after.workspace.savedViews.map((view) => view.members.some((member) => member.id === id)),
+        after.workspace.maps.map((map) => map.members.some((member) => member.id === id)),
         subset ? [false, true] : [true],
       )
     }
@@ -634,7 +629,7 @@ test('new concepts link to and inherit color only from a single selected concept
   host.registerVocab(vocabB)
   host.store.setSelection([{ kind: 'concept', id: 'urn:n1' }])
   const id = host.store.addConcept({ x: 5, y: 5 })
-  assert.equal(host.store.getState().viewGraph, host.store.getState().graph)
+  assert.equal(host.store.getState().mapGraph, host.store.getState().graph)
   assert.deepEqual(host.store.getState().graph.concepts.at(-1), { id, label: 'Concept 4' })
 })
 
@@ -651,12 +646,12 @@ test('inherited concept colors are independent and restored with creation histor
     false,
   )
   store.redo()
-  assert.equal(store.getState().viewGraph.concepts.at(-1)?.color, '#e1ecde')
+  assert.equal(store.getState().mapGraph.concepts.at(-1)?.color, '#e1ecde')
   store.setConceptColor('urn:n1', '#dfeaf5')
-  assert.equal(store.getState().viewGraph.concepts.at(-1)?.color, '#e1ecde')
+  assert.equal(store.getState().mapGraph.concepts.at(-1)?.color, '#e1ecde')
   store.setSelection([{ kind: 'concept', id: 'urn:n2' }])
   store.addConcept()
-  assert.equal(Object.hasOwn(store.getState().viewGraph.concepts.at(-1)!, 'color'), false)
+  assert.equal(Object.hasOwn(store.getState().mapGraph.concepts.at(-1)!, 'color'), false)
 })
 
 test('renderer registration rejects duplicate ids and unknown activation, first one becomes active', () => {
@@ -737,15 +732,15 @@ test('naming a new relation type creates and assigns its own IRI atomically', ()
   ])
 })
 
-test('reconnecting either endpoint preserves its predicate, shared objects and view membership', () => {
+test('reconnecting either endpoint preserves its predicate, shared objects and map membership', () => {
   for (const endpoint of ['source', 'target'] as const) {
     const graph = fixture()
     graph.relationTypes.push({ id: 'urn:custom', label: 'Custom' })
     graph.relations[0].predicate = 'urn:custom'
     const host = createNessoStore(graph)
     host.registerVocab(vocabB)
-    const pair = host.store.createView('Pair', ['urn:n1', 'urn:n2'])
-    host.store.setView(null)
+    const pair = host.store.createMap('Pair', ['urn:n1', 'urn:n2'])
+    host.store.setMap(null)
     const id = relationKey(graph.relations[0])
     const selected: Selection = [
       { kind: 'relation', id },
@@ -766,7 +761,7 @@ test('reconnecting either endpoint preserves its predicate, shared objects and v
     assert.equal(after.graph.relationTypes, before.graph.relationTypes)
     assert.equal(after.graph.concepts, before.graph.concepts)
     assert.equal(after.workspace, before.workspace)
-    assert.deepEqual(host.store.getViewGraph(pair).relations, [])
+    assert.deepEqual(host.store.getMapGraph(pair).relations, [])
     assert.deepEqual(before, snapshot)
   }
 })
@@ -837,7 +832,7 @@ test('duplicate, self, empty, unknown or invalid reconnects roll back atomically
 test('mixed batches publish once, apply in order and own inputs while sharing untouched objects', () => {
   for (const subset of [false, true]) {
     const { store } = createNessoStore(fixture(), { workspace: viewed() })
-    if (subset) store.createView('Pair', ['urn:n1', 'urn:n2'])
+    if (subset) store.createMap('Pair', ['urn:n1', 'urn:n2'])
     const before = store.getState()
     const snapshot = structuredClone(before)
     const rename = { kind: 'concept.label' as const, id: 'urn:n1', value: 'Renamed' }
@@ -858,13 +853,13 @@ test('mixed batches publish once, apply in order and own inputs while sharing un
     assert.equal(after.graph.concepts[0].label, 'Renamed')
     assert.equal(after.graph.concepts[1].label, 'Second')
     assert.deepEqual(
-      after.viewGraph.concepts.map(({ position }) => position),
+      after.mapGraph.concepts.map(({ position }) => position),
       [...updates.map(({ position }) => position), ...(subset ? [] : [{ x: 2, y: 0 }])],
     )
     assert.equal(after.graph.concepts[2], before.graph.concepts[2])
     assert.equal(after.graph.relations, before.graph.relations)
     assert.equal(after.graph.relationTypes, before.graph.relationTypes)
-    assert.equal(after.workspace.savedViews.length, subset ? 2 : 1)
+    assert.equal(after.workspace.maps.length, subset ? 2 : 1)
     assert.deepEqual(before, snapshot)
     const published = structuredClone(after)
     rename.value = 'External mutation'
@@ -877,7 +872,7 @@ test('mixed batches publish once, apply in order and own inputs while sharing un
 test('batches can reference new concepts and types and reconcile navigation after deletion', () => {
   const host = createNessoStore(fixture())
   host.registerVocab(vocabA)
-  const viewId = host.store.createView('All', ['urn:n1', 'urn:n2', 'urn:n3'])
+  const mapId = host.store.createMap('All', ['urn:n1', 'urn:n2', 'urn:n3'])
   host.store.setSelection([{ kind: 'concept', id: 'urn:n1' }])
   const relation = { source: 'urn:n4', predicate: 'urn:links', target: 'urn:n5' }
   let notifications = 0
@@ -905,19 +900,19 @@ test('batches can reference new concepts and types and reconcile navigation afte
   assert.equal(state.graph.concepts.find((concept) => concept.id === 'urn:n4')?.label, 'Four')
   assert.deepEqual(state.graph.relations, [{ ...relation, predicate: 'urn:custom' }])
   assert.deepEqual(state.graph.relationTypes.at(-1), { id: 'urn:custom', label: 'Custom' })
-  assert.equal(state.workspace.activeViewId, viewId)
+  assert.equal(state.workspace.activeMapId, mapId)
   assert.deepEqual(
-    state.workspace.savedViews[0].members.map(({ id }) => id),
+    state.workspace.maps[0].members.map(({ id }) => id),
     ['urn:n2', 'urn:n3', 'urn:n4', 'urn:n5'],
   )
   assert.deepEqual(state.selected, [])
   assert.deepEqual(
-    state.viewGraph.concepts.map((concept) => concept.id),
+    state.mapGraph.concepts.map((concept) => concept.id),
     ['urn:n2', 'urn:n3', 'urn:n4', 'urn:n5'],
   )
 })
 
-test('state batches share ordered graph, view and preference changes, including reset', () => {
+test('state batches share ordered graph, map and preference changes, including reset', () => {
   const host = createNessoStore(fixture())
   host.registerVocab(vocabA)
   host.registerVocab(vocabB)
@@ -927,32 +922,32 @@ test('state batches share ordered graph, view and preference changes, including 
   let notifications = 0
   store.subscribe(() => notifications++)
   store.applyOperations([
-    { kind: 'view.create', id: 'urn:first', name: 'First', conceptIds: ['urn:n1'] },
+    { kind: 'map.create', id: 'urn:first', name: 'First', conceptIds: ['urn:n1'] },
     { kind: 'selection.set', value: [{ kind: 'concept', id: 'urn:n1' }] },
     { kind: 'preferences.vocab', id: vocabB.id },
     { kind: 'concept.add', id: 'urn:n4' },
-    { kind: 'view.create', id: 'urn:second', name: 'Temporary', conceptIds: ['urn:n2'] },
+    { kind: 'map.create', id: 'urn:second', name: 'Temporary', conceptIds: ['urn:n2'] },
     { kind: 'selection.set', value: [] },
     { kind: 'concept.add', id: 'urn:n5' },
-    { kind: 'view.rename', id: 'urn:second', name: ' Second ' },
-    { kind: 'view.membership', viewId: 'urn:second', conceptId: 'urn:n4', included: true },
-    { kind: 'view.pin', id: 'urn:first', pinned: true },
+    { kind: 'map.rename', id: 'urn:second', name: ' Second ' },
+    { kind: 'map.membership', mapId: 'urn:second', conceptId: 'urn:n4', included: true },
+    { kind: 'map.pin', id: 'urn:first', pinned: true },
     { kind: 'preferences.renderer', id: 'graph' },
     { kind: 'preferences.theme', id: 'light' },
     { kind: 'preferences.panels', value: { explorerWidth: 300, inspectorWidth: 350 } },
-    { kind: 'preferences.section', id: 'sidebar.views', open: false },
+    { kind: 'preferences.section', id: 'sidebar.maps', open: false },
     { kind: 'viewport.set', rendererId: 'graph', value: { x: 10, y: 20, zoom: 0.8 } },
     { kind: 'selection.set', value: [{ kind: 'concept', id: 'urn:n4' }] },
-    { kind: 'view.activate', id: 'urn:first' },
+    { kind: 'map.activate', id: 'urn:first' },
   ])
   const state = store.getState()
   assert.equal(notifications, 1)
-  const views = (value: typeof state) =>
-    value.workspace.savedViews.map(({ members, ...view }) => ({
-      ...view,
+  const maps = (value: typeof state) =>
+    value.workspace.maps.map(({ members, ...map }) => ({
+      ...map,
       members: members.map(({ id }) => id),
     }))
-  assert.deepEqual(views(state), [
+  assert.deepEqual(maps(state), [
     { id: 'urn:first', name: 'First', members: ['urn:n1', 'urn:n4'], pinned: true },
     { id: 'urn:second', name: 'Second', members: ['urn:n2', 'urn:n5', 'urn:n4'], pinned: false },
   ])
@@ -962,12 +957,12 @@ test('state batches share ordered graph, view and preference changes, including 
     target: 'urn:n4',
   })
   assert.deepEqual(
-    state.viewGraph.concepts.map(({ id }) => id),
+    state.mapGraph.concepts.map(({ id }) => id),
     ['urn:n1', 'urn:n4'],
   )
   assert.deepEqual(state.selected, [{ kind: 'concept', id: 'urn:n4' }])
   assert.deepEqual(state.preferences.panels, { explorerWidth: 300, inspectorWidth: 350 })
-  assert.deepEqual(state.preferences.collapsedSections, ['sidebar.views'])
+  assert.deepEqual(state.preferences.collapsedSections, ['sidebar.maps'])
   assert.deepEqual(state.workspace.viewports[viewportKey('graph', 'urn:second')], {
     x: 10,
     y: 20,
@@ -975,7 +970,7 @@ test('state batches share ordered graph, view and preference changes, including 
   })
   store.applyOperations([
     { kind: 'document.reset', id: 'urn:fresh' },
-    { kind: 'view.create', id: 'urn:fresh-view', name: 'Fresh', conceptIds: ['urn:fresh'] },
+    { kind: 'map.create', id: 'urn:fresh-map', name: 'Fresh', conceptIds: ['urn:fresh'] },
     { kind: 'selection.set', value: [{ kind: 'concept', id: 'urn:fresh' }] },
     { kind: 'concept.add', id: 'urn:child' },
   ])
@@ -985,8 +980,8 @@ test('state batches share ordered graph, view and preference changes, including 
     ['urn:fresh', 'urn:child'],
   )
   assert.deepEqual(
-    views(store.getState()).filter(({ id }) => id === 'urn:fresh-view'),
-    [{ id: 'urn:fresh-view', name: 'Fresh', members: ['urn:fresh', 'urn:child'], pinned: false }],
+    maps(store.getState()).filter(({ id }) => id === 'urn:fresh-map'),
+    [{ id: 'urn:fresh-map', name: 'Fresh', members: ['urn:fresh', 'urn:child'], pinned: false }],
   )
   assert.deepEqual(store.getState().workspace.viewports, {})
   assert.equal(store.getState().preferences, state.preferences)
@@ -994,15 +989,15 @@ test('state batches share ordered graph, view and preference changes, including 
 
 test('invalid state batches reject every preceding change without notification', () => {
   const { store } = createNessoStore(fixture())
-  const viewId = store.createView('Pair', ['urn:n1', 'urn:n2'])
+  const mapId = store.createMap('Pair', ['urn:n1', 'urn:n2'])
   const before = store.getState()
   const snapshot = structuredClone(before)
   let notifications = 0
   store.subscribe(() => notifications++)
   const invalid: readonly HostOperation[] = [
-    { kind: 'view.rename', id: viewId, name: '' },
-    { kind: 'view.create', id: viewId, name: 'Duplicate', conceptIds: [] },
-    { kind: 'view.membership', viewId, conceptId: 'missing', included: true },
+    { kind: 'map.rename', id: mapId, name: '' },
+    { kind: 'map.create', id: mapId, name: 'Duplicate', conceptIds: [] },
+    { kind: 'map.membership', mapId, conceptId: 'missing', included: true },
     { kind: 'preferences.panels', value: { explorerWidth: NaN, inspectorWidth: 300 } },
     { kind: 'preferences.renderer', id: 'missing' },
     { kind: 'preferences.locale', value: 'fr' as never },
@@ -1019,7 +1014,7 @@ test('invalid state batches reject every preceding change without notification',
       () =>
         store.applyOperations([
           { kind: 'concept.label', id: 'urn:n1', value: 'Changed' },
-          { kind: 'view.pin', id: viewId, pinned: true },
+          { kind: 'map.pin', id: mapId, pinned: true },
           { kind: 'preferences.section', id: 'sidebar', open: false },
           { kind: 'selection.set', value: [{ kind: 'concept', id: 'urn:n2' }] },
           operation,
@@ -1037,7 +1032,7 @@ test('empty and cancelling batches preserve state identity and do not notify', (
   const host = createNessoStore(fixture())
   host.registerVocab(vocabA)
   host.registerRenderer({ id: 'graph' })
-  const viewId = host.store.createView('Pair', ['urn:n1', 'urn:n2'])
+  const mapId = host.store.createMap('Pair', ['urn:n1', 'urn:n2'])
   host.store.setViewport('graph', { x: 0, y: 0, zoom: 1 })
   host.store.setSelection([{ kind: 'concept', id: 'urn:n1' }])
   const before = host.store.getState()
@@ -1046,15 +1041,15 @@ test('empty and cancelling batches preserve state identity and do not notify', (
   host.store.subscribe(() => notifications++)
   host.store.applyOperations([])
   host.store.applyOperations([
-    { kind: 'view.rename', id: viewId, name: '' },
-    { kind: 'view.rename', id: viewId, name: 'Pair' },
-    { kind: 'view.pin', id: viewId, pinned: true },
-    { kind: 'view.pin', id: viewId, pinned: false },
-    { kind: 'view.membership', viewId, conceptId: 'urn:n2', included: false },
-    { kind: 'view.membership', viewId, conceptId: 'urn:n2', included: true },
-    { kind: 'view.create', id: 'urn:temporary-view', name: 'Temporary', conceptIds: [] },
-    { kind: 'view.remove', id: 'urn:temporary-view' },
-    { kind: 'view.activate', id: viewId },
+    { kind: 'map.rename', id: mapId, name: '' },
+    { kind: 'map.rename', id: mapId, name: 'Pair' },
+    { kind: 'map.pin', id: mapId, pinned: true },
+    { kind: 'map.pin', id: mapId, pinned: false },
+    { kind: 'map.membership', mapId, conceptId: 'urn:n2', included: false },
+    { kind: 'map.membership', mapId, conceptId: 'urn:n2', included: true },
+    { kind: 'map.create', id: 'urn:temporary-map', name: 'Temporary', conceptIds: [] },
+    { kind: 'map.remove', id: 'urn:temporary-map' },
+    { kind: 'map.activate', id: mapId },
     { kind: 'viewport.set', rendererId: 'graph', value: { x: NaN, y: 10, zoom: 1 } },
     { kind: 'viewport.set', rendererId: 'graph', value: { x: 0, y: 0, zoom: 1 } },
     { kind: 'preferences.panels', value: { explorerWidth: NaN, inspectorWidth: 300 } },
@@ -1123,7 +1118,7 @@ test('consecutive removals apply together between other edits and undo as one st
   )
   const host = createNessoStore(graph)
   host.registerVocab(vocabA)
-  host.store.createView('Group', ['urn:n1', 'urn:n2', 'urn:n4'])
+  host.store.createMap('Group', ['urn:n1', 'urn:n2', 'urn:n4'])
   const before = host.store.getState()
   host.store.applyOperations([
     { kind: 'relation.remove', id: relationKey(graph.relations[3]) },
@@ -1143,7 +1138,7 @@ test('consecutive removals apply together between other edits and undo as one st
   )
   assert.deepEqual(after.graph.relations, [])
   assert.deepEqual(
-    after.workspace.savedViews[0].members.map(({ id }) => id),
+    after.workspace.maps[0].members.map(({ id }) => id),
     ['urn:n2'],
   )
   host.store.undo()
@@ -1163,16 +1158,16 @@ test('custom relation types disappear only after their last use in the whole gra
     host.store.createRelationType(relationKey(graph.relations[0]), 'Custom')
     const type = host.store.getState().graph.relationTypes.at(-1)!
     host.store.setRelationType(relationKey(graph.relations[1]), type.id)
-    host.store.createView('Pair', ['urn:n1', 'urn:n2'])
+    host.store.createMap('Pair', ['urn:n1', 'urn:n2'])
     host.store.setRelationType(
       relationKey(host.store.getState().graph.relations[0]),
       vocabA.defaultTypeId,
     )
     const before = host.store.getState()
     assert.ok(before.graph.relationTypes.includes(type))
-    assert.ok(before.viewGraph.relationTypes.includes(type))
+    assert.ok(before.mapGraph.relationTypes.includes(type))
     assert.equal(
-      before.viewGraph.relations.some((relation) => relation.predicate === type.id),
+      before.mapGraph.relations.some((relation) => relation.predicate === type.id),
       false,
     )
     const last = relationKey(before.graph.relations[1])
@@ -1188,7 +1183,7 @@ test('custom relation types disappear only after their last use in the whole gra
       false,
     )
     assert.equal(
-      after.viewGraph.relationTypes.some((item) => item.id === type.id),
+      after.mapGraph.relationTypes.some((item) => item.id === type.id),
       false,
     )
     assert.ok(after.graph.relationTypes.some((item) => item.id === vocabA.defaultTypeId))
@@ -1215,7 +1210,7 @@ test('positions and multiple selections are owned, normalized and ignore no-ops'
   concept.id = 'missing'
   relation.id = 'missing'
   input.length = 0
-  assert.deepEqual(before.viewGraph.concepts.find((concept) => concept.id === id)?.position, {
+  assert.deepEqual(before.mapGraph.concepts.find((concept) => concept.id === id)?.position, {
     x: 10,
     y: 20,
   })
@@ -1269,11 +1264,11 @@ test('registered vocabularies and their inserted types are owned independently b
   )
 })
 
-test('position batches reject invalid coordinates atomically in every view mode', () => {
+test('position batches reject invalid coordinates atomically in every map mode', () => {
   for (const subset of [true, false]) {
     for (const invalid of [NaN, Infinity, -Infinity]) {
       const { store } = createNessoStore(fixture(), { workspace: viewed() })
-      if (subset) store.createView('Pair', ['urn:n1', 'urn:n3'])
+      if (subset) store.createMap('Pair', ['urn:n1', 'urn:n3'])
       store.setSelection([{ kind: 'concept', id: 'urn:n2' }])
       const before = store.getState()
       let notifications = 0
@@ -1285,7 +1280,7 @@ test('position batches reject invalid coordinates atomically in every view mode'
             { id: 'urn:n3', position: { x: 30, y: invalid } },
           ]),
         ).map(({ path }) => path),
-        [`workspace.savedViews[${subset ? 1 : 0}].members[${subset ? 1 : 2}].position.y`],
+        [`workspace.maps[${subset ? 1 : 0}].members[${subset ? 1 : 2}].position.y`],
       )
       assert.equal(store.getState(), before)
       assert.equal(notifications, 0)
@@ -1302,7 +1297,7 @@ test('position batches use the last position for repeated ids', () => {
     { id: 'urn:n1', position: { x: 10, y: 20 } },
   ])
   assert.equal(notifications, 1)
-  assert.deepEqual(store.getState().viewGraph.concepts[0].position, { x: 10, y: 20 })
+  assert.deepEqual(store.getState().mapGraph.concepts[0].position, { x: 10, y: 20 })
   const before = store.getState()
   store.setConceptPositions([
     { id: 'urn:n1', position: { x: 30, y: 40 } },
@@ -1375,7 +1370,7 @@ test('edits and removals of unknown or duplicate items reject the whole batch', 
 test('restoration resolves saved plugin preferences, falling back when unavailable', () => {
   for (const missing of [false, true]) {
     const host = createNessoStore(fixture(), {
-      workspace: { activeViewId: null, savedViews: [], viewports: {} },
+      workspace: { activeMapId: null, maps: [], viewports: {} },
       preferences: {
         activeVocabId: missing ? 'removed' : 'b',
         activeRendererId: missing ? 'removed' : 'other',
@@ -1391,7 +1386,7 @@ test('restoration resolves saved plugin preferences, falling back when unavailab
     assert.equal(state.preferences.activeVocabId, missing ? 'a' : 'b')
     assert.equal(state.preferences.activeRendererId, missing ? 'graph' : 'other')
     assert.equal(state.preferences.activeThemeId, missing ? 'light' : 'alternative')
-    assert.equal(state.viewGraph, state.graph)
+    assert.equal(state.mapGraph, state.graph)
     assert.deepEqual(state.selected, [])
     assert.deepEqual(state.graph, fixture())
   }
@@ -1399,13 +1394,13 @@ test('restoration resolves saved plugin preferences, falling back when unavailab
 
 test('locale changes leave document data, selection and history untouched', () => {
   const host = createNessoStore(fixture())
-  host.store.createView('Original view', ['urn:n1', 'urn:n2'])
+  host.store.createMap('Original map', ['urn:n1', 'urn:n2'])
   host.store.setSelection([{ kind: 'concept', id: 'urn:n1' }])
   const before = host.store.getState()
   host.store.setLocale('it')
   const after = host.store.getState()
   assert.deepEqual(after, { ...before, preferences: { ...before.preferences, locale: 'it' } })
-  for (const key of ['graph', 'workspace', 'viewGraph', 'selected', 'history'] as const)
+  for (const key of ['graph', 'workspace', 'mapGraph', 'selected', 'history'] as const)
     assert.equal(after[key], before[key])
   host.store.setLocale('it')
   assert.equal(host.store.getState(), after)
@@ -1424,7 +1419,7 @@ test('inspector tab defaults to details and changes only preferences', () => {
     ...before,
     preferences: { ...before.preferences, inspectorTab: 'chat' },
   })
-  for (const key of ['graph', 'workspace', 'viewGraph', 'selected', 'history'] as const)
+  for (const key of ['graph', 'workspace', 'mapGraph', 'selected', 'history'] as const)
     assert.equal(after[key], before[key])
   host.store.applyOperations([{ kind: 'preferences.inspectorTab', value: 'chat' }])
   assert.equal(host.store.getState(), after)
@@ -1457,7 +1452,7 @@ test('section preferences are global, immutable, validated and independent of th
     assert.deepEqual(closed.preferences.collapsedSections, [id])
     assert.equal(closed.graph, before.graph)
     assert.equal(closed.workspace, before.workspace)
-    assert.equal(closed.viewGraph, before.viewGraph)
+    assert.equal(closed.mapGraph, before.mapGraph)
     assert.equal(closed.selected, before.selected)
     assert.equal(previous.preferences.collapsedSections?.includes(id) ?? false, false)
     host.store.setSectionOpen(id, false)
@@ -1467,14 +1462,14 @@ test('section preferences are global, immutable, validated and independent of th
     assert.deepEqual(closed.preferences.collapsedSections, [id])
   }
   assert.equal(notifications, sectionIds.length * 2)
-  const collapsedSections: SectionId[] = ['sidebar', 'inspector.views']
+  const collapsedSections: SectionId[] = ['sidebar', 'inspector.maps']
   const restored = createNessoStore(fixture(), {
     preferences: { ...before.preferences, collapsedSections },
   })
   collapsedSections.push('inspector.nodes')
   assert.deepEqual(restored.store.getState().preferences.collapsedSections, [
     'sidebar',
-    'inspector.views',
+    'inspector.maps',
   ])
   const state = host.store.getState()
   assert.throws(() => host.store.setSectionOpen('missing' as SectionId, false), NessoError)
@@ -1482,26 +1477,26 @@ test('section preferences are global, immutable, validated and independent of th
   assert.equal(host.store.getState(), state)
 })
 
-test('view renaming changes only the name and ignores no-ops', () => {
+test('map renaming changes only the name and ignores no-ops', () => {
   const host = createNessoStore(fixture())
-  const viewId = host.store.createView('Pair', ['urn:n1', 'urn:n2'])
-  host.store.setViewPinned(viewId, true)
+  const mapId = host.store.createMap('Pair', ['urn:n1', 'urn:n2'])
+  host.store.setMapPinned(mapId, true)
   host.store.setSelection([{ kind: 'concept', id: 'urn:n1' }])
   const before = host.store.getState()
-  host.store.renameView(viewId, '  Renamed pair  ')
+  host.store.renameMap(mapId, '  Renamed pair  ')
   const after = host.store.getState()
-  assert.deepEqual(after.workspace.savedViews[0], {
-    ...before.workspace.savedViews[0],
+  assert.deepEqual(after.workspace.maps[0], {
+    ...before.workspace.maps[0],
     name: 'Renamed pair',
   })
   assert.deepEqual(after, {
     ...before,
-    workspace: { ...before.workspace, savedViews: after.workspace.savedViews },
+    workspace: { ...before.workspace, maps: after.workspace.maps },
   })
   assert.equal(after.graph, before.graph)
-  assert.equal(after.viewGraph, before.viewGraph)
-  assert.equal(before.workspace.savedViews[0].name, 'Pair')
-  host.store.renameView(viewId, ' Renamed pair ')
+  assert.equal(after.mapGraph, before.mapGraph)
+  assert.equal(before.workspace.maps[0].name, 'Pair')
+  host.store.renameMap(mapId, ' Renamed pair ')
   assert.equal(host.store.getState(), after)
 })
 
@@ -1517,7 +1512,7 @@ test('UI and viewport writes own their inputs, ignore no-ops and reject invalid 
   const panels = { explorerWidth: 300, inspectorWidth: 350 }
   const viewport = { x: 100, y: -200, zoom: 0.8 }
   const disabled = ['@nesso-how/notes']
-  const viewId = host.store.createView('Pair', conceptIds)
+  const mapId = host.store.createMap('Pair', conceptIds)
   host.store.setPanelSizes(panels)
   host.store.setViewport('graph', viewport)
   host.store.applyOperations([
@@ -1530,10 +1525,10 @@ test('UI and viewport writes own their inputs, ignore no-ops and reject invalid 
   const state = host.store.getState()
   assert.equal(state.graph, graph)
   assert.deepEqual(
-    state.workspace.savedViews[0].members.map(({ id }) => id),
+    state.workspace.maps[0].members.map(({ id }) => id),
     ['urn:n1', 'urn:n2'],
   )
-  assert.deepEqual(state.workspace.viewports[viewportKey('graph', viewId)], {
+  assert.deepEqual(state.workspace.viewports[viewportKey('graph', mapId)], {
     x: 100,
     y: -200,
     zoom: 0.8,
@@ -1542,9 +1537,9 @@ test('UI and viewport writes own their inputs, ignore no-ops and reject invalid 
   assert.deepEqual(state.preferences.disabledBundledActionPlugins, ['@nesso-how/notes'])
   let notifications = 0
   host.store.subscribe(() => notifications++)
-  host.store.setViewMembership(viewId, 'urn:n1', true)
-  host.store.setViewPinned(viewId, false)
-  host.store.setView(viewId)
+  host.store.setMapMembership(mapId, 'urn:n1', true)
+  host.store.setMapPinned(mapId, false)
+  host.store.setMap(mapId)
   host.store.setPanelSizes({ explorerWidth: 300, inspectorWidth: 350 })
   host.store.setViewport('graph', { x: 100, y: -200, zoom: 0.8 })
   host.store.applyOperations([
@@ -1553,14 +1548,14 @@ test('UI and viewport writes own their inputs, ignore no-ops and reject invalid 
   assert.equal(host.store.getState(), state)
   assert.equal(notifications, 0)
   const writes = [
-    () => host.store.createView('', []),
-    () => host.store.createView('x'.repeat(71), []),
-    () => host.store.renameView(viewId, '   '),
-    () => host.store.renameView(viewId, 'x'.repeat(71)),
-    () => host.store.renameView('missing', 'Name'),
-    () => host.store.createView('Invalid', ['missing']),
-    () => host.store.setViewMembership(viewId, 'missing', true),
-    () => host.store.deleteView('missing'),
+    () => host.store.createMap('', []),
+    () => host.store.createMap('x'.repeat(71), []),
+    () => host.store.renameMap(mapId, '   '),
+    () => host.store.renameMap(mapId, 'x'.repeat(71)),
+    () => host.store.renameMap('missing', 'Name'),
+    () => host.store.createMap('Invalid', ['missing']),
+    () => host.store.setMapMembership(mapId, 'missing', true),
+    () => host.store.deleteMap('missing'),
     () => host.store.setPanelSizes({ explorerWidth: 500, inspectorWidth: 300 }),
     () => host.store.setPanelSizes({ explorerWidth: 179, inspectorWidth: 300 }),
     () => host.store.setPanelSizes({ explorerWidth: 300, inspectorWidth: 100 }),
@@ -1580,9 +1575,9 @@ test('UI and viewport writes own their inputs, ignore no-ops and reject invalid 
   })
   host.store.setPanelSizes({ explorerWidth: 480, inspectorWidth: 200 })
   assert.equal(host.store.getState().preferences.panels.explorerWidth, 480)
-  const longestView = host.store.createView('x'.repeat(70), [])
+  const longestMap = host.store.createMap('x'.repeat(70), [])
   assert.equal(
-    host.store.getState().workspace.savedViews.find((view) => view.id === longestView)?.name.length,
+    host.store.getState().workspace.maps.find((map) => map.id === longestMap)?.name.length,
     70,
   )
 })
@@ -1655,5 +1650,5 @@ test('theme registration and activation are validated, isolated, and leave the d
   assert.equal(notifications, 1)
   assert.equal(host.store.getState().graph, before.graph)
   assert.equal(host.store.getState().workspace, before.workspace)
-  assert.equal(host.store.getState().viewGraph, before.viewGraph)
+  assert.equal(host.store.getState().mapGraph, before.mapGraph)
 })

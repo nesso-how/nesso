@@ -66,7 +66,7 @@ test('manual backups round-trip every record, exclude device secrets and bind co
       ...backup,
       records: {
         ...backup.records,
-        document: { ...document, graph: { ...document.graph, schemaVersion: 4 } },
+        document: { ...document, graph: { ...document.graph, schemaVersion: 5 } },
       },
     },
     { ...backup, records: { ...backup.records, preferences: { version: 99 } } },
@@ -100,7 +100,7 @@ test('migration backups preserve all original records and restore through the ma
     workspace: WorkspaceState
   }
   const positions = new Map(
-    document.workspace.savedViews.flatMap(({ members }) =>
+    document.workspace.maps.flatMap(({ members }) =>
       members.map(({ id, position }) => [id, position]),
     ),
   )
@@ -114,9 +114,10 @@ test('migration backups preserve all original records and restore through the ma
       ),
     },
     workspace: {
-      ...document.workspace,
-      savedViews: document.workspace.savedViews.map(({ members, ...view }) => ({
-        ...view,
+      activeViewId: document.workspace.activeMapId,
+      viewports: document.workspace.viewports,
+      savedViews: document.workspace.maps.map(({ members, ...map }) => ({
+        ...map,
         conceptIds: members.map(({ id }) => id),
       })),
     },
@@ -160,7 +161,7 @@ test('migration backups preserve all original records and restore through the ma
   const candidate = await manual.choose(1, file)
   const restored = manual.take(1, candidate.id)
   assert.deepEqual(restored.records.preferences, {
-    version: 3,
+    version: 4,
     preferences: preferences.preferences,
   })
   await storage.write('plugin-storage', { version: 1, documentId: loaded.documentId, plugins: [] })

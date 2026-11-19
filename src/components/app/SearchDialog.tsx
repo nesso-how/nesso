@@ -31,26 +31,26 @@ export function SearchDialog({
 }) {
   const t = useTranslation(store)
   const graph = useNessoStore((state) => state.graph, store)
-  const views = useNessoStore((state) => state.workspace.savedViews, store)
-  const activeViewId = useNessoStore((state) => state.workspace.activeViewId, store)
+  const maps = useNessoStore((state) => state.workspace.maps, store)
+  const activeMapId = useNessoStore((state) => state.workspace.activeMapId, store)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<'all' | SearchResult['kind']>('all')
   const input = useRef<HTMLInputElement>(null)
   const navigating = useRef(false)
   const highlighted = useRef<SearchResult | undefined>(undefined)
-  const overview = t('completeGraph')
+  const graphLabel = t('completeGraph')
   const members = useMemo(
-    () => new Set(views.find(({ id }) => id === activeViewId)?.members.map(({ id }) => id)),
-    [views, activeViewId],
+    () => new Set(maps.find(({ id }) => id === activeMapId)?.members.map(({ id }) => id)),
+    [maps, activeMapId],
   )
   const outside = (result?: SearchResult) =>
-    activeViewId !== null && result?.kind === 'concept' && !members.has(result.id)
+    activeMapId !== null && result?.kind === 'concept' && !members.has(result.id)
   const results = useMemo(() => {
     if (!open) return []
-    return searchGraph(graph, views, query, overview, activeViewId).filter(
+    return searchGraph(graph, maps, query, graphLabel, activeMapId).filter(
       (result) => filter === 'all' || result.kind === filter,
     )
-  }, [open, graph, views, query, overview, activeViewId, filter])
+  }, [open, graph, maps, query, graphLabel, activeMapId, filter])
   const choose = (result: SearchResult, add: boolean) => {
     navigating.current = true
     if (add && result.kind === 'concept') onAdd(result.id)
@@ -58,7 +58,7 @@ export function SearchDialog({
     onOpenChange(false)
   }
   const placeholder = t('searchPlaceholder')
-  const groups = (['view', 'concept'] as const)
+  const groups = (['map', 'concept'] as const)
     .map((kind) => ({ kind, items: results.filter((result) => result.kind === kind) }))
     .filter((group) => group.items.length > 0)
   const highlight = (label: string) => {
@@ -145,7 +145,7 @@ export function SearchDialog({
           </div>
           <div className="flex shrink-0 items-center justify-between gap-3 px-4 pt-3 pb-1.5">
             <div className="flex gap-1" role="group" aria-label={t('search')}>
-              {(['all', 'view', 'concept'] as const).map((kind) => (
+              {(['all', 'map', 'concept'] as const).map((kind) => (
                 <Button
                   key={kind}
                   variant="ghost"
@@ -157,7 +157,7 @@ export function SearchDialog({
                     input.current?.focus()
                   }}
                 >
-                  {t(kind === 'all' ? 'searchAll' : kind === 'view' ? 'views' : 'concepts')}
+                  {t(kind === 'all' ? 'searchAll' : kind === 'map' ? 'maps' : 'concepts')}
                 </Button>
               ))}
             </div>
@@ -174,7 +174,7 @@ export function SearchDialog({
             {(group: (typeof groups)[number]) => (
               <Combobox.Group key={group.kind} items={group.items}>
                 <Combobox.GroupLabel className="px-3 pt-3 pb-1.5 font-mono text-[10px] text-muted-foreground">
-                  {t(group.kind === 'view' ? 'views' : 'concepts')}
+                  {t(group.kind === 'map' ? 'maps' : 'concepts')}
                 </Combobox.GroupLabel>
                 <Combobox.Collection>
                   {(result: SearchResult) => (
@@ -184,7 +184,7 @@ export function SearchDialog({
                       className="group flex min-h-11 items-center gap-3 px-3 py-2.5"
                     >
                       <span className="flex w-5 shrink-0 justify-center text-muted-foreground">
-                        {result.kind === 'view' ? (
+                        {result.kind === 'map' ? (
                           <Layers className="size-4" />
                         ) : (
                           <span
@@ -200,7 +200,7 @@ export function SearchDialog({
                       <span className="min-w-0 flex-1 truncate text-[13px] leading-[18px]">
                         {highlight(result.label || t('concept'))}
                       </span>
-                      {result.kind === 'view' && (
+                      {result.kind === 'map' && (
                         <span className="shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground">
                           {t('conceptCount', { count: result.count })}
                         </span>
@@ -217,7 +217,7 @@ export function SearchDialog({
                           }}
                         >
                           <Plus className="size-3" />
-                          {t('addToView')}
+                          {t('addToMap')}
                         </Button>
                       )}
                       <CornerDownLeft className="size-3.5 shrink-0 text-muted-foreground opacity-0 group-data-highlighted:opacity-100" />
@@ -256,7 +256,7 @@ export function SearchDialog({
               <Kbd>↵</Kbd>
               {t('searchOpen')}
             </span>
-            {activeViewId !== null && (
+            {activeMapId !== null && (
               <span className="flex items-center gap-1">
                 <Kbd>{/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'}</Kbd>
                 <Kbd>↵</Kbd>

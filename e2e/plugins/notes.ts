@@ -7,12 +7,12 @@ export async function verifyNotes({ window, url }: CheckContext) {
   const state = {
     ...actionState(),
     workspace: {
-      activeViewId: null,
-      savedViews: [{ id: 'urn:project', name: 'Project', pinned: false }],
+      activeMapId: null,
+      maps: [{ id: 'urn:project', name: 'Project', pinned: false }],
     },
   }
   await evaluate(`window.__notesRecords=[];window.__notesRevision=0;
-    window.__openNotes=async(viewId,reuse=false)=>{
+    window.__openNotes=async(mapId,reuse=false)=>{
       window.__notesReady=0;
       const response=await fetch(${JSON.stringify(new URL('preinstalled/notes/index.js', url).href)});
       const bytes=new Uint8Array(await response.arrayBuffer());
@@ -26,7 +26,7 @@ export async function verifyNotes({ window, url }: CheckContext) {
       const channel=new MessageChannel();window.__notesPort=channel.port1;
       channel.port1.onmessage=({data})=>{
         if(data.type==='panel-ready'&&++window.__notesReady===1)
-          channel.port1.postMessage({type:'invoke',actionId:'notes',state:{...${JSON.stringify(state)},targetViewId:viewId}});
+          channel.port1.postMessage({type:'invoke',actionId:'notes',state:{...${JSON.stringify(state)},targetMapId:mapId}});
         if(data.type!=='request')return;
         if((window.__notesFailure==='save'&&data.method==='storage.set')||
           (window.__notesFailure==='restore'&&data.method==='storage.list')){
@@ -46,8 +46,8 @@ export async function verifyNotes({ window, url }: CheckContext) {
       };
        frame.contentWindow.postMessage({type:'bootstrap',guard:'notes',token:'notes'},'*',[channel.port2]);
     };undefined`)
-  const open = async (viewId: string | null, reuse = false) => {
-    await evaluate(`window.__openNotes(${JSON.stringify(viewId)},${reuse})`)
+  const open = async (mapId: string | null, reuse = false) => {
+    await evaluate(`window.__openNotes(${JSON.stringify(mapId)},${reuse})`)
     await waitFor(
       () => evaluate<number>('window.__notesReady'),
       (ready) => ready === 2,
@@ -63,7 +63,7 @@ export async function verifyNotes({ window, url }: CheckContext) {
   }
   const savedText = () =>
     evaluate<string | undefined>(
-      `window.__notesRecords.find(r=>r.scope?.kind==='view'&&r.scope.id==='urn:project')?.value.text`,
+      `window.__notesRecords.find(r=>r.scope?.kind==='map'&&r.scope.id==='urn:project')?.value.text`,
     )
   let frame = await open('urn:project')
   assert.deepEqual(

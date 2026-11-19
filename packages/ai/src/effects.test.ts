@@ -8,7 +8,7 @@ const empty: AiEffects = {
   concepts: counts,
   relations: counts,
   relationTypes: counts,
-  views: counts,
+  maps: counts,
   memberships: 0,
 }
 
@@ -17,7 +17,7 @@ test('effect summaries aggregate every group and preserve membership counts', ()
     concepts: { added: 1, updated: 2, removed: 3 },
     relations: { added: 4, updated: 5, removed: 6 },
     relationTypes: { added: 7, updated: 8, removed: 9 },
-    views: { added: 10, updated: 11, removed: 12 },
+    maps: { added: 10, updated: 11, removed: 12 },
     memberships: 13,
   }
   assert.deepEqual(summarizeAiEffects(effects), {
@@ -30,7 +30,7 @@ test('effect summaries aggregate every group and preserve membership counts', ()
 
 test('effect detection includes each group and membership-only changes', () => {
   assert.equal(hasAiEffects(empty), false)
-  for (const group of ['concepts', 'relations', 'relationTypes', 'views'] as const) {
+  for (const group of ['concepts', 'relations', 'relationTypes', 'maps'] as const) {
     for (const change of ['added', 'updated', 'removed'] as const) {
       assert.equal(hasAiEffects({ ...empty, [group]: { ...counts, [change]: 1 } }), true)
     }

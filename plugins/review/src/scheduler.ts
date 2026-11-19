@@ -109,11 +109,11 @@ function restoreProgress(records: readonly PluginStorageRecord[]) {
   return progress
 }
 
-export function reviewBadge({ viewGraph, records, now }: ActionBadgeInput): ActionBadgeResult {
+export function reviewBadge({ mapGraph, records, now }: ActionBadgeInput): ActionBadgeResult {
   const progress = restoreProgress(records)
   let value = 0
   let refreshAt = Infinity
-  for (const { id } of viewGraph.concepts) {
+  for (const { id } of mapGraph.concepts) {
     const due = progress.get(id)?.card.dueAt.getTime()
     if (due === undefined || due <= now) value++
     else refreshAt = Math.min(refreshAt, due)

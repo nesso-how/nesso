@@ -3,7 +3,7 @@ import { defaultLocale } from '@nesso-how/i18n'
 import { ActionIcon, IconButton, Menu, MenuItem, MenuPopup, PanelHeader, Tabs } from '@nesso-how/ui'
 import { ChevronDown, MoreHorizontal } from 'lucide-react'
 import { useTranslation } from '@/i18n'
-import { openCanvasTab, useCanvasTabs, usePluginPanel, useViewActions } from '@/plugins'
+import { openCanvasTab, useCanvasTabs, usePluginPanel, useMapActions } from '@/plugins'
 import {
   sameTabLayout,
   visibleTabs,
@@ -12,7 +12,7 @@ import {
 } from '@/plugins/canvas-tabs'
 import { nessoStore, useNessoStore } from '@/store'
 import type { HostStore } from '@/store/types'
-import { ViewActions } from './ViewActions'
+import { MapActions } from './MapActions'
 import { ActionBadge } from './ActionBadge'
 
 const shortcut = (index: number) => {
@@ -20,7 +20,7 @@ const shortcut = (index: number) => {
   return `${/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl+'}${index + 1}`
 }
 
-export function ViewHeader({
+export function MapHeader({
   readonly = false,
   store = nessoStore,
   preview,
@@ -38,7 +38,7 @@ export function ViewHeader({
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale, store)
   const availableTabs = useCanvasTabs()
   const tabs = preview?.tabs ?? availableTabs
-  const commands = useViewActions().length > 0
+  const commands = useMapActions().length > 0
   const panel = usePluginPanel()
   const root = useRef<HTMLDivElement>(null)
   const measure = useRef<HTMLDivElement>(null)
@@ -47,9 +47,9 @@ export function ViewHeader({
   const value = activeIndex < 0 ? 'graph' : tabs[activeIndex].id
   const shown = preview ? tabs : visibleTabs(tabs, activeIndex, layout)
   const hidden = tabs.filter((tab) => !shown.includes(tab))
-  const view = workspace.savedViews.find((view) => view.id === workspace.activeViewId)
-  const name = view?.name ?? t('completeGraph')
-  const canvasLabel = view ? 'canvasMap' : 'canvasGraph'
+  const map = workspace.maps.find((map) => map.id === workspace.activeMapId)
+  const name = map?.name ?? t('completeGraph')
+  const canvasLabel = map ? 'canvasMap' : 'canvasGraph'
   const label = (tab: CanvasTab) => tab.label[locale] ?? tab.label.en
   const content = (tab: CanvasTab) => (
     <>
@@ -64,12 +64,7 @@ export function ViewHeader({
             {preview.badgeCount}
           </span>
         ) : (
-          <ActionBadge
-            actionId={tab.id}
-            viewId={workspace.activeViewId}
-            label={label(tab)}
-            inline
-          />
+          <ActionBadge actionId={tab.id} mapId={workspace.activeMapId} label={label(tab)} inline />
         ))}
     </>
   )
@@ -197,7 +192,7 @@ export function ViewHeader({
       size="lg"
       actions={
         <Menu.Root
-          key={workspace.activeViewId ?? 'complete-graph'}
+          key={workspace.activeMapId ?? 'complete-graph'}
           open={actionsOpen}
           onOpenChange={onActionsOpenChange}
         >
@@ -213,7 +208,7 @@ export function ViewHeader({
             <MoreHorizontal />
           </Menu.Trigger>
           <MenuPopup align="end">
-            <ViewActions viewId={workspace.activeViewId} />
+            <MapActions mapId={workspace.activeMapId} />
           </MenuPopup>
         </Menu.Root>
       }

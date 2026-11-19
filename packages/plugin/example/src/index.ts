@@ -8,7 +8,7 @@ export const create = (): readonly ActionContribution[] => {
     run: async ({ document }) => {
       const state = document.getState()
 
-      const operations: readonly NessoOperation[] = state.viewGraph.concepts.map(
+      const operations: readonly NessoOperation[] = state.mapGraph.concepts.map(
         ({ id, label }) => ({
           kind: 'concept.label',
           id,

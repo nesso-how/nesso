@@ -42,7 +42,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
   if (!isAbsoluteIri(documentId)) fail('documentId', 'Expected an absolute document IRI')
   const pluginStorage =
     graph && restored.pluginStorage
-      ? parsePluginStorage({ version: 3, documentId, plugins: restored.pluginStorage }).plugins
+      ? parsePluginStorage({ version: 4, documentId, plugins: restored.pluginStorage }).plugins
       : []
   const workspace =
     fresh?.workspace ?? (restored.workspace ? parseWorkspace(restored.workspace) : newWorkspace())
@@ -67,7 +67,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
       messages: restored.conversation?.messages ?? [],
     }),
     preferences: { ...preferences, activeVocabId: '', activeRendererId: '', activeThemeId: '' },
-    viewGraph: materialize(initial, workspace),
+    mapGraph: materialize(initial, workspace),
     selected: [],
     vocabs: [],
     persistenceIssues: [],
@@ -155,11 +155,10 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     setChatMessages: (value) => applyOperations([{ kind: 'conversation.messages', value }]),
     appendChatText: (id, text) => applyOperations([{ kind: 'conversation.append', id, text }]),
     clearChat: () => applyOperations([{ kind: 'conversation.clear' }]),
-    getViewGraph: (id) => {
+    getMapGraph: (id) => {
       const state = store.getState()
-      if (!state.workspace.savedViews.some((view) => view.id === id))
-        fail('view.id', 'Unknown view')
-      return materialize(state.graph, { ...state.workspace, activeViewId: id })
+      if (!state.workspace.maps.some((map) => map.id === id)) fail('map.id', 'Unknown map')
+      return materialize(state.graph, { ...state.workspace, activeMapId: id })
     },
   }
 

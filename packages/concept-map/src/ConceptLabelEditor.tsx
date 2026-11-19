@@ -18,7 +18,7 @@ export function ConceptLabelEditor({
   const t = useTranslation()
   const { store } = useCanvasContext()
   const graph = useNesso((state) => state.graph)
-  const viewGraph = useNesso((state) => state.viewGraph)
+  const mapGraph = useNesso((state) => state.mapGraph)
   const input = useRef<HTMLInputElement>(null)
   const hintId = useId()
   const finished = useRef(false)
@@ -33,8 +33,8 @@ export function ConceptLabelEditor({
   }, [initialized])
   const suggestions = useMemo(
     () =>
-      data.onReuse && query !== undefined ? creationSuggestions({ graph, viewGraph }, query) : [],
-    [data.onReuse, graph, viewGraph, query],
+      data.onReuse && query !== undefined ? creationSuggestions({ graph, mapGraph }, query) : [],
+    [data.onReuse, graph, mapGraph, query],
   )
   const suggesting = open && suggestions.length > 0
   const hint = data.maxLength !== undefined && (

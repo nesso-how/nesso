@@ -13,7 +13,7 @@ import { conceptPlacementOffset } from '../store/operations.ts'
 import { connectActionChannel } from './action-channel.ts'
 import { createPluginFrame } from './frame.ts'
 import { createPluginFiles } from './files.ts'
-import { renderViewImage } from './images.ts'
+import { renderMapImage } from './images.ts'
 import type { createPluginEntry } from './entry.ts'
 
 export type ActionPackage = {
@@ -31,7 +31,7 @@ export function loadActions(
   bridge?: FileBridge,
   invocation?: {
     actionId: string
-    viewId: string | null
+    mapId: string | null
     descriptors: readonly ActionDescriptor[]
   },
   signal?: AbortSignal,
@@ -82,12 +82,12 @@ export function loadActions(
     const frameRuntime = container.load(
       (port, failed) => {
         if (
-          invocation?.viewId !== null &&
-          invocation?.viewId !== undefined &&
-          !store.getState().workspace.savedViews.some(({ id }) => id === invocation.viewId)
+          invocation?.mapId !== null &&
+          invocation?.mapId !== undefined &&
+          !store.getState().workspace.maps.some(({ id }) => id === invocation.mapId)
         )
           throw new PluginError('stale-context', [
-            { path: 'action', message: 'The target view no longer exists' },
+            { path: 'action', message: 'The target map no longer exists' },
           ])
         let files: ReturnType<typeof createPluginFiles>
         const runtime = connectActionChannel(
@@ -108,8 +108,7 @@ export function loadActions(
           },
           {
             presentation: panel ? presentation : undefined,
-            renderImage: (viewId, options, signal) =>
-              renderViewImage(store, viewId, options, signal),
+            renderImage: (mapId, options, signal) => renderMapImage(store, mapId, options, signal),
             files: {
               open: (options) => files.open(options),
               save: (options) => files.save(options),

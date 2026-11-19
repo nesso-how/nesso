@@ -1,14 +1,14 @@
 import type { NessoOperation, NessoState } from '@nesso-how/core'
 
-type CreationState = Pick<NessoState, 'graph' | 'viewGraph' | 'workspace'>
+type CreationState = Pick<NessoState, 'graph' | 'mapGraph' | 'workspace'>
 
 const normalize = (value: string) =>
   value.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim()
 
-export function creationSuggestions(state: Pick<NessoState, 'graph' | 'viewGraph'>, query: string) {
+export function creationSuggestions(state: Pick<NessoState, 'graph' | 'mapGraph'>, query: string) {
   const text = normalize(query)
   if (!text) return []
-  const visible = new Set(state.viewGraph.concepts.map(({ id }) => id))
+  const visible = new Set(state.mapGraph.concepts.map(({ id }) => id))
   const tokens = text.split(/\s+/)
   return state.graph.concepts
     .filter(({ id }) => !visible.has(id))
@@ -36,17 +36,17 @@ export function reuseConceptOperations(
   provisionalId: string,
   conceptId: string,
 ): NessoOperation[] {
-  const viewId = state.workspace.activeViewId
-  const provisional = state.viewGraph.concepts.find(({ id }) => id === provisionalId)
+  const mapId = state.workspace.activeMapId
+  const provisional = state.mapGraph.concepts.find(({ id }) => id === provisionalId)
   if (
-    !viewId ||
+    !mapId ||
     !provisional?.position ||
-    state.viewGraph.concepts.some(({ id }) => id === conceptId) ||
+    state.mapGraph.concepts.some(({ id }) => id === conceptId) ||
     !state.graph.concepts.some(({ id }) => id === conceptId)
   )
     return []
   return [
-    { kind: 'view.membership', viewId, conceptId, included: true },
+    { kind: 'map.membership', mapId, conceptId, included: true },
     { kind: 'concept.position', id: conceptId, value: provisional.position },
     ...state.graph.relations.flatMap((relation): NessoOperation[] => {
       if (relation.source !== provisionalId && relation.target !== provisionalId) return []

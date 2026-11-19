@@ -9,7 +9,7 @@ const source: ActionPackage = {
   name: 'nesso-plugin-panel',
   local: false,
   entry: createPluginEntry(new Uint8Array([1])),
-  manifest: { apiVersion: 6, kind: 'actions', entry: 'index.js', writes: [], capabilities: ['ui'] },
+  manifest: { apiVersion: 7, kind: 'actions', entry: 'index.js', writes: [], capabilities: ['ui'] },
   i18n: {
     metadata: {
       name: { en: 'Example' },
@@ -23,12 +23,12 @@ test('central sessions are revoked by replacement, cancellation, reset or target
   for (const reason of ['replace', 'abort', 'reset', 'delete'] as const) {
     const host = createNessoStore(null)
     const panel = createPluginPanel(host.store, { notify: () => '', dismiss: () => {} })
-    const viewId = host.store.createView(
+    const mapId = host.store.createMap(
       'Target',
       host.store.getState().graph.concepts.map(({ id }) => id),
     )
     const invocation = {
-      viewId,
+      mapId,
       actionId: 'browse',
       descriptors: [{ id: 'browse', label: { en: 'Browse' }, ui: true as const }],
     }
@@ -37,7 +37,7 @@ test('central sessions are revoked by replacement, cancellation, reset or target
     if (reason === 'abort') controller.abort()
     if (reason === 'reset')
       host.store.applyOperations([{ kind: 'document.reset', id: host.store.getState().documentId }])
-    if (reason === 'delete') host.store.deleteView(viewId)
+    if (reason === 'delete') host.store.deleteMap(mapId)
     if (reason === 'replace') {
       const replaced = panel.open(source, invocation, new AbortController().signal)
       await pending
@@ -50,18 +50,18 @@ test('central sessions are revoked by replacement, cancellation, reset or target
   }
 })
 
-test('view navigation reuses panel frames without ending the action or reopening closed panels', async () => {
+test('map navigation reuses panel frames without ending the action or reopening closed panels', async () => {
   const host = createNessoStore(null)
   const panel = createPluginPanel(host.store, { notify: () => '', dismiss: () => {} })
-  const first = host.store.createView('First', [])
-  const second = host.store.createView('Second', [])
-  host.store.setView(first)
+  const first = host.store.createMap('First', [])
+  const second = host.store.createMap('Second', [])
+  host.store.setMap(first)
   let ended = false
   const pending = panel
     .open(
       source,
       {
-        viewId: first,
+        mapId: first,
         actionId: 'browse',
         descriptors: [{ id: 'browse', label: { en: 'Browse' }, ui: true as const }],
       },
@@ -71,7 +71,7 @@ test('view navigation reuses panel frames without ending the action or reopening
       ended = true
     })
   const initial = panel.getSnapshot()!
-  assert.equal(initial.viewName, 'First')
+  assert.equal(initial.mapName, 'First')
   host.store.setLocale('it')
   assert.equal(panel.getSnapshot(), initial)
   for (const [id, name] of [
@@ -79,20 +79,20 @@ test('view navigation reuses panel frames without ending the action or reopening
     [null, null],
     [first, 'First'],
   ] as const) {
-    host.store.setView(id)
+    host.store.setMap(id)
     const next = panel.getSnapshot()!
     assert.equal(next.id, initial.id)
     assert.equal(next.frameId, initial.frameId)
-    assert.equal(next.viewName, name)
+    assert.equal(next.mapName, name)
     assert.equal(next.status, 'loading')
     await Promise.resolve()
     assert.equal(ended, false)
   }
-  host.store.deleteView(second)
+  host.store.deleteMap(second)
   assert.ok(panel.getSnapshot())
   panel.close()
   await pending
-  host.store.setView(null)
+  host.store.setMap(null)
   assert.equal(panel.getSnapshot(), null)
 })
 
@@ -112,7 +112,7 @@ test('only Notes and Review are preloaded and retained until invalidation', asyn
       source,
       {
         actionId: 'browse',
-        viewId: null,
+        mapId: null,
         descriptors: [{ id: 'browse', label: { en: 'Browse' }, ui: true }],
       },
       new AbortController().signal,

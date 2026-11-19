@@ -1,11 +1,11 @@
-import type { DeepReadonly, NessoState, ViewGraphSnapshot } from '@nesso-how/core'
+import type { DeepReadonly, NessoState, MapGraphSnapshot } from '@nesso-how/core'
 import type { Concept, Presentation } from '@nesso-how/schema'
 import type { Edge, Node } from '@xyflow/react'
 
 export type PresentedGraph = DeepReadonly<
-  Omit<ViewGraphSnapshot, 'concepts'> & { concepts: (Concept & Presentation)[] }
+  Omit<MapGraphSnapshot, 'concepts'> & { concepts: (Concept & Presentation)[] }
 >
-export const presentedGraph = (state: NessoState) => state.viewGraph as PresentedGraph
+export const presentedGraph = (state: NessoState) => state.mapGraph as PresentedGraph
 
 export type ConceptData = {
   label: string

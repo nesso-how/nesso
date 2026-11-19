@@ -25,7 +25,7 @@ export async function verifyBundled({ window, url }: CheckContext) {
     relations: [],
     relationTypes: [],
   }
-  const state: ActionState = { ...actionState(), viewGraph: graph }
+  const state: ActionState = { ...actionState(), mapGraph: graph }
   const file = {
     name: 'graph.jsonld',
     mediaType: 'application/ld+json',
@@ -56,7 +56,7 @@ export async function verifyBundled({ window, url }: CheckContext) {
         if(data.type==='contribution'){
           result.contribution=data.value;result.discoveryRequests=result.requests.length;
            if(${phase === 'badge'}){
-             channel.port1.postMessage({type:'badge',actionId:data.value[0].id,input:{viewId:null,viewGraph:${JSON.stringify(graph)},records:[],now:0}});
+             channel.port1.postMessage({type:'badge',actionId:data.value[0].id,input:{mapId:null,mapGraph:${JSON.stringify(graph)},records:[],now:0}});
            }else if(${invocation}){
             channel.port1.postMessage({type:'invoke',actionId:data.value[0].id,state:${JSON.stringify(state)}});
           }else result.done=true;
@@ -109,7 +109,7 @@ export async function verifyBundled({ window, url }: CheckContext) {
         if (name === 'export') {
           const saved = result.requests.find(({ method }) => method === 'files.save')!.params
           assert.equal(saved.name, 'nesso-graph.jsonld')
-          assert.deepEqual(parseGraph(JSON.parse(saved.text!)), { graph, views: [] })
+          assert.deepEqual(parseGraph(JSON.parse(saved.text!)), { graph, maps: [] })
         }
       } else assert.deepEqual(result.requests, [])
     } finally {

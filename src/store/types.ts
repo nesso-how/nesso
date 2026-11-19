@@ -13,11 +13,11 @@ import type { KnowledgeGraphLayout } from '@nesso-how/knowledge-graph/layout'
 
 export const sectionIds = [
   'sidebar',
-  'sidebar.pinned-views',
-  'sidebar.views',
+  'sidebar.pinned-maps',
+  'sidebar.maps',
   'inspector',
   'inspector.connections',
-  'inspector.views',
+  'inspector.maps',
   'inspector.nodes',
 ] as const satisfies readonly SectionId[]
 

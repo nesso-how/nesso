@@ -34,10 +34,10 @@ test('intro steps frame the idea, connection, whole map and Rest without moving 
   const graph = store.getState().graph
   const seed = createSeedDocument('en')
   assert.deepEqual(
-    store.getState().viewGraph.concepts.map(({ id }) => id),
+    store.getState().mapGraph.concepts.map(({ id }) => id),
     [graph.concepts[0].id],
   )
-  assert.deepEqual(store.getState().viewGraph.relations, [])
+  assert.deepEqual(store.getState().mapGraph.relations, [])
 
   assert.equal(chosenRelation(store), undefined)
   for (const step of [1, 2, 3, 1, 0]) {
@@ -55,14 +55,14 @@ test('intro steps frame the idea, connection, whole map and Rest without moving 
         ? [introConnection.source]
         : step === 1
           ? [introConnection.source, introConnection.target]
-          : seed.workspace.savedViews
+          : seed.workspace.maps
               .find(({ id }) => id === (step === 3 ? 'rest' : 'coffee'))!
               .members.map(({ id }) => id)
     assert.deepEqual(
-      state.viewGraph.concepts.map(({ id }) => id),
+      state.mapGraph.concepts.map(({ id }) => id),
       ids,
     )
-    if (step >= 2) assert.deepEqual(state.workspace.savedViews, seed.workspace.savedViews)
+    if (step >= 2) assert.deepEqual(state.workspace.maps, seed.workspace.maps)
     assert.deepEqual(
       state.selected,
       step === 0 || (step === 1 && !chosenRelation(store))
@@ -79,7 +79,7 @@ test('intro navigation stays isolated from the user document and its viewport', 
   const host = createNessoStore(seed.graph, { workspace: seed.workspace })
   host.registerRenderer({ id: 'concept-map' })
   host.store.setConceptLabel(seed.graph.concepts[0].id, 'My concept')
-  host.store.setView('rest')
+  host.store.setMap('rest')
   host.store.setSelection([{ kind: 'concept', id: seed.graph.concepts[0].id }])
   host.store.setViewport('concept-map', { x: 100, y: 200, zoom: 0.8 })
   const original = host.store.getState()
@@ -87,14 +87,14 @@ test('intro navigation stays isolated from the user document and its viewport', 
   for (const step of [1, 2, 3, 0]) setIntroStep(intro, step)
   setIntroStep(intro, 1)
   intro.createRelationType(relationKey(chosenRelation(intro)!), 'My relation')
-  intro.setView('rest')
-  assert.equal(intro.getState().workspace.activeViewId, 'rest')
-  assert.ok(intro.getState().viewGraph.concepts.length < intro.getState().graph.concepts.length)
+  intro.setMap('rest')
+  assert.equal(intro.getState().workspace.activeMapId, 'rest')
+  assert.ok(intro.getState().mapGraph.concepts.length < intro.getState().graph.concepts.length)
   setIntroStep(intro, 2)
-  assert.equal(intro.getState().workspace.activeViewId, 'coffee')
+  assert.equal(intro.getState().workspace.activeMapId, 'coffee')
   assert.deepEqual(
-    intro.getState().viewGraph.concepts.map(({ id }) => id),
-    seed.workspace.savedViews[0].members.map(({ id }) => id),
+    intro.getState().mapGraph.concepts.map(({ id }) => id),
+    seed.workspace.maps[0].members.map(({ id }) => id),
   )
   assert.equal(host.store.getState(), original)
   assert.equal(intro.getState().preferences.locale, 'it')
@@ -190,11 +190,11 @@ test('discarding the first-run example starts a fresh document', () => {
   assert.deepEqual(state.graph.relations, [])
   assert.deepEqual(state.graph.relationTypes, [])
   assert.deepEqual(
-    state.workspace.savedViews.map(({ id, name, members }) => [id, name, members]),
+    state.workspace.maps.map(({ id, name, members }) => [id, name, members]),
     [
       [
-        state.workspace.activeViewId,
-        'View 1',
+        state.workspace.activeMapId,
+        'Map 1',
         [{ id: state.graph.concepts[0].id, position: { x: 0, y: 0 } }],
       ],
     ],

@@ -1,8 +1,8 @@
-import type { GraphSnapshot, SavedView } from '@nesso-how/core'
+import type { GraphSnapshot, WorkspaceMap } from '@nesso-how/core'
 import type { HostStore } from '../store/types.ts'
 
 export type SearchResult = { readonly label: string } & (
-  | { readonly kind: 'view'; readonly id: string | null; readonly count: number }
+  | { readonly kind: 'map'; readonly id: string | null; readonly count: number }
   | {
       readonly kind: 'concept'
       readonly id: string
@@ -16,13 +16,13 @@ const normalize = (value: string) =>
 
 export function searchGraph(
   graph: GraphSnapshot,
-  views: readonly SavedView[],
+  maps: readonly WorkspaceMap[],
   query: string,
-  overview: string,
-  activeViewId: string | null = null,
+  graphLabel: string,
+  activeMapId: string | null = null,
 ): SearchResult[] {
   const colors = new Map(
-    views.find(({ id }) => id === activeViewId)?.members.map(({ id, color }) => [id, color]),
+    maps.find(({ id }) => id === activeMapId)?.members.map(({ id, color }) => [id, color]),
   )
   const text = normalize(query)
   const tokens = text.split(/\s+/)
@@ -51,12 +51,12 @@ export function searchGraph(
   }
   return [
     ...rank([
-      { kind: 'view', id: null, label: overview, count: graph.concepts.length },
-      ...views.map((view) => ({
-        kind: 'view' as const,
-        id: view.id,
-        label: view.name,
-        count: view.members.length,
+      { kind: 'map', id: null, label: graphLabel, count: graph.concepts.length },
+      ...maps.map((map) => ({
+        kind: 'map' as const,
+        id: map.id,
+        label: map.name,
+        count: map.members.length,
       })),
     ]),
     ...rank(
@@ -71,30 +71,30 @@ export function searchGraph(
   ]
 }
 
-export function addToActiveView(
+export function addToActiveMap(
   store: HostStore,
-  renderer: { readonly addToView: (id: string) => void } | null,
+  renderer: { readonly addToMap: (id: string) => void } | null,
   id: string,
 ): void {
   const { graph, workspace } = store.getState()
-  const viewId = workspace.activeViewId
-  if (viewId === null || !graph.concepts.some((concept) => concept.id === id)) return
-  if (renderer) renderer.addToView(id)
-  else store.applyOperations([{ kind: 'view.membership', viewId, conceptId: id, included: true }])
+  const mapId = workspace.activeMapId
+  if (mapId === null || !graph.concepts.some((concept) => concept.id === id)) return
+  if (renderer) renderer.addToMap(id)
+  else store.applyOperations([{ kind: 'map.membership', mapId, conceptId: id, included: true }])
   store.applyOperations([{ kind: 'selection.set', value: [{ kind: 'concept', id }] }])
 }
 
 export function openSearchResult(store: HostStore, result: SearchResult): void {
   const { graph, workspace } = store.getState()
-  if (result.kind === 'view') {
-    if (result.id !== null && !workspace.savedViews.some(({ id }) => id === result.id)) return
-    store.setView(result.id)
+  if (result.kind === 'map') {
+    if (result.id !== null && !workspace.maps.some(({ id }) => id === result.id)) return
+    store.setMap(result.id)
   } else {
     if (!graph.concepts.some(({ id }) => id === result.id)) return
-    const current = workspace.savedViews.find(({ id }) => id === workspace.activeViewId)
+    const current = workspace.maps.find(({ id }) => id === workspace.activeMapId)
     store.applyOperations([
       {
-        kind: 'view.activate',
+        kind: 'map.activate',
         id: current?.members.some(({ id }) => id === result.id) ? current.id : null,
       },
       { kind: 'selection.set', value: [{ kind: 'concept', id: result.id }] },

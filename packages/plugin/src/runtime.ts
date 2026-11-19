@@ -6,14 +6,14 @@ import {
   type RenderedImage,
 } from './images.ts'
 export type { ImageRenderOptions, RenderedImage } from './images.ts'
-import { positionSchema, viewGraphSchema } from '@nesso-how/schema'
+import { positionSchema, mapGraphSchema } from '@nesso-how/schema'
 import type { ComponentType } from 'react'
 import type {
   DeepReadonly,
   NessoOperation,
   Selection,
-  SavedView,
-  ViewGraphSnapshot,
+  WorkspaceMap,
+  MapGraphSnapshot,
   VocabDefinition,
 } from '@nesso-how/core'
 import type { Locale } from '@nesso-how/i18n'
@@ -87,8 +87,8 @@ const actionBadgeResult = z.strictObject({
 })
 
 export type ActionBadgeInput = {
-  readonly viewId: string | null
-  readonly viewGraph: ViewGraphSnapshot
+  readonly mapId: string | null
+  readonly mapGraph: MapGraphSnapshot
   readonly records: readonly PluginStorageRecord[]
   readonly now: number
 }
@@ -139,17 +139,17 @@ const operation = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('history.undo') }),
   z.strictObject({ kind: z.literal('history.redo') }),
   z.strictObject({ kind: z.literal('selection.set'), value: selection }),
-  z.strictObject({ kind: z.literal('view.activate'), id: id.nullable() }),
-  z.strictObject({ kind: z.literal('view.create'), id, name: z.string(), conceptIds: z.array(id) }),
-  z.strictObject({ kind: z.literal('view.rename'), id, name: z.string() }),
-  z.strictObject({ kind: z.literal('view.pin'), id, pinned: z.boolean() }),
+  z.strictObject({ kind: z.literal('map.activate'), id: id.nullable() }),
+  z.strictObject({ kind: z.literal('map.create'), id, name: z.string(), conceptIds: z.array(id) }),
+  z.strictObject({ kind: z.literal('map.rename'), id, name: z.string() }),
+  z.strictObject({ kind: z.literal('map.pin'), id, pinned: z.boolean() }),
   z.strictObject({
-    kind: z.literal('view.membership'),
-    viewId: id,
+    kind: z.literal('map.membership'),
+    mapId: id,
     conceptId: id,
     included: z.boolean(),
   }),
-  z.strictObject({ kind: z.literal('view.remove'), id }),
+  z.strictObject({ kind: z.literal('map.remove'), id }),
   ...(['vocab', 'theme'] as const).map((kind) =>
     z.strictObject({ kind: z.literal(`preferences.${kind}`), id }),
   ),
@@ -162,11 +162,11 @@ const operation = z.discriminatedUnion('kind', [
     kind: z.literal('preferences.section'),
     id: z.enum([
       'sidebar',
-      'sidebar.pinned-views',
-      'sidebar.views',
+      'sidebar.pinned-maps',
+      'sidebar.maps',
       'inspector',
       'inspector.connections',
-      'inspector.views',
+      'inspector.maps',
       'inspector.nodes',
     ]),
     open: z.boolean(),
@@ -190,7 +190,7 @@ export function parsePluginI18n(value: unknown): PluginI18n {
   return parseOrThrow(pluginI18n, value, 'i18n.')
 }
 
-export const pluginApiVersion = 6
+export const pluginApiVersion = 7
 const manifestFields = {
   apiVersion: z.literal(pluginApiVersion),
 }
@@ -220,8 +220,8 @@ const pluginWriteKinds = [
   'relation.remove',
   'relation.bend',
   'selection.set',
-  'view.create',
-  'view.membership',
+  'map.create',
+  'map.membership',
 ] as const
 const operationDeclarations = z.array(z.enum(pluginWriteKinds))
 const manifest = z
@@ -296,7 +296,7 @@ const request = z.discriminatedUnion('method', [
   z.strictObject({ ...envelope, method: z.literal('files.save'), params: fileSaveOptions }),
   z.strictObject({
     ...envelope,
-    method: z.literal('images.renderView'),
+    method: z.literal('images.renderMap'),
     params: imageRenderOptions,
   }),
 ])
@@ -392,13 +392,13 @@ export type ActionState = {
   readonly theme: Readonly<Record<string, string>>
   readonly colorScheme: ColorScheme
   readonly conceptPlacementOffset: Readonly<{ x: number; y: number }>
-  readonly viewGraph: ViewGraphSnapshot
+  readonly mapGraph: MapGraphSnapshot
   readonly selected: Selection
   readonly workspace: {
-    readonly activeViewId: string | null
-    readonly savedViews: readonly Pick<SavedView, 'id' | 'name' | 'pinned'>[]
+    readonly activeMapId: string | null
+    readonly maps: readonly Pick<WorkspaceMap, 'id' | 'name' | 'pinned'>[]
   }
-  readonly targetViewId: string | null
+  readonly targetMapId: string | null
   readonly activeVocab: VocabDefinition | null
   readonly history: { readonly canUndo: boolean; readonly canRedo: boolean }
 }
@@ -408,19 +408,19 @@ type PluginWrites = Omit<
   ReturnType<typeof createWriteCommands<Promise<void>, Promise<string>>>,
   | 'undo'
   | 'redo'
-  | 'setView'
+  | 'setMap'
   | 'setActiveVocab'
   | 'setActiveTheme'
   | 'setLocale'
   | 'setPanelSizes'
   | 'setSectionOpen'
-  | 'createView'
-  | 'renameView'
-  | 'setViewPinned'
-  | 'deleteView'
+  | 'createMap'
+  | 'renameMap'
+  | 'setMapPinned'
+  | 'deleteMap'
 >
 export type ActionContext = {
-  readonly viewId: string | null
+  readonly mapId: string | null
   readonly document: PluginWrites & {
     readonly getState: () => ActionState
     readonly subscribe: (listener: () => void) => () => void
@@ -443,7 +443,7 @@ export type ActionContext = {
   }
   readonly storage: PluginStorage
   readonly images: {
-    readonly renderView: (options: ImageRenderOptions) => Promise<RenderedImage>
+    readonly renderMap: (options: ImageRenderOptions) => Promise<RenderedImage>
   }
   readonly signal: AbortSignal
 }
@@ -465,16 +465,16 @@ const actionStateSchema = z.strictObject({
   ),
   colorScheme: z.enum(colorSchemes),
   conceptPlacementOffset: position,
-  viewGraph: viewGraphSchema,
+  mapGraph: mapGraphSchema,
   selected: selection,
-  targetViewId: id.nullable(),
+  targetMapId: id.nullable(),
   activeVocab: z
     .strictObject({ id, relationTypes: z.array(vocabRelationType), defaultTypeId: id })
     .nullable(),
   history: z.strictObject({ canUndo: z.boolean(), canRedo: z.boolean() }),
   workspace: z.strictObject({
-    activeViewId: id.nullable(),
-    savedViews: z.array(z.strictObject({ id, name: z.string(), pinned: z.boolean() })),
+    activeMapId: id.nullable(),
+    maps: z.array(z.strictObject({ id, name: z.string(), pinned: z.boolean() })),
   }),
 })
 const reply = z.union([
@@ -507,7 +507,7 @@ const results = {
   'notifications.notify': id,
   'files.open': fileOpenResult,
   'files.save': z.strictObject({ saved: z.boolean() }),
-  'images.renderView': renderedImage,
+  'images.renderMap': renderedImage,
 } satisfies Record<RequestMethod, z.ZodType>
 
 export function parsePluginMessage(value: unknown): z.infer<typeof message> {
@@ -652,16 +652,16 @@ export function createPluginClient(port: MessagePort, initial: unknown) {
   const {
     undo: _undo,
     redo: _redo,
-    setView: _view,
+    setMap: _map,
     setActiveVocab: _vocab,
     setActiveTheme: _theme,
     setLocale: _locale,
     setPanelSizes: _panels,
     setSectionOpen: _section,
-    createView: _createView,
-    renameView: _renameView,
-    setViewPinned: _pin,
-    deleteView: _deleteView,
+    createMap: _createMap,
+    renameMap: _renameMap,
+    setMapPinned: _pin,
+    deleteMap: _deleteMap,
     ...writes
   } = createWriteCommands(
     async (operations, options) => {
@@ -690,7 +690,7 @@ export function createPluginClient(port: MessagePort, initial: unknown) {
     return result.changed
   }
   const context: ActionContext = {
-    viewId: state.targetViewId,
+    mapId: state.targetMapId,
     document: {
       ...writes,
       getState,
@@ -705,7 +705,7 @@ export function createPluginClient(port: MessagePort, initial: unknown) {
       applyOperations,
     },
     notifications: { notify: (value) => call('notifications.notify', value) },
-    images: { renderView: (options) => call('images.renderView', options) },
+    images: { renderMap: (options) => call('images.renderMap', options) },
     files: {
       open: (options) => call('files.open', options),
       save: (options) => call('files.save', options),

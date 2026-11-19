@@ -50,7 +50,7 @@ export const findPluginStorage = (
 ) => plugins.find((entry) => entry.pluginId === pluginId && entry.local === local)
 
 const storageSchema = z.strictObject({
-  version: z.literal(3),
+  version: z.literal(4),
   documentId: iriSchema,
   plugins: z
     .array(
@@ -91,7 +91,7 @@ export function applyPluginStorage(
   plugins: readonly PluginStorageNamespace[],
   write: PluginStorageWrite,
   conceptIds: ReadonlySet<string>,
-  viewIds: ReadonlySet<string>,
+  mapIds: ReadonlySet<string>,
 ): readonly PluginStorageNamespace[] {
   const pluginId = checkPluginId(write.pluginId)
   const local = parseSettings(z.boolean(), write.local, 'local')
@@ -113,8 +113,8 @@ export function applyPluginStorage(
       const { kind, id } = record.scope
       if (kind === 'concept' && !isAbsoluteIri(id))
         fail('storage.scope.id', 'Expected an absolute IRI')
-      if (!(kind === 'concept' ? conceptIds : viewIds).has(id))
-        fail('storage.scope.id', kind === 'concept' ? 'Unknown concept' : 'Unknown view')
+      if (!(kind === 'concept' ? conceptIds : mapIds).has(id))
+        fail('storage.scope.id', kind === 'concept' ? 'Unknown concept' : 'Unknown map')
     }
     records.set(recordId(record), record)
   }

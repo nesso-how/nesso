@@ -8,18 +8,18 @@ import {
   type RenderedImage,
 } from '@nesso-how/plugin/runtime'
 
-class ViewImageError extends NessoError {
-  override name = 'ViewImageError'
+class MapImageError extends NessoError {
+  override name = 'MapImageError'
 }
 
-export async function renderViewImage(
+export async function renderMapImage(
   store: HostStore,
-  viewId: string | null,
+  mapId: string | null,
   options: ImageRenderOptions,
   signal: AbortSignal,
 ): Promise<RenderedImage> {
-  const canvas = await renderViewCanvas(store, viewId, options, signal)
-  const fail = (message: string) => new ViewImageError([{ path: 'image', message }])
+  const canvas = await renderMapCanvas(store, mapId, options, signal)
+  const fail = (message: string) => new MapImageError([{ path: 'image', message }])
   const blob = await new Promise<Blob>((resolve, reject) =>
     canvas.toBlob(
       (value) => (value ? resolve(value) : reject(fail('Could not encode PNG'))),
@@ -35,9 +35,9 @@ export async function renderViewImage(
   return { mediaType: 'image/png', base64: btoa(binary) }
 }
 
-async function renderViewCanvas(
+async function renderMapCanvas(
   store: HostStore,
-  viewId: string | null,
+  mapId: string | null,
   options: ImageRenderOptions,
   signal: AbortSignal,
 ) {
@@ -46,7 +46,7 @@ async function renderViewCanvas(
   const theme = Object.fromEntries(
     themeTokens.map((token) => [token, style.getPropertyValue(`--${token}`).trim()]),
   )
-  if (viewId === null) {
+  if (mapId === null) {
     const { renderKnowledgeGraphImage } = await import('@nesso-how/knowledge-graph/image')
     return renderKnowledgeGraphImage({
       state,
@@ -59,8 +59,8 @@ async function renderViewCanvas(
   const presentation = store.getConceptMapPresentation()
   const snapshot = {
     ...state,
-    workspace: { ...state.workspace, activeViewId: viewId },
-    viewGraph: materialize(state.graph, { ...state.workspace, activeViewId: viewId }),
+    workspace: { ...state.workspace, activeMapId: mapId },
+    mapGraph: materialize(state.graph, { ...state.workspace, activeMapId: mapId }),
     selected: [],
   }
   const { renderConceptMapImage } = await import('@nesso-how/concept-map/image')

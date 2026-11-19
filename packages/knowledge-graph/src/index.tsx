@@ -107,12 +107,12 @@ export function KnowledgeGraph({
       ? { x: saved.x, y: saved.y, k: saved.zoom }
       : { x: 0, y: 0, k: 1 }
     const save = (value = transform) => {
-      if (readOnly || store.getState().workspace.activeViewId !== null) return
+      if (readOnly || store.getState().workspace.activeMapId !== null) return
       store.applyOperations([
         {
           kind: 'viewport.set',
           rendererId: 'knowledge-graph',
-          viewId: null,
+          mapId: null,
           value: { x: value.x, y: value.y, zoom: value.k },
         },
       ])
@@ -502,7 +502,7 @@ export function KnowledgeGraph({
       ref={focusRef}
       tabIndex={0}
       role="application"
-      aria-label={t('overview')}
+      aria-label={t('graph')}
       className="relative h-full w-full outline-none"
     >
       <canvas ref={canvas} className="absolute inset-0 h-full w-full touch-none" />

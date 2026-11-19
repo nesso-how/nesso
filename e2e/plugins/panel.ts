@@ -17,7 +17,7 @@ export async function verifyPanel({ window, url, name, attempted }: CheckContext
     const dynamic=await import('react');
     if(React.createElement!==createElement||ReactNamespace.useState!==useState||dynamic.useState!==useState||ReactDOM.flushSync!==flushSync||ReactDOMClient.createRoot!==createRoot||typeof jsx!=='function')throw new Error('React module identity changed');
     const state=context.document.getState();
-    const result={target:context.viewId,concepts:state.viewGraph.concepts.map(c=>c.id),dom:document.getElementById('root').ownerDocument===document,bridges:typeof require==='undefined'&&typeof process==='undefined'&&typeof window.nessoPlugins==='undefined'&&typeof window.nessoStorage==='undefined'};
+    const result={target:context.mapId,concepts:state.mapGraph.concepts.map(c=>c.id),dom:document.getElementById('root').ownerDocument===document,bridges:typeof require==='undefined'&&typeof process==='undefined'&&typeof window.nessoPlugins==='undefined'&&typeof window.nessoStorage==='undefined'};
     try{parent.document.body;result.host=false}catch{result.host=true}
     try{localStorage.setItem('probe','1');result.storage=false}catch{result.storage=true}
     try{await fetch('http://127.0.0.1:5191/plugin-probe');result.network=false}catch{result.network=true}
@@ -33,10 +33,10 @@ export async function verifyPanel({ window, url, name, attempted }: CheckContext
   ];`
   const state = {
     ...actionState(),
-    targetViewId: 'urn:target',
+    targetMapId: 'urn:target',
     locale: 'it',
     theme: { ...actionState().theme, background: '#ffffff' },
-    viewGraph: {
+    mapGraph: {
       concepts: [{ id: 'urn:a', label: 'A' }],
       relations: [],
       relationTypes: [],
@@ -107,7 +107,7 @@ export async function verifyPanel({ window, url, name, attempted }: CheckContext
     (count) => count === 2,
   )
   await evaluate(
-    `window.__openPanel('browse',true,${JSON.stringify({ ...state, contextId: 'next-view', targetViewId: null })})`,
+    `window.__openPanel('browse',true,${JSON.stringify({ ...state, contextId: 'next-map', targetMapId: null })})`,
   )
   await waitFor(
     () =>
@@ -118,7 +118,7 @@ export async function verifyPanel({ window, url, name, attempted }: CheckContext
   )
   assert.deepEqual(
     await content.executeJavaScript(
-      `(async()=>({document:document===window.__initialDocument,module:window.__moduleIdentity===window.__initialModule,aborted:window.__contexts[0].signal.aborted,current:window.__contexts[1].signal.aborted,target:window.__contexts[1].viewId,context:window.__contexts[1].document.getState().contextId,pending:await window.__pending,stale:await window.__contexts[0].notifications.notify({tone:'info',title:{en:'Stale'}}).then(()=> 'completed',error=>error.code),cleaned:document.documentElement.dataset.cleaned}))()`,
+      `(async()=>({document:document===window.__initialDocument,module:window.__moduleIdentity===window.__initialModule,aborted:window.__contexts[0].signal.aborted,current:window.__contexts[1].signal.aborted,target:window.__contexts[1].mapId,context:window.__contexts[1].document.getState().contextId,pending:await window.__pending,stale:await window.__contexts[0].notifications.notify({tone:'info',title:{en:'Stale'}}).then(()=> 'completed',error=>error.code),cleaned:document.documentElement.dataset.cleaned}))()`,
     ),
     {
       document: true,
@@ -126,7 +126,7 @@ export async function verifyPanel({ window, url, name, attempted }: CheckContext
       aborted: true,
       current: false,
       target: null,
-      context: 'next-view',
+      context: 'next-map',
       pending: 'closed',
       stale: 'closed',
       cleaned: 'true',

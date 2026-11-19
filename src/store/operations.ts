@@ -3,9 +3,9 @@ import type {
   NessoOperation,
   NessoState,
   Preferences,
-  SavedView,
+  WorkspaceMap,
   Selection,
-  ViewGraphSnapshot,
+  MapGraphSnapshot,
   WorkspaceState,
 } from '@nesso-how/core'
 import { viewportKey } from '@nesso-how/core'
@@ -37,15 +37,15 @@ import {
   sameConcept,
   sameMembers,
   sameType,
-  sameView,
-  viewChanges,
+  sameMap,
+  mapChanges,
 } from './delta.ts'
 import { applyPluginStorage } from './plugin-storage.ts'
 
 export const conceptPlacementOffset = Object.freeze({ x: 160, y: 100 })
 
 type Removal = Extract<HostOperation, { kind: 'concept.remove' | 'relation.remove' }>
-type Member = SavedView['members'][number]
+type Member = WorkspaceMap['members'][number]
 const isRemoval = (operation: HostOperation): operation is Removal =>
   operation.kind === 'concept.remove' || operation.kind === 'relation.remove'
 
@@ -80,21 +80,21 @@ export const checkGraph = (graph: GraphSnapshot): void => {
 export const checkWorkspace = (graph: GraphSnapshot, workspace: WorkspaceState): void => {
   const concepts = new Set(graph.concepts.map(({ id }) => id))
   const relations = new Set(graph.relations.map(relationKey))
-  for (const [index, view] of workspace.savedViews.entries()) {
-    const members = new Set(view.members.map(({ id }) => id))
+  for (const [index, map] of workspace.maps.entries()) {
+    const members = new Set(map.members.map(({ id }) => id))
     if ([...members].some((id) => !concepts.has(id)))
-      fail(`workspace.savedViews[${index}].members`, 'Unknown concept')
-    const bends = (view.relationBends ?? []).map(relationKey)
+      fail(`workspace.maps[${index}].members`, 'Unknown concept')
+    const bends = (map.relationBends ?? []).map(relationKey)
     if (
       new Set(bends).size < bends.length ||
-      view.relationBends?.some(
+      map.relationBends?.some(
         (bend) =>
           !relations.has(relationKey(bend)) ||
           !members.has(bend.source) ||
           !members.has(bend.target),
       )
     )
-      fail(`workspace.savedViews[${index}].relationBends`, 'Duplicate or invalid relation bend')
+      fail(`workspace.maps[${index}].relationBends`, 'Duplicate or invalid relation bend')
   }
 }
 
@@ -112,39 +112,39 @@ export const materialize = (
   graph: GraphSnapshot,
   workspace: WorkspaceState,
   previous?: NessoState,
-): ViewGraphSnapshot => {
-  if (workspace.activeViewId === null) return graph
-  const view = workspace.savedViews.find(({ id }) => id === workspace.activeViewId)
-  const previousView =
-    previous?.workspace.activeViewId === workspace.activeViewId
-      ? previous.workspace.savedViews.find(({ id }) => id === workspace.activeViewId)
+): MapGraphSnapshot => {
+  if (workspace.activeMapId === null) return graph
+  const map = workspace.maps.find(({ id }) => id === workspace.activeMapId)
+  const previousMap =
+    previous?.workspace.activeMapId === workspace.activeMapId
+      ? previous.workspace.maps.find(({ id }) => id === workspace.activeMapId)
       : undefined
-  const members = view?.members ?? []
-  const previousMembers = previousView?.members
+  const members = map?.members ?? []
+  const previousMembers = previousMap?.members
   const samePresentation = !!previousMembers && sameMembers(members, previousMembers)
-  const sameRelationPresentation = sameBends(view?.relationBends, previousView?.relationBends)
+  const sameRelationPresentation = sameBends(map?.relationBends, previousMap?.relationBends)
   if (samePresentation && sameRelationPresentation && graph === previous!.graph)
-    return previous!.viewGraph
+    return previous!.mapGraph
   const scoped =
     !!previousMembers &&
     members.length === previousMembers.length &&
     members.every(({ id }, index) => id === previousMembers[index].id)
   const presentation = new Map(members.map((member) => [member.id, member]))
   const reusable = new Map(
-    previousMembers ? previous!.viewGraph.concepts.map((concept) => [concept.id, concept]) : [],
+    previousMembers ? previous!.mapGraph.concepts.map((concept) => [concept.id, concept]) : [],
   )
   const previousPresentation = new Map(previousMembers?.map((member) => [member.id, member]))
   const previousConcepts = new Map(previous?.graph.concepts.map((concept) => [concept.id, concept]))
   const relationPresentation = new Map(
-    view?.relationBends?.map((relation) => [relationKey(relation), relation.bend]),
+    map?.relationBends?.map((relation) => [relationKey(relation), relation.bend]),
   )
   const previousRelations = new Map(
-    previous?.viewGraph.relations.map((relation) => [relationKey(relation), relation]),
+    previous?.mapGraph.relations.map((relation) => [relationKey(relation), relation]),
   )
   return {
     concepts:
       samePresentation && graph.concepts === previous!.graph.concepts
-        ? previous!.viewGraph.concepts
+        ? previous!.mapGraph.concepts
         : graph.concepts.flatMap((concept) => {
             const member = presentation.get(concept.id)
             if (!member) return []
@@ -155,12 +155,12 @@ export const materialize = (
               previousPresentation.get(concept.id) === member
             )
               return [reused]
-            const { id: _, ...view } = member
-            return [{ ...concept, ...view }]
+            const { id: _, ...map } = member
+            return [{ ...concept, ...map }]
           }),
     relations:
       scoped && sameRelationPresentation && graph.relations === previous!.graph.relations
-        ? previous!.viewGraph.relations
+        ? previous!.mapGraph.relations
         : graph.relations
             .filter(
               (relation) => presentation.has(relation.source) && presentation.has(relation.target),
@@ -175,19 +175,19 @@ export const materialize = (
   }
 }
 
-export const defaultViewName = 'View 1'
+export const defaultMapName = 'Map 1'
 
 export const newDocument = (
   conceptId: string,
-  viewId: string,
+  mapId: string,
 ): { graph: Graph; workspace: WorkspaceState } => ({
   graph: { concepts: [{ id: conceptId, label: 'Concept 1' }], relationTypes: [], relations: [] },
   workspace: {
-    activeViewId: viewId,
-    savedViews: [
+    activeMapId: mapId,
+    maps: [
       {
-        id: viewId,
-        name: defaultViewName,
+        id: mapId,
+        name: defaultMapName,
         members: [{ id: conceptId, position: { x: 0, y: 0 } }],
         pinned: false,
       },
@@ -197,8 +197,8 @@ export const newDocument = (
 })
 
 export const newWorkspace = (): WorkspaceState => ({
-  activeViewId: null,
-  savedViews: [],
+  activeMapId: null,
+  maps: [],
   viewports: {},
 })
 
@@ -217,8 +217,8 @@ export const sameGraph = (left: GraphSnapshot, right: GraphSnapshot): boolean =>
   sameItems(left.relationTypes, right.relationTypes, (a, b) => a.id === b.id && a.label === b.label)
 
 export const sameWorkspace = (left: WorkspaceState, right: WorkspaceState): boolean =>
-  left.activeViewId === right.activeViewId &&
-  sameItems(left.savedViews, right.savedViews, sameView) &&
+  left.activeMapId === right.activeMapId &&
+  sameItems(left.maps, right.maps, sameMap) &&
   Object.keys(left.viewports).length === Object.keys(right.viewports).length &&
   Object.entries(left.viewports).every(([id, a]) => {
     const b = right.viewports[id]
@@ -260,7 +260,7 @@ export const applyStateOperations = (
     (a, b) => relationKey(a) === relationKey(b),
   )
   let types = new ListEdit(state.graph.relationTypes, (item) => item.id, sameType)
-  let views = new ListEdit(state.workspace.savedViews, (item) => item.id, sameView)
+  let maps = new ListEdit(state.workspace.maps, (item) => item.id, sameMap)
   let relationOrigins: Map<string, string> | undefined
   const origins = () =>
     (relationOrigins ??= new Map(
@@ -304,19 +304,19 @@ export const applyStateOperations = (
 
   const updateMembers = (ids: ReadonlySet<string>, update: (member: Member) => Member): void => {
     for (const id of ids) if (!concepts.get(id)) fail('concept.id', 'Unknown concept')
-    const viewId = workspace.activeViewId ?? fail('workspace.activeViewId', 'No active view')
-    updateView(viewId, (view) => {
+    const mapId = workspace.activeMapId ?? fail('workspace.activeMapId', 'No active map')
+    updateMap(mapId, (map) => {
       let found = 0
       let changed = false
-      const members = view.members.map((member) => {
+      const members = map.members.map((member) => {
         if (!ids.has(member.id)) return member
         found++
         const next = update(member)
         changed ||= next !== member
         return next
       })
-      if (found !== ids.size) fail('view.members', 'Concept is not in the active view')
-      return changed ? { ...view, members } : view
+      if (found !== ids.size) fail('map.members', 'Concept is not in the active map')
+      return changed ? { ...map, members } : map
     })
   }
 
@@ -336,7 +336,7 @@ export const applyStateOperations = (
   const placeMember = (
     id: string,
     members: readonly Member[],
-    sources: readonly SavedView[] = [],
+    sources: readonly WorkspaceMap[] = [],
   ): Member => {
     for (const source of sources) {
       const copied = source.members.find((member) => member.id === id)
@@ -381,11 +381,11 @@ export const applyStateOperations = (
     if (origin !== undefined) relationOrigins!.set(triple, origin)
     relations.set(id, next)
     if (next.source === relation.source && next.target === relation.target)
-      for (const view of views.items)
-        if (view.relationBends?.some((bend) => relationKey(bend) === id))
-          updateView(view.id, (view) => ({
-            ...view,
-            relationBends: view.relationBends!.map((bend) =>
+      for (const map of maps.items)
+        if (map.relationBends?.some((bend) => relationKey(bend) === id))
+          updateMap(map.id, (map) => ({
+            ...map,
+            relationBends: map.relationBends!.map((bend) =>
               relationKey(bend) === id ? { ...next, bend: bend.bend } : bend,
             ),
           }))
@@ -396,16 +396,16 @@ export const applyStateOperations = (
       : [{ kind: 'relation', id: triple }]
   }
 
-  const updateView = (id: string, update: (view: SavedView) => SavedView): void => {
-    const view = views.get(id) ?? fail('view.id', 'Unknown view')
-    const next = update(view)
+  const updateMap = (id: string, update: (map: WorkspaceMap) => WorkspaceMap): void => {
+    const map = maps.get(id) ?? fail('map.id', 'Unknown map')
+    const next = update(map)
     const { relationBends, ...metadata } = next
-    views.set(id, relationBends?.length === 0 ? metadata : next)
-    if (views.items !== workspace.savedViews) workspace = { ...workspace, savedViews: views.items }
+    maps.set(id, relationBends?.length === 0 ? metadata : next)
+    if (maps.items !== workspace.maps) workspace = { ...workspace, maps: maps.items }
   }
 
-  const viewName = (name: string): string => {
-    if (typeof name !== 'string') fail('view.name', 'Expected a string')
+  const mapName = (name: string): string => {
+    if (typeof name !== 'string') fail('map.name', 'Expected a string')
     return name.trim()
   }
 
@@ -435,11 +435,11 @@ export const applyStateOperations = (
     if (conceptIds.size === 0) return
     concepts.removeWhere((concept) => conceptIds.has(concept.id))
     for (const id of conceptIds) removedConcepts.add(id)
-    for (const view of views.items)
-      if (view.members.some(({ id }) => conceptIds.has(id)))
-        updateView(view.id, (view) => ({
-          ...view,
-          members: view.members.filter(({ id }) => !conceptIds.has(id)),
+    for (const map of maps.items)
+      if (map.members.some(({ id }) => conceptIds.has(id)))
+        updateMap(map.id, (map) => ({
+          ...map,
+          members: map.members.filter(({ id }) => !conceptIds.has(id)),
         }))
   }
 
@@ -454,7 +454,7 @@ export const applyStateOperations = (
           pluginStorage,
           operation,
           new Set(concepts.items.map(({ id }) => id)),
-          new Set(views.items.map(({ id }) => id)),
+          new Set(maps.items.map(({ id }) => id)),
         )
         break
       case 'conversation.messages':
@@ -545,18 +545,18 @@ export const applyStateOperations = (
           relations.add(relation)
         }
         selected = [{ kind: 'concept', id: operation.id }]
-        if (workspace.activeViewId !== null)
-          updateView(workspace.activeViewId, (view) => {
-            if (view.members.some(({ id }) => id === operation.id)) return view
-            const origin = source && view.members.find(({ id }) => id === source.id)
+        if (workspace.activeMapId !== null)
+          updateMap(workspace.activeMapId, (map) => {
+            if (map.members.some(({ id }) => id === operation.id)) return map
+            const origin = source && map.members.find(({ id }) => id === source.id)
             const position = operation.position ?? {
               x: (origin?.position.x ?? 0) + conceptPlacementOffset.x,
               y: (origin?.position.y ?? 0) + conceptPlacementOffset.y,
             }
             return {
-              ...view,
+              ...map,
               members: [
-                ...view.members,
+                ...map.members,
                 {
                   id: operation.id,
                   position: { x: position.x, y: position.y },
@@ -630,19 +630,19 @@ export const applyStateOperations = (
         break
       case 'relation.bend': {
         const relation = relations.get(operation.id) ?? fail('relation.id', 'Unknown relation')
-        const viewId = workspace.activeViewId ?? fail('workspace.activeViewId', 'No active view')
-        updateView(viewId, (view) => {
+        const mapId = workspace.activeMapId ?? fail('workspace.activeMapId', 'No active map')
+        updateMap(mapId, (map) => {
           if (
-            !view.members.some(({ id }) => id === relation.source) ||
-            !view.members.some(({ id }) => id === relation.target)
+            !map.members.some(({ id }) => id === relation.source) ||
+            !map.members.some(({ id }) => id === relation.target)
           )
-            fail('relation.bend', 'Relation is not in the view')
+            fail('relation.bend', 'Relation is not in the map')
           const bend = { ...relation, bend: operation.value }
-          const bends = view.relationBends ?? []
+          const bends = map.relationBends ?? []
           const relationBends = bends.some((item) => relationKey(item) === operation.id)
             ? bends.map((item) => (relationKey(item) === operation.id ? bend : item))
             : [...bends, bend]
-          return { ...view, relationBends: relationBends.filter((item) => item.bend !== 0) }
+          return { ...map, relationBends: relationBends.filter((item) => item.bend !== 0) }
         })
         break
       }
@@ -654,7 +654,7 @@ export const applyStateOperations = (
         concepts = new ListEdit(document.graph.concepts, (item) => item.id, sameConcept)
         relations = new ListEdit([], relationKey, (a, b) => relationKey(a) === relationKey(b))
         types = new ListEdit([], (item: Readonly<RelationType>) => item.id, sameType)
-        views = new ListEdit(document.workspace.savedViews, (item: SavedView) => item.id, sameView)
+        maps = new ListEdit(document.workspace.maps, (item: WorkspaceMap) => item.id, sameMap)
         workspace = document.workspace
         conversation = { messages: [] }
         conversationReplaced = true
@@ -670,66 +670,64 @@ export const applyStateOperations = (
         )
         explicitSelection = selected
         break
-      case 'view.activate':
-        if (operation.id !== null && !workspace.savedViews.some((view) => view.id === operation.id))
-          fail('workspace.activeViewId', 'Unknown view')
-        if (workspace.activeViewId === operation.id) break
-        workspace = { ...workspace, activeViewId: operation.id }
+      case 'map.activate':
+        if (operation.id !== null && !workspace.maps.some((map) => map.id === operation.id))
+          fail('workspace.activeMapId', 'Unknown map')
+        if (workspace.activeMapId === operation.id) break
+        workspace = { ...workspace, activeMapId: operation.id }
         selected = reconcileSelection(materialize(graph(), workspace), selected)
         explicitSelection = selected
         break
-      case 'view.create': {
-        const active =
-          workspace.activeViewId === null ? undefined : views.get(workspace.activeViewId)
-        const sources = active ? [active, ...views.items] : views.items
+      case 'map.create': {
+        const active = workspace.activeMapId === null ? undefined : maps.get(workspace.activeMapId)
+        const sources = active ? [active, ...maps.items] : maps.items
         const members: Member[] = []
         for (const id of new Set(operation.conceptIds))
           members.push(placeMember(id, members, sources))
-        views.add({ id: operation.id, name: viewName(operation.name), members, pinned: false })
-        workspace = { ...workspace, activeViewId: operation.id, savedViews: views.items }
+        maps.add({ id: operation.id, name: mapName(operation.name), members, pinned: false })
+        workspace = { ...workspace, activeMapId: operation.id, maps: maps.items }
         break
       }
-      case 'view.rename':
-        updateView(operation.id, (view) => {
-          const name = viewName(operation.name)
-          return view.name === name ? view : { ...view, name }
+      case 'map.rename':
+        updateMap(operation.id, (map) => {
+          const name = mapName(operation.name)
+          return map.name === name ? map : { ...map, name }
         })
         break
-      case 'view.pin':
-        updateView(operation.id, (view) =>
-          view.pinned === operation.pinned ? view : { ...view, pinned: operation.pinned },
+      case 'map.pin':
+        updateMap(operation.id, (map) =>
+          map.pinned === operation.pinned ? map : { ...map, pinned: operation.pinned },
         )
         break
-      case 'view.membership':
-        if (!concepts.get(operation.conceptId)) fail('view.conceptId', 'Unknown concept')
-        if (typeof operation.included !== 'boolean') fail('view.included', 'Expected a boolean')
-        updateView(operation.viewId, (view) =>
-          view.members.some(({ id }) => id === operation.conceptId) === operation.included
-            ? view
+      case 'map.membership':
+        if (!concepts.get(operation.conceptId)) fail('map.conceptId', 'Unknown concept')
+        if (typeof operation.included !== 'boolean') fail('map.included', 'Expected a boolean')
+        updateMap(operation.mapId, (map) =>
+          map.members.some(({ id }) => id === operation.conceptId) === operation.included
+            ? map
             : {
-                ...view,
+                ...map,
                 members: operation.included
-                  ? [...view.members, placeMember(operation.conceptId, view.members)]
-                  : view.members.filter(({ id }) => id !== operation.conceptId),
+                  ? [...map.members, placeMember(operation.conceptId, map.members)]
+                  : map.members.filter(({ id }) => id !== operation.conceptId),
               },
         )
         break
-      case 'view.remove':
-        if (!workspace.savedViews.some((view) => view.id === operation.id))
-          fail('view.id', 'Unknown view')
-        views.removeWhere((view) => view.id === operation.id)
+      case 'map.remove':
+        if (!workspace.maps.some((map) => map.id === operation.id)) fail('map.id', 'Unknown map')
+        maps.removeWhere((map) => map.id === operation.id)
         workspace = {
           ...workspace,
-          activeViewId: workspace.activeViewId === operation.id ? null : workspace.activeViewId,
-          savedViews: views.items,
+          activeMapId: workspace.activeMapId === operation.id ? null : workspace.activeMapId,
+          maps: maps.items,
         }
         break
       case 'viewport.set': {
         if (!registry.renderers.has(operation.rendererId))
           fail('rendererId', `Unknown renderer: ${operation.rendererId}`)
-        const viewId = operation.viewId === undefined ? workspace.activeViewId : operation.viewId
-        if (viewId !== null && !views.get(viewId)) fail('view.id', 'Unknown view')
-        const key = viewportKey(operation.rendererId, viewId)
+        const mapId = operation.mapId === undefined ? workspace.activeMapId : operation.mapId
+        if (mapId !== null && !maps.get(mapId)) fail('map.id', 'Unknown map')
+        const key = viewportKey(operation.rendererId, mapId)
         workspace = {
           ...workspace,
           viewports: { ...workspace.viewports, [key]: { ...operation.value } },
@@ -827,17 +825,17 @@ export const applyStateOperations = (
     types.removeWhere((type) => removed.has(type.id))
   }
   const typeEdit = types.finish()
-  for (const view of views.items) {
-    if (!view.relationBends) continue
-    const members = new Set(view.members.map(({ id }) => id))
-    const kept = view.relationBends.filter(
+  for (const map of maps.items) {
+    if (!map.relationBends) continue
+    const members = new Set(map.members.map(({ id }) => id))
+    const kept = map.relationBends.filter(
       (bend) =>
         !!relations.get(relationKey(bend)) && members.has(bend.source) && members.has(bend.target),
     )
-    if (kept.length < view.relationBends.length)
-      updateView(view.id, (view) => ({ ...view, relationBends: kept }))
+    if (kept.length < map.relationBends.length)
+      updateMap(map.id, (map) => ({ ...map, relationBends: kept }))
   }
-  const viewEdit = views.finish()
+  const mapEdit = maps.finish()
   let candidate: GraphSnapshot = {
     concepts: conceptEdit.items,
     relations: relationEdit.items,
@@ -853,8 +851,7 @@ export const applyStateOperations = (
     selected = explicitSelection
   }
   if (candidate !== state.graph) checkGraph(candidate)
-  if (viewEdit.items !== workspace.savedViews)
-    workspace = { ...workspace, savedViews: viewEdit.items }
+  if (mapEdit.items !== workspace.maps) workspace = { ...workspace, maps: mapEdit.items }
   if (workspace !== state.workspace) {
     parseWorkspace(workspace)
     checkWorkspace(candidate, workspace)
@@ -864,8 +861,8 @@ export const applyStateOperations = (
     parsePreferences(preferences)
     if (samePreferences(preferences, state.preferences)) preferences = state.preferences
   }
-  const viewGraph = materialize(candidate, workspace, state)
-  selected = reconcileSelection(viewGraph, selected)
+  const mapGraph = materialize(candidate, workspace, state)
+  selected = reconcileSelection(mapGraph, selected)
   if (
     conversationReplaced &&
     conversation !== state.conversation &&
@@ -899,7 +896,7 @@ export const applyStateOperations = (
         documentId,
         pluginStorage,
         selected,
-        viewGraph,
+        mapGraph,
       }
   let relationRewrites: { before: string; after: string }[] = []
   if (relationOrigins?.size) {
@@ -919,7 +916,7 @@ export const applyStateOperations = (
       concepts: conceptEdit.changes,
       relations: relationEdit.changes,
       relationTypes: typeEdit.changes,
-      views: viewChanges(viewEdit.changes),
+      maps: mapChanges(mapEdit.changes),
     },
   }
 }

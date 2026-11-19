@@ -10,7 +10,7 @@ const retainedPlugins = ['@nesso-how/notes', '@nesso-how/review']
 
 type Invocation = {
   readonly actionId: string
-  readonly viewId: string | null
+  readonly mapId: string | null
   readonly descriptors: readonly ActionDescriptor[]
 }
 type Panel = {
@@ -19,7 +19,7 @@ type Panel = {
   readonly actionId: string
   readonly pluginName: string
   readonly title: string
-  readonly viewName: string | null
+  readonly mapName: string | null
   readonly status: 'loading' | 'ready' | 'failed'
 }
 type Frame = {
@@ -100,16 +100,16 @@ export function createPluginPanel(
       if (!source.manifest.capabilities.includes('ui') || !action?.ui)
         throw new PluginError('denied', [{ path: 'ui', message: 'UI not authorized' }])
       if (
-        invocation.viewId !== null &&
-        !state.workspace.savedViews.some(({ id }) => id === invocation.viewId)
+        invocation.mapId !== null &&
+        !state.workspace.maps.some(({ id }) => id === invocation.mapId)
       )
         throw new PluginError('stale-context', [
-          { path: 'panel', message: 'Target view no longer exists' },
+          { path: 'panel', message: 'Target map no longer exists' },
         ])
       return new Promise<void>((resolve) => {
         const id = crypto.randomUUID()
         let target = invocation
-        let activeViewId = state.workspace.activeViewId
+        let activeMapId = state.workspace.activeMapId
         let detach: (() => void) | undefined
         const end = () => {
           if (session?.close !== end) return
@@ -135,8 +135,7 @@ export function createPluginPanel(
             actionId: target.actionId,
             pluginName: resolvePluginText(source.i18n.metadata.name, locale),
             title: resolvePluginText(action.label, locale),
-            viewName:
-              next.workspace.savedViews.find(({ id }) => id === target.viewId)?.name ?? null,
+            mapName: next.workspace.maps.find(({ id }) => id === target.mapId)?.name ?? null,
             status: 'loading',
           }
           publish()
@@ -162,16 +161,13 @@ export function createPluginPanel(
         }
         const unsubscribe = store.subscribe(() => {
           const next = store.getState()
-          if (
-            target.viewId !== null &&
-            !next.workspace.savedViews.some(({ id }) => id === target.viewId)
-          ) {
+          if (target.mapId !== null && !next.workspace.maps.some(({ id }) => id === target.mapId)) {
             end()
             return
           }
-          if (next.workspace.activeViewId !== activeViewId) {
-            activeViewId = next.workspace.activeViewId
-            target = { ...target, viewId: activeViewId }
+          if (next.workspace.activeMapId !== activeMapId) {
+            activeMapId = next.workspace.activeMapId
+            target = { ...target, mapId: activeMapId }
             mount()
           }
         })

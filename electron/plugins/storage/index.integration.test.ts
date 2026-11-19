@@ -26,7 +26,7 @@ test('installed actions restore verified bytes offline, reject conflicts and can
     version: '1.0.0',
     author: 'Test Author <private@example.test>',
     repository: 'github:example/plugin',
-    nesso: { apiVersion: 6, kind: 'actions', entry: 'dist/index.js', writes: [], capabilities: [] },
+    nesso: { apiVersion: 7, kind: 'actions', entry: 'dist/index.js', writes: [], capabilities: [] },
     i18n: {
       metadata: {
         name: { en: 'Test' },
@@ -104,7 +104,7 @@ test('manual updates atomically replace one exact package, preserve disabled sta
   const manifest = {
     name: 'nesso-plugin-test',
     version: '1.0.0',
-    nesso: { apiVersion: 6, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+    nesso: { apiVersion: 7, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
     i18n: {
       metadata: {
         name: { en: 'Test' },
@@ -224,7 +224,7 @@ test('definition records restore offline and reject tampered updates without rep
     const manifest = {
       name: `nesso-test-${kind}`,
       version: '1.0.0',
-      nesso: { apiVersion: 6, kind, entry: 'definition.json', writes: [], capabilities: [] },
+      nesso: { apiVersion: 7, kind, entry: 'definition.json', writes: [], capabilities: [] },
       i18n: {
         metadata: {
           name: { en: 'Test' },
@@ -279,7 +279,7 @@ test('unreadable records are isolated without losing valid packages or permittin
       manifest: {
         name,
         version,
-        nesso: { apiVersion: 6, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+        nesso: { apiVersion: 7, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
         i18n: {
           metadata: {
             name: { en: name },
@@ -356,7 +356,7 @@ test('a verified package replaces its own unreadable record and preserves neighb
       manifest: {
         name,
         version,
-        nesso: { apiVersion: 6, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+        nesso: { apiVersion: 7, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
         i18n: {
           metadata: {
             name: { en: name },
@@ -405,7 +405,7 @@ test('records for another plugin API are retained without loading, blocking chan
       manifest: {
         name,
         version,
-        nesso: { apiVersion: 6, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+        nesso: { apiVersion: 7, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
         i18n: {
           metadata: {
             name: { en: name },
@@ -420,7 +420,7 @@ test('records for another plugin API are retained without loading, blocking chan
     const file = path.join(directory, `${createHash('sha256').update(name).digest('hex')}.json`)
     await writeFile(
       file,
-      (await readFile(file, 'utf8')).replace('"apiVersion":6', '"apiVersion":5'),
+      (await readFile(file, 'utf8')).replace('"apiVersion":7', '"apiVersion":6'),
     )
   }
   const legacy = await storage.install(
@@ -438,7 +438,7 @@ test('records for another plugin API are retained without loading, blocking chan
     contentId: legacy.contentId,
     enabled: false,
     kind: 'actions',
-    apiVersion: 5,
+    apiVersion: 6,
     npmIntegrity,
   }
   assert.deepEqual(await createPluginStorage(directory).list(), {
@@ -522,15 +522,15 @@ test('legacy records are read unchanged and upgrade only after their exact origi
   const npmIntegrity = `sha512-${Buffer.alloc(64).toString('base64')}`
   const legacy = []
   for (const [name, apiVersion, origin] of [
-    ['nesso-legacy-local', 6, {}],
-    ['nesso-legacy-npm', 6, { npmIntegrity }],
+    ['nesso-legacy-local', 7, {}],
+    ['nesso-legacy-npm', 7, { npmIntegrity }],
     ['nesso-legacy-api3', 3, {}],
   ] as const) {
     const prepared = await preparePluginPackage({
       manifest: {
         name,
         version: '1.0.0',
-        nesso: { apiVersion: 6, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+        nesso: { apiVersion: 7, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
         i18n: {
           metadata: {
             name: { en: name },

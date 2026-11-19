@@ -16,7 +16,7 @@ import { chat } from '@/ai'
 import { AppSidebar } from './Sidebar'
 import { Inspector } from './Inspector'
 import { GraphWorkspace } from './GraphWorkspace'
-import { ViewHeader } from './ViewHeader'
+import { MapHeader } from './MapHeader'
 import { CompactIntro } from './CompactIntro'
 import { IntroDescription } from './IntroDescription'
 import notesPackage from '../../../plugins/notes/package.json'
@@ -25,7 +25,7 @@ import reviewPackage from '../../../plugins/review/package.json'
 const chapters = [
   { title: 'introConceptTitle', description: 'introConceptDescription' },
   { title: 'introConnectionsTitle', description: 'introConnectionsDescription' },
-  { title: 'introViewsTitle', description: 'introViewsDescription' },
+  { title: 'introMapsTitle', description: 'introMapsDescription' },
   { title: 'introReviewTitle', description: 'introReviewDescription' },
 ] as const
 
@@ -156,14 +156,14 @@ function DesktopIntro({
           inert={step < 2}
           aria-hidden={step < 2}
         >
-          <aside className="intro-explorer" aria-label={t('views')}>
+          <aside className="intro-explorer" aria-label={t('maps')}>
             <AppSidebar store={store} readonly bare />
           </aside>
         </div>
         <div className="intro-workspace flex min-h-0 min-w-0 flex-1">
           <div className="intro-canvas min-h-0 min-w-0 flex-1">
             {step === lastStep && (
-              <ViewHeader store={store} readonly preview={{ tabs: introTabs, badgeCount: 3 }} />
+              <MapHeader store={store} readonly preview={{ tabs: introTabs, badgeCount: 3 }} />
             )}
             <div className="intro-graph min-h-0 flex-1">
               <GraphWorkspace

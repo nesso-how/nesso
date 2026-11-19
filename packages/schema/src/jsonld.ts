@@ -12,13 +12,13 @@ import {
   type Graph,
   type Relation,
   type RelationType,
-  type View,
+  type ConceptMap,
 } from './types.ts'
 
 type JsonObject = Record<string, unknown>
 const jsonObject = z.record(z.string(), z.unknown())
 const jsonldDocument = z.strictObject({
-  schemaVersion: z.literal(3),
+  schemaVersion: z.literal(4),
   '@context': jsonObject,
   '@graph': z.array(jsonObject),
 })
@@ -34,9 +34,9 @@ const jsonldConcept = z
     'rdfs:comment': conceptSchema.shape.notes,
   })
   .catchall(z.unknown())
-const jsonldView = z.strictObject({
+const jsonldMap = z.strictObject({
   '@id': iriSchema,
-  '@type': z.literal('View'),
+  '@type': z.literal('Map'),
   'rdfs:label': z.string(),
   members: z.array(presentationSchema.extend({ concept: z.strictObject({ '@id': iriSchema }) })),
   relationBends: z.array(relationBendSchema).optional(),
@@ -68,7 +68,7 @@ function checkTerms(context: JsonObject, terms: readonly (keyof typeof schemaCon
   }
 }
 
-export function parseGraph(value: unknown): { graph: Graph; views: View[] } {
+export function parseGraph(value: unknown): { graph: Graph; maps: ConceptMap[] } {
   const document = parseSchema(jsonldDocument, migrateGraph(value))
   const context = document['@context']
   checkTerms(context, ['rdf', 'rdfs', 'schemaVersion', 'position'])
@@ -84,7 +84,7 @@ export function parseGraph(value: unknown): { graph: Graph; views: View[] } {
 
   const concepts: Concept[] = []
   const relationTypes: RelationType[] = []
-  const views: View[] = []
+  const maps: ConceptMap[] = []
   const entries = document['@graph']
   for (const [index, entry] of entries.entries()) {
     const path = `@graph[${index}]`
@@ -94,14 +94,14 @@ export function parseGraph(value: unknown): { graph: Graph; views: View[] } {
       relationTypes.push({ id, label: type['rdfs:label'] })
       continue
     }
-    if (entry['@type'] === 'View') {
-      if (!views.length) checkTerms(context, ['View', 'members', 'concept'])
-      const view = parseSchema(jsonldView, entry, path)
-      if (view.relationBends !== undefined) checkTerms(context, ['relationBends'])
-      views.push({
+    if (entry['@type'] === 'Map') {
+      if (!maps.length) checkTerms(context, ['Map', 'members', 'concept'])
+      const map = parseSchema(jsonldMap, entry, path)
+      if (map.relationBends !== undefined) checkTerms(context, ['relationBends'])
+      maps.push({
         id,
-        name: view['rdfs:label'],
-        members: view.members.map(({ concept, position, color, bold, italic, strikethrough }) => ({
+        name: map['rdfs:label'],
+        members: map.members.map(({ concept, position, color, bold, italic, strikethrough }) => ({
           id: concept['@id'],
           position,
           ...(color === undefined ? {} : { color: color.toLowerCase() }),
@@ -109,7 +109,7 @@ export function parseGraph(value: unknown): { graph: Graph; views: View[] } {
           ...(italic === undefined ? {} : { italic }),
           ...(strikethrough === undefined ? {} : { strikethrough }),
         })),
-        ...(view.relationBends === undefined ? {} : { relationBends: view.relationBends }),
+        ...(map.relationBends === undefined ? {} : { relationBends: map.relationBends }),
       })
       continue
     }
@@ -137,13 +137,13 @@ export function parseGraph(value: unknown): { graph: Graph; views: View[] } {
     }
   }
   const graph = { concepts, relationTypes, relations }
-  const issues = validateGraph(graph, views)
+  const issues = validateGraph(graph, maps)
   if (issues.length) throw new SchemaError(issues)
-  return { graph, views }
+  return { graph, maps }
 }
 
-export function serializeGraph(graph: Graph, views: readonly View[] = []): JsonObject {
-  const issues = validateGraph(graph, views)
+export function serializeGraph(graph: Graph, maps: readonly ConceptMap[] = []): JsonObject {
+  const issues = validateGraph(graph, maps)
   if (issues.length) throw new SchemaError(issues)
 
   const entries: JsonObject[] = graph.relationTypes.map(({ id, label }) => ({
@@ -168,14 +168,14 @@ export function serializeGraph(graph: Graph, views: readonly View[] = []): JsonO
     else entry[relation.predicate] = [{ '@id': relation.target }]
   }
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     '@context': structuredClone(schemaContext),
     '@graph': [
       ...entries,
       ...concepts.values(),
-      ...views.map(({ id, name, members, relationBends }) => ({
+      ...maps.map(({ id, name, members, relationBends }) => ({
         '@id': id,
-        '@type': 'View',
+        '@type': 'Map',
         'rdfs:label': name,
         members: members.map(({ id, position, color, bold, italic, strikethrough }) => ({
           concept: { '@id': id },

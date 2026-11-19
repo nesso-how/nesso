@@ -49,16 +49,16 @@ const settle = async () => {
   for (let i = 0; i < 10; i++) await Promise.resolve()
 }
 
-test('notes use document scope for Overview and isolated view scopes for saved views', async () => {
+test('notes use document scope for the graph and isolated scopes for maps', async () => {
   const f = fixture()
-  const overview = await createNotes(f.storage, null)
+  const graph = await createNotes(f.storage, null)
   const first = await createNotes(f.storage, 'urn:first')
   const second = await createNotes(f.storage, 'urn:second')
-  overview.setText('Overview')
+  graph.setText('Graph')
   first.setText('**Project**\n- Idea')
   second.setText('Another project')
   await settle()
-  assert.equal((await createNotes(f.storage, null)).getSnapshot().text, 'Overview')
+  assert.equal((await createNotes(f.storage, null)).getSnapshot().text, 'Graph')
   assert.equal(
     (await createNotes(f.storage, 'urn:first')).getSnapshot().text,
     '**Project**\n- Idea',
@@ -71,7 +71,7 @@ test('notes use document scope for Overview and isolated view scopes for saved v
 
 test('edits publish immediately, serialize overlapping saves and keep the latest text', async () => {
   const f = fixture()
-  const notes = await createNotes(f.storage, 'urn:view')
+  const notes = await createNotes(f.storage, 'urn:map')
   f.hold()
   notes.setText('A')
   notes.setText('AB')
@@ -83,15 +83,15 @@ test('edits publish immediately, serialize overlapping saves and keep the latest
   assert.equal(f.writes.length, 2)
   assert.deepEqual(f.writes[1], {
     key: 'notes',
-    scope: { kind: 'view', id: 'urn:view' },
+    scope: { kind: 'map', id: 'urn:map' },
     value: { version: 1, text: 'ABC' },
   })
-  assert.equal((await createNotes(f.storage, 'urn:view')).getSnapshot().text, 'ABC')
+  assert.equal((await createNotes(f.storage, 'urn:map')).getSnapshot().text, 'ABC')
 })
 
 test('failed saves retain the latest draft and never retry or refresh the storage baseline', async () => {
   const f = fixture()
-  const notes = await createNotes(f.storage, 'urn:view')
+  const notes = await createNotes(f.storage, 'urn:map')
   f.hold()
   f.fail()
   notes.setText('First')
@@ -116,6 +116,6 @@ test('invalid and unknown-version notes remain untouched; unrelated scopes are i
     assert.equal(f.writes.length, 0)
     assert.deepEqual([...f.records.values()][0].value, value)
   }
-  const f = fixture([{ key: 'notes', scope: { kind: 'concept', id: 'urn:view' }, value: null }])
-  assert.equal((await createNotes(f.storage, 'urn:view')).getSnapshot().text, '')
+  const f = fixture([{ key: 'notes', scope: { kind: 'concept', id: 'urn:map' }, value: null }])
+  assert.equal((await createNotes(f.storage, 'urn:map')).getSnapshot().text, '')
 })

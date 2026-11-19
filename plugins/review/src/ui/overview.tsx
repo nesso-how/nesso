@@ -52,11 +52,11 @@ export function Overview({
   const t = messages[state.locale]
   const ready = new Set(
     review.due(
-      state.viewGraph.concepts.map(({ id }) => id),
+      state.mapGraph.concepts.map(({ id }) => id),
       time,
     ),
   )
-  const ordered = [...state.viewGraph.concepts].sort(
+  const ordered = [...state.mapGraph.concepts].sort(
     (a, b) =>
       Number(ready.has(b.id)) - Number(ready.has(a.id)) ||
       (progress.get(a.id)?.card.dueAt.getTime() ?? 0) -

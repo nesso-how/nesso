@@ -1,4 +1,4 @@
-import type { GraphSnapshot, SavedView } from '@nesso-how/core'
+import type { GraphSnapshot, WorkspaceMap } from '@nesso-how/core'
 import { relationKey, type RelationBend } from '@nesso-how/schema'
 
 type Entry<T> = { readonly index: number; readonly value: T }
@@ -197,7 +197,7 @@ export const mergeChanges = <T>(
   )
 }
 
-type Member = SavedView['members'][number]
+type Member = WorkspaceMap['members'][number]
 
 export const sameConcept = (
   a: GraphSnapshot['concepts'][number],
@@ -226,15 +226,15 @@ export const sameBends = (
   b: readonly RelationBend[] = [],
 ): boolean =>
   a === b || (a.length === b.length && a.every((bend, index) => sameBend(bend, b[index])))
-export const sameView = (a: SavedView, b: SavedView): boolean =>
+export const sameMap = (a: WorkspaceMap, b: WorkspaceMap): boolean =>
   a.id === b.id &&
   a.name === b.name &&
   a.pinned === b.pinned &&
   sameMembers(a.members, b.members) &&
   sameBends(a.relationBends, b.relationBends)
 
-type ViewMetadata = Omit<SavedView, 'members' | 'relationBends'>
-export type ViewChange = Change<ViewMetadata> & {
+type MapMetadata = Omit<WorkspaceMap, 'members' | 'relationBends'>
+export type MapChange = Change<MapMetadata> & {
   readonly members: readonly Change<Member>[]
   readonly relationBends: readonly Change<RelationBend>[]
 }
@@ -242,7 +242,7 @@ export type DocumentDelta = {
   readonly concepts: readonly Change<GraphSnapshot['concepts'][number]>[]
   readonly relations: readonly Change<GraphSnapshot['relations'][number]>[]
   readonly relationTypes: readonly Change<GraphSnapshot['relationTypes'][number]>[]
-  readonly views: readonly ViewChange[]
+  readonly maps: readonly MapChange[]
 }
 
 const listChanges = <T>(
@@ -275,9 +275,9 @@ const listChanges = <T>(
   })
 }
 
-export const viewChanges = (changes: readonly Change<SavedView>[]): ViewChange[] =>
+export const mapChanges = (changes: readonly Change<WorkspaceMap>[]): MapChange[] =>
   changes.map(({ id, before, after }) => {
-    const metadata = (entry: Entry<SavedView> | undefined): Entry<ViewMetadata> | undefined =>
+    const metadata = (entry: Entry<WorkspaceMap> | undefined): Entry<MapMetadata> | undefined =>
       entry && {
         index: entry.index,
         value: { id: entry.value.id, name: entry.value.name, pinned: entry.value.pinned },
@@ -302,5 +302,5 @@ export const viewChanges = (changes: readonly Change<SavedView>[]): ViewChange[]
   })
 
 export const hasDelta = (delta: DocumentDelta): boolean =>
-  delta.concepts.length + delta.relations.length + delta.relationTypes.length + delta.views.length >
+  delta.concepts.length + delta.relations.length + delta.relationTypes.length + delta.maps.length >
   0

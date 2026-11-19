@@ -34,7 +34,7 @@ test('intro descriptions have balanced, nonempty keyword emphasis in every local
     for (const key of [
       'introConceptDescription',
       'introConnectionsDescription',
-      'introViewsDescription',
+      'introMapsDescription',
       'introReviewDescription',
     ]) {
       const parts = catalog[key].split('**')

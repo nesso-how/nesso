@@ -85,7 +85,7 @@ export async function verifyStorage({ window, url, name }: CheckContext) {
         version: number
         plugins: { local: boolean; records: { scope?: { id: string } }[] }[]
       },
-    (value) => value.version === 3 && value.plugins[0].records.length === 3,
+    (value) => value.version === 4 && value.plugins[0].records.length === 3,
   )
   assert.equal(preserved.plugins[0].local, false)
   assert.deepEqual(
@@ -106,7 +106,7 @@ export async function verifyStorage({ window, url, name }: CheckContext) {
   assert.equal(protectedDocument.documentId, document.documentId)
   assert.deepEqual(protectedDocument.graph, document.graph)
   const presentation = new Map(
-    document.workspace.savedViews.flatMap(({ members }) =>
+    document.workspace.maps.flatMap(({ members }) =>
       members.map(({ id, ...member }) => [id, member]),
     ),
   )
@@ -121,9 +121,10 @@ export async function verifyStorage({ window, url, name }: CheckContext) {
       })),
     },
     workspace: {
-      ...document.workspace,
-      savedViews: document.workspace.savedViews.map(({ members, ...view }) => ({
-        ...view,
+      activeViewId: document.workspace.activeMapId,
+      viewports: document.workspace.viewports,
+      savedViews: document.workspace.maps.map(({ members, ...map }) => ({
+        ...map,
         conceptIds: members.map(({ id }) => id),
       })),
     },
@@ -144,7 +145,7 @@ export async function verifyStorage({ window, url, name }: CheckContext) {
         graph: unknown
         workspace: object
       },
-    (value) => value.version === 6,
+    (value) => value.version === 7,
   )
   assert.deepEqual(upgraded.graph, document.graph)
   assert.deepEqual(

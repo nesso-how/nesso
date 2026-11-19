@@ -17,5 +17,5 @@
     "urn:nesso:example:disrupts": "può disturbare",
     "urn:nesso:example:supports": "sostiene"
   },
-  "viewNames": { "coffee": "Caffè", "energy": "Energia", "rest": "Riposo" }
+  "mapNames": { "coffee": "Caffè", "energy": "Energia", "rest": "Riposo" }
 }

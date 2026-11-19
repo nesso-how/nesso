@@ -28,7 +28,7 @@ export async function renderConceptMapImage({
   const state = store.getState()
   const graph = presentedGraph(state)
   if (signal.aborted) throw fail('Image rendering cancelled')
-  if (!graph.concepts.length) throw fail('Cannot render an empty view')
+  if (!graph.concepts.length) throw fail('Cannot render an empty map')
   const element = document.createElement('div')
   element.className = 'graph-image-export'
   element.setAttribute('aria-hidden', 'true')

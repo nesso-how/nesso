@@ -3,7 +3,7 @@ import {
   type ActionBadgeInput,
   type ActionBadgeResult,
 } from '@nesso-how/plugin/runtime'
-import type { SavedView } from '@nesso-how/core'
+import type { WorkspaceMap } from '@nesso-how/core'
 import type { HostStore } from '../store/types.ts'
 import { materialize } from '../store/operations.ts'
 import { sameIds } from '../store/delta.ts'
@@ -13,7 +13,7 @@ import { isLocalPlugin, type createPluginRegistry, type PluginEntry } from './re
 type ActionPlugin = Extract<PluginEntry, { kind: 'actions' }>
 type Badge = {
   actionId: string
-  viewId: string | null
+  mapId: string | null
   pluginId: string
   local: boolean
   listeners: Set<() => void>
@@ -21,7 +21,7 @@ type Badge = {
   refreshAt: number
   started: number
 }
-const key = (actionId: string, viewId: string | null) => JSON.stringify([actionId, viewId])
+const key = (actionId: string, mapId: string | null) => JSON.stringify([actionId, mapId])
 const cacheLimit = 64
 
 export function createActionBadges(
@@ -72,7 +72,7 @@ export function createActionBadges(
     return (
       badge.listeners.size > 0 &&
       pluginFor(badge.actionId) &&
-      (badge.viewId === null || state.workspace.savedViews.some(({ id }) => id === badge.viewId))
+      (badge.mapId === null || state.workspace.maps.some(({ id }) => id === badge.mapId))
     )
   }
   const schedule = () => {
@@ -105,8 +105,8 @@ export function createActionBadges(
     nextStart = now + badgeLimits.rate
     const state = store.getState()
     const input: ActionBadgeInput = {
-      viewId: badge.viewId,
-      viewGraph: materialize(state.graph, { ...state.workspace, activeViewId: badge.viewId }),
+      mapId: badge.mapId,
+      mapGraph: materialize(state.graph, { ...state.workspace, activeMapId: badge.mapId }),
       records: plugin.access?.capabilities.includes('storage')
         ? (findPluginStorage(state.pluginStorage, badge.pluginId, badge.local)?.records ?? [])
         : [],
@@ -137,13 +137,13 @@ export function createActionBadges(
     const documentChanged =
       state.documentId !== previous.documentId || state.documentEpoch !== previous.documentEpoch
     const graphChanged = state.graph !== previous.graph
-    const viewsChanged = state.workspace.savedViews !== previous.workspace.savedViews
+    const mapsChanged = state.workspace.maps !== previous.workspace.maps
     invalidate((badge) => {
       if (documentChanged || graphChanged) return true
-      if (viewsChanged && badge.viewId !== null) {
-        const next = state.workspace.savedViews.find(({ id }) => id === badge.viewId)
-        const before = previous.workspace.savedViews.find(({ id }) => id === badge.viewId)
-        const ids = (view: SavedView) => view.members.map(({ id }) => id)
+      if (mapsChanged && badge.mapId !== null) {
+        const next = state.workspace.maps.find(({ id }) => id === badge.mapId)
+        const before = previous.workspace.maps.find(({ id }) => id === badge.mapId)
+        const ids = (map: WorkspaceMap) => map.members.map(({ id }) => id)
         if (!next || !before || !sameIds(ids(next), ids(before))) return true
       }
       return (
@@ -155,17 +155,17 @@ export function createActionBadges(
   })
   const unsubscribeRegistry = registry.subscribe(() => invalidate(() => true))
   return {
-    getValue: (actionId: string, viewId: string | null) => {
-      const badge = badges.get(key(actionId, viewId))
+    getValue: (actionId: string, mapId: string | null) => {
+      const badge = badges.get(key(actionId, mapId))
       return badge && (badge.listeners.size || badge.refreshAt > Date.now()) ? badge.value : null
     },
-    watch(actionId: string, viewId: string | null, listener: () => void) {
+    watch(actionId: string, mapId: string | null, listener: () => void) {
       const plugin = pluginFor(actionId)
       if (!plugin) return () => {}
-      const id = key(actionId, viewId)
+      const id = key(actionId, mapId)
       const entry: Badge = badges.get(id) ?? {
         actionId,
-        viewId,
+        mapId,
         pluginId: plugin.id,
         local: isLocalPlugin(plugin),
         listeners: new Set(),

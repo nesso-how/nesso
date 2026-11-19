@@ -18,57 +18,57 @@ const graph = (): Graph => ({
 })
 const fixture = () => {
   const host = createNessoStore(graph())
-  const first = host.store.createView('First', ['urn:a', 'urn:b', 'urn:c', 'urn:d'])
-  const second = host.store.createView('Second', ['urn:a', 'urn:b'])
-  host.store.setView(first)
+  const first = host.store.createMap('First', ['urn:a', 'urn:b', 'urn:c', 'urn:d'])
+  const second = host.store.createMap('Second', ['urn:a', 'urn:b'])
+  host.store.setMap(first)
   return { ...host, first, second }
 }
 
-test('bends are view-local, keep the semantic graph and unchanged objects, and undo in grouped deltas', () => {
+test('bends are map-local, keep the semantic graph and unchanged objects, and undo in grouped deltas', () => {
   const { store, first, second } = fixture()
   const before = store.getState()
   store.setRelationBend(key, 0.2, 'drag')
   store.setRelationBend(key, 0.4, 'drag')
   const after = store.getState()
   assert.equal(after.graph, before.graph)
-  assert.equal(after.viewGraph.concepts, before.viewGraph.concepts)
-  assert.equal(after.viewGraph.relations[1], before.viewGraph.relations[1])
-  assert.equal(after.viewGraph.relations[0].bend, 0.4)
+  assert.equal(after.mapGraph.concepts, before.mapGraph.concepts)
+  assert.equal(after.mapGraph.relations[1], before.mapGraph.relations[1])
+  assert.equal(after.mapGraph.relations[0].bend, 0.4)
   store.setRelationBend(key, 0.4)
   store.applyOperations([
     { kind: 'relation.bend', id: key, value: 0.6 },
     { kind: 'relation.bend', id: key, value: 0.4 },
   ])
   assert.equal(store.getState(), after)
-  store.setView(second)
-  assert.equal(store.getState().viewGraph.relations[0].bend, undefined)
+  store.setMap(second)
+  assert.equal(store.getState().mapGraph.relations[0].bend, undefined)
   store.undo()
-  assert.deepEqual(store.getState().workspace.savedViews, before.workspace.savedViews)
+  assert.deepEqual(store.getState().workspace.maps, before.workspace.maps)
   store.redo()
-  assert.deepEqual(store.getState().workspace.savedViews, after.workspace.savedViews)
-  assert.equal(store.getState().workspace.activeViewId, second)
-  store.setView(first)
+  assert.deepEqual(store.getState().workspace.maps, after.workspace.maps)
+  assert.equal(store.getState().workspace.activeMapId, second)
+  store.setMap(first)
   store.setConceptPosition('urn:a', { x: 300, y: 200 })
-  assert.equal(store.getState().viewGraph.relations[0].bend, 0.4)
+  assert.equal(store.getState().mapGraph.relations[0].bend, 0.4)
 })
 
-test('retyping preserves bends in every view while reconnection and removals clean them undoably', () => {
+test('retyping preserves bends in every map while reconnection and removals clean them undoably', () => {
   for (const edit of ['type', 'reconnect', 'relation', 'concept', 'membership'] as const) {
     const { store, first, second } = fixture()
     store.applyOperations([
       { kind: 'relation.bend', id: key, value: 0.2 },
-      { kind: 'view.activate', id: second },
+      { kind: 'map.activate', id: second },
       { kind: 'relation.bend', id: key, value: -0.3 },
-      { kind: 'view.activate', id: first },
+      { kind: 'map.activate', id: first },
     ])
     const before = store.getState()
     if (edit === 'type') store.setRelationType(key, 'urn:q')
     if (edit === 'reconnect') store.reconnectRelation(key, 'urn:a', 'urn:d')
     if (edit === 'relation') store.removeRelation(key)
     if (edit === 'concept') store.removeConcept('urn:b')
-    if (edit === 'membership') store.setViewMembership(first, 'urn:b', false)
+    if (edit === 'membership') store.setMapMembership(first, 'urn:b', false)
     const after = store.getState()
-    const bends = after.workspace.savedViews.map((view) => view.relationBends ?? [])
+    const bends = after.workspace.maps.map((map) => map.relationBends ?? [])
     if (edit === 'type')
       assert.deepEqual(bends, [
         [{ ...relation, predicate: 'urn:q', bend: 0.2 }],
@@ -80,10 +80,10 @@ test('retyping preserves bends in every view while reconnection and removals cle
         edit === 'membership' ? [[], [{ ...relation, bend: -0.3 }]] : [[], []],
       )
     store.undo()
-    assert.deepEqual(store.getState().workspace.savedViews, before.workspace.savedViews)
+    assert.deepEqual(store.getState().workspace.maps, before.workspace.maps)
     assert.deepEqual(store.getState().graph, before.graph)
     store.redo()
-    assert.deepEqual(store.getState().workspace.savedViews, after.workspace.savedViews)
+    assert.deepEqual(store.getState().workspace.maps, after.workspace.maps)
   }
 })
 
@@ -104,21 +104,19 @@ test('invalid bend operations reject complete batches without state or history c
     )
     assert.equal(store.getState(), before)
   }
-  store.setView(null)
-  assert.throws(() => store.setRelationBend(key, 0.2), /No active view/)
-  store.setViewMembership(first, 'urn:b', false)
-  store.setView(first)
-  assert.throws(() => store.setRelationBend(key, 0.2), /not in the view/)
+  store.setMap(null)
+  assert.throws(() => store.setRelationBend(key, 0.2), /No active map/)
+  store.setMapMembership(first, 'urn:b', false)
+  store.setMap(first)
+  assert.throws(() => store.setRelationBend(key, 0.2), /not in the map/)
 })
 
 test('clipboard remaps bends', () => {
   const { store } = fixture()
   store.setRelationBend(key, 0.25)
-  const copied = copyGraph(store.getState().viewGraph, [{ kind: 'relation', id: key }])!
+  const copied = copyGraph(store.getState().mapGraph, [{ kind: 'relation', id: key }])!
   store.applyOperations(pasteOperations(copied))
-  const added = store
-    .getState()
-    .viewGraph.relations.find((relation) => relation.source !== 'urn:a')!
+  const added = store.getState().mapGraph.relations.find((relation) => relation.source !== 'urn:a')!
   assert.equal(added.bend, 0.25)
 })
 
@@ -127,7 +125,7 @@ test('persisted bends round-trip and invalid references block loading', async ()
   store.setRelationBend(key, 0.25)
   const state = store.getState()
   const record = {
-    version: 6,
+    version: 7,
     documentId: state.documentId,
     graph: serializeGraph(graph()),
     workspace: state.workspace,
@@ -137,9 +135,9 @@ test('persisted bends round-trip and invalid references block loading', async ()
   assert.deepEqual((await load(record)).workspace, state.workspace)
   const workspace = {
     ...state.workspace,
-    savedViews: [
+    maps: [
       {
-        ...state.workspace.savedViews[0],
+        ...state.workspace.maps[0],
         relationBends: [{ ...relation, predicate: 'urn:missing', bend: 0.25 }],
       },
     ],

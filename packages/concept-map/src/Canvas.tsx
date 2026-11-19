@@ -142,11 +142,11 @@ export function Canvas({
   const indexed = useMemo(() => indexGraph(displayed, vocabs, locale), [displayed, vocabs, locale])
   const selected = useNesso((state) => state.selected)
   const conceptCount = useNesso((state) => state.graph.concepts.length)
-  const view = useNesso((state) => state.workspace.activeViewId)
+  const map = useNesso((state) => state.workspace.activeMapId)
   const defaultTypeId = useNesso(
     (state) => state.vocabs.find(({ id }) => id === state.preferences.activeVocabId)?.defaultTypeId,
   )
-  const viewCount = graph.concepts.length
+  const visibleCount = graph.concepts.length
   const { store, commands, connection } = useCanvasContext()
   const write = store.applyOperations
   const flow = useStoreApi()
@@ -155,7 +155,7 @@ export function Canvas({
   const LockIcon = interactive ? LockOpen : Lock
   const [initialViewport] = useState(() =>
     restoreViewport && !preview
-      ? store.getState().workspace.viewports[viewportKey('concept-map', view)]
+      ? store.getState().workspace.viewports[viewportKey('concept-map', map)]
       : undefined,
   )
   const reconnecting = useRef<Reconnection | null>(null)
@@ -176,11 +176,11 @@ export function Canvas({
   const [editing, setEditing] = useState<{
     id: string
     historyGroup?: string
-    viewId: string | null
+    mapId: string | null
   } | null>(null)
   const changeEditing = useCallback(
     (id: string | null) =>
-      setEditing(id ? { id, viewId: store.getState().workspace.activeViewId } : null),
+      setEditing(id ? { id, mapId: store.getState().workspace.activeMapId } : null),
     [store],
   )
   const [focusTarget, setFocusTarget] = useState<string | null>(null)
@@ -206,11 +206,10 @@ export function Canvas({
     target: ContextMenuTarget
   } | null>(null)
   const grouping = useNesso((state) => state.preferences.relationGroups ?? true)
-  const [retained, setRetained] = useState({ view, grouping, groups: [] as RelationGroup[] })
+  const [retained, setRetained] = useState({ map, grouping, groups: [] as RelationGroup[] })
   const kept = useMemo(
-    () =>
-      keepGroups(retained.view === view && retained.grouping === grouping ? retained.groups : []),
-    [retained, view, grouping],
+    () => keepGroups(retained.map === map && retained.grouping === grouping ? retained.groups : []),
+    [retained, map, grouping],
   )
   const [adapt] = useState(createGraphElements)
   const selection = useCallback(
@@ -244,17 +243,17 @@ export function Canvas({
     [grouping, displayed, sizes, kept],
   )
   if (
-    retained.view !== view ||
+    retained.map !== map ||
     retained.grouping !== grouping ||
     retained.groups.length !== groups.length ||
     retained.groups.some((group, index) => group.key !== groups[index].key)
   )
-    setRetained({ view, grouping, groups })
+    setRetained({ map, grouping, groups })
   useLayoutEffect(() => {
     if (dragged) return
     onPresentation?.({
       graph,
-      viewId: view,
+      mapId: map,
       groups: groups.filter((group) => {
         const count = group.relations.filter((id) =>
           selected.some((item) => item.kind === 'relation' && item.id === id),
@@ -262,7 +261,7 @@ export function Canvas({
         return count === 0 || count === group.relations.length
       }),
     })
-  }, [groups, dragged, onPresentation, graph, view, sizes, selected])
+  }, [groups, dragged, onPresentation, graph, map, sizes, selected])
   const groupDrag = useRef<{
     pointerId: number
     members: readonly string[]
@@ -335,8 +334,8 @@ export function Canvas({
   const addNear = useCallback(
     (id: string) => {
       const state = store.getState()
-      const viewId = state.workspace.activeViewId
-      if (!viewId) return
+      const mapId = state.workspace.activeMapId
+      if (!mapId) return
       const { concepts: members, relations: shown } = presentedGraph(state)
       const ids = new Set(members.map((concept) => concept.id))
       const links = state.graph.relations.filter(
@@ -353,7 +352,7 @@ export function Canvas({
               links: [...shown, ...links],
             }).get(id)!
       write([
-        { kind: 'view.membership', viewId, conceptId: id, included: true },
+        { kind: 'map.membership', mapId, conceptId: id, included: true },
         { kind: 'concept.position', id, value: position },
       ])
     },
@@ -363,7 +362,7 @@ export function Canvas({
     ref,
     () => ({
       focusConcept: setFocusTarget,
-      addToView: (id) => {
+      addToMap: (id) => {
         if (!presentedGraph(store.getState()).concepts.some((concept) => concept.id === id))
           addNear(id)
       },
@@ -373,7 +372,7 @@ export function Canvas({
   const reuseConcept = useCallback(
     (id: string) => {
       const state = store.getState()
-      if (!editing?.historyGroup || editing.viewId !== state.workspace.activeViewId) return
+      if (!editing?.historyGroup || editing.mapId !== state.workspace.activeMapId) return
       write(reuseConceptOperations(state, editing.id, id), { historyGroup: editing.historyGroup })
       setEditing(null)
       setFocusAfterReuse((request) => request + 1)
@@ -399,12 +398,12 @@ export function Canvas({
     sizes,
     defaultTypeId,
     editing: {
-      id: editing?.viewId === view ? editing.id : null,
+      id: editing?.mapId === map ? editing.id : null,
       enabled: interactive,
       maxLength: conceptLabelMaxLength,
       onChange: changeEditing,
       historyGroup: editing?.historyGroup,
-      onReuse: editing?.historyGroup && view !== null ? reuseConcept : undefined,
+      onReuse: editing?.historyGroup && map !== null ? reuseConcept : undefined,
     },
     label: (relation) =>
       t('relationFromTo', {
@@ -498,7 +497,7 @@ export function Canvas({
   useEffect(() => {
     flow.getState().cancelConnection()
     flow.setState({ connectionClickStartHandle: null })
-  }, [connection, view, flow])
+  }, [connection, map, flow])
 
   const canDelete = interactive && selected.length > 0
   const canCut =
@@ -551,25 +550,25 @@ export function Canvas({
       )
     const id = newIri()
     write([{ kind: 'concept.add', id, position: placement() }], { historyGroup: id })
-    setEditing({ id, historyGroup: id, viewId: state.workspace.activeViewId })
+    setEditing({ id, historyGroup: id, mapId: state.workspace.activeMapId })
     requestAnimationFrame(() => {
       const current = store.getState()
       if (
         canvas.current === element &&
-        current.workspace.activeViewId === state.workspace.activeViewId &&
+        current.workspace.activeMapId === state.workspace.activeMapId &&
         current.graph.concepts.some((concept) => concept.id === id)
       )
         write([{ kind: 'concept.position', id, value: placement() }], { historyGroup: id })
     })
   }
 
-  const canRearrange = interactive && (selectedConcepts.length > 0 || viewCount > 1)
+  const canRearrange = interactive && (selectedConcepts.length > 0 || visibleCount > 1)
   const bentRelations = graph.relations.filter(
     (relation) =>
       relation.bend &&
       selected.some(({ kind, id }) => kind === 'relation' && id === relationKey(relation)),
   )
-  const rearrangeLabel = t(selectedConcepts.length > 0 ? 'rearrangeSelection' : 'rearrangeView')
+  const rearrangeLabel = t(selectedConcepts.length > 0 ? 'rearrangeSelection' : 'rearrangeMap')
   const rearrange = () => {
     const { concepts, relations } = presentedGraph(store.getState())
     const chosen = new Set(selectedConcepts.map(({ id }) => id))
@@ -605,10 +604,10 @@ export function Canvas({
   }
 
   const selectAll = () => {
-    const { viewGraph } = store.getState()
+    const { mapGraph } = store.getState()
     selection([
-      ...viewGraph.concepts.map(({ id }) => ({ kind: 'concept' as const, id })),
-      ...viewGraph.relations.map((relation) => ({
+      ...mapGraph.concepts.map(({ id }) => ({ kind: 'concept' as const, id })),
+      ...mapGraph.relations.map((relation) => ({
         kind: 'relation' as const,
         id: relationKey(relation),
       })),
@@ -632,7 +631,7 @@ export function Canvas({
       ],
       { historyGroup: id },
     )
-    setEditing({ id, historyGroup: id, viewId: store.getState().workspace.activeViewId })
+    setEditing({ id, historyGroup: id, mapId: store.getState().workspace.activeMapId })
   }
 
   const openContextMenu = useCallback(
@@ -688,7 +687,7 @@ export function Canvas({
       onReconnectStart: (_event: unknown, _edge: RelationEdge, handleType: 'source' | 'target') => {
         const state = store.getState()
         reconnecting.current = {
-          relations: selectedRelations(state.viewGraph, state.selected),
+          relations: selectedRelations(state.mapGraph, state.selected),
           endpoint: handleType === 'source' ? 'target' : 'source',
         }
         setReconnectDrag(reconnecting.current)
@@ -1068,8 +1067,8 @@ export function Canvas({
           readOnly
             ? undefined
             : (_event, value) => {
-                if (store.getState().workspace.activeViewId !== view) return
-                write([{ kind: 'viewport.set', rendererId: 'concept-map', viewId: view, value }])
+                if (store.getState().workspace.activeMapId !== map) return
+                write([{ kind: 'viewport.set', rendererId: 'concept-map', mapId: map, value }])
               }
         }
         minZoom={0.2}
@@ -1342,7 +1341,7 @@ export function Canvas({
             label: t('selectAll'),
             icon: ListChecks,
             onClick: selectAll,
-            disabled: !interactive || viewCount === 0,
+            disabled: !interactive || visibleCount === 0,
           },
           {
             label: t('fitView'),

@@ -1,19 +1,19 @@
 import type { RefObject } from 'react'
 import { Layers, LayersPlus, Pin } from 'lucide-react'
 import { Menu, MenuItem, MenuPopup } from '@nesso-how/ui'
-import type { SavedView } from '@nesso-how/core'
+import type { WorkspaceMap } from '@nesso-how/core'
 import { useTranslation } from '@/i18n'
 
-export function OpenViewMenu({
+export function OpenMapMenu({
   target,
   onClose,
   onOpen,
   onCreate,
   finalFocus,
 }: {
-  target: { x: number; y: number; views: readonly SavedView[] } | null
+  target: { x: number; y: number; maps: readonly WorkspaceMap[] } | null
   onClose: () => void
-  onOpen: (viewId: string) => void
+  onOpen: (mapId: string) => void
   onCreate: () => void
   finalFocus: RefObject<HTMLDivElement | null>
 }) {
@@ -32,22 +32,22 @@ export function OpenViewMenu({
             getBoundingClientRect: () => DOMRect.fromRect({ ...target, width: 0, height: 0 }),
           }}
           sideOffset={2}
-          aria-label={t('openInView')}
+          aria-label={t('openInMap')}
           finalFocus={finalFocus}
           onKeyDown={(event) => event.stopPropagation()}
         >
-          {target.views.length === 0 ? (
+          {target.maps.length === 0 ? (
             <MenuItem onClick={onCreate}>
               <LayersPlus aria-hidden="true" />
-              {t('createViewWithConcept')}
+              {t('createMapWithConcept')}
             </MenuItem>
           ) : (
-            target.views
+            target.maps
               .toSorted((a, b) => Number(b.pinned) - Number(a.pinned))
-              .map((view) => (
-                <MenuItem key={view.id} onClick={() => onOpen(view.id)}>
-                  {view.pinned ? <Pin aria-hidden="true" /> : <Layers aria-hidden="true" />}
-                  {view.name}
+              .map((map) => (
+                <MenuItem key={map.id} onClick={() => onOpen(map.id)}>
+                  {map.pinned ? <Pin aria-hidden="true" /> : <Layers aria-hidden="true" />}
+                  {map.name}
                 </MenuItem>
               ))
           )}

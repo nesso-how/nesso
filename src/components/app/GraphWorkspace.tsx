@@ -11,14 +11,14 @@ import {
   type RefObject,
 } from 'react'
 import { ConceptMap, type ConceptMapHandle } from '@nesso-how/concept-map'
-import type { SavedView } from '@nesso-how/core'
+import type { WorkspaceMap } from '@nesso-how/core'
 import { KnowledgeGraph, type KnowledgeGraphHandle } from '@nesso-how/knowledge-graph'
 import { newIri, type Position } from '@nesso-how/schema'
 import { useGraphInteractions } from '../../graph/interactions.ts'
 import type { HostOperation, HostStore } from '../../store/types.ts'
-import { defaultViewName } from '../../store/operations.ts'
-import { maxConceptLabelLength, maxViewNameLength } from '../../store/settings.ts'
-import { OpenViewMenu } from './OpenViewMenu.tsx'
+import { defaultMapName } from '../../store/operations.ts'
+import { maxConceptLabelLength, maxMapNameLength } from '../../store/settings.ts'
+import { OpenMapMenu } from './OpenMapMenu.tsx'
 
 export function GraphWorkspace({
   ref,
@@ -28,7 +28,7 @@ export function GraphWorkspace({
   connection,
   suspended = false,
   bottomInset = 0,
-  onDeleteView,
+  onDeleteMap,
   onConfirmDelete,
   focusRef,
 }: {
@@ -39,22 +39,22 @@ export function GraphWorkspace({
   connection?: ComponentProps<typeof ConceptMap>['connection']
   suspended?: boolean
   bottomInset?: number
-  onDeleteView?: () => void
+  onDeleteMap?: () => void
   onConfirmDelete?: () => void
   focusRef?: RefObject<HTMLDivElement | null>
 }) {
-  const activeViewId = useSyncExternalStore(
+  const activeMapId = useSyncExternalStore(
     store.subscribe,
-    () => store.getState().workspace.activeViewId,
+    () => store.getState().workspace.activeMapId,
   )
-  const overview = activeViewId === null
+  const inGraph = activeMapId === null
   const localFocus = useRef<HTMLDivElement>(null)
   const target = focusRef ?? localFocus
   const readOnly = preview || locked
   const { epoch, commands, surfaceProps } = useGraphInteractions(store, {
     readOnly: readOnly || suspended,
     preview,
-    onDeleteView,
+    onDeleteMap,
     onConfirmDelete,
     focusRef: target,
   })
@@ -80,48 +80,48 @@ export function GraphWorkspace({
   useEffect(() => {
     const id = pending.current
     pending.current = null
-    if (id !== null) (overview ? graph.current : map.current)?.focusConcept(id)
-  }, [activeViewId, overview])
+    if (id !== null) (inGraph ? graph.current : map.current)?.focusConcept(id)
+  }, [activeMapId, inGraph])
   const focusConcept = (id: string) => {
-    if (store.getState().workspace.activeViewId !== activeViewId) pending.current = id
-    else (overview ? graph.current : map.current)?.focusConcept(id)
+    if (store.getState().workspace.activeMapId !== activeMapId) pending.current = id
+    else (inGraph ? graph.current : map.current)?.focusConcept(id)
   }
   useImperativeHandle(ref, () => ({
     focusConcept,
-    addToView: (id) => map.current?.addToView(id),
+    addToMap: (id) => map.current?.addToMap(id),
   }))
 
   const [opening, setOpening] = useState<{
     id: string
     x: number
     y: number
-    views: SavedView[]
+    maps: WorkspaceMap[]
   } | null>(null)
-  const show = (id: string, view: HostOperation) => {
+  const show = (id: string, activation: HostOperation) => {
     setOpening(null)
-    store.applyOperations([view, { kind: 'selection.set', value: [{ kind: 'concept', id }] }])
+    store.applyOperations([activation, { kind: 'selection.set', value: [{ kind: 'concept', id }] }])
     focusConcept(id)
   }
   const open = (id: string, point: { x: number; y: number }) => {
-    const views = store
+    const maps = store
       .getState()
-      .workspace.savedViews.filter(({ members }) => members.some((member) => member.id === id))
-    if (views.length === 1) show(id, { kind: 'view.activate', id: views[0].id })
-    else setOpening({ id, ...point, views })
+      .workspace.maps.filter(({ members }) => members.some((member) => member.id === id))
+    if (maps.length === 1) show(id, { kind: 'map.activate', id: maps[0].id })
+    else setOpening({ id, ...point, maps })
   }
   const create = (id: string) => {
     const label = store.getState().graph.concepts.find((concept) => concept.id === id)?.label
     show(id, {
-      kind: 'view.create',
+      kind: 'map.create',
       id: newIri(),
-      name: label?.trim().slice(0, maxViewNameLength).trim() || defaultViewName,
+      name: label?.trim().slice(0, maxMapNameLength).trim() || defaultMapName,
       conceptIds: [id],
     })
   }
 
   return (
     <div key={epoch} {...surfaceProps} className="h-full w-full">
-      {overview ? (
+      {inGraph ? (
         <KnowledgeGraph
           ref={graph}
           store={store}
@@ -144,10 +144,10 @@ export function GraphWorkspace({
           onPresentation={preview ? undefined : store.setConceptMapPresentation}
         />
       )}
-      <OpenViewMenu
+      <OpenMapMenu
         target={opening}
         onClose={() => setOpening(null)}
-        onOpen={(viewId) => opening && show(opening.id, { kind: 'view.activate', id: viewId })}
+        onOpen={(mapId) => opening && show(opening.id, { kind: 'map.activate', id: mapId })}
         onCreate={() => opening && create(opening.id)}
         finalFocus={target}
       />

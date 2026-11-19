@@ -33,13 +33,13 @@ const issueKeys = [
   'aiChatLimitReached',
   'storageBusy',
 ] as const
-const starters = ['aiStarterHelp', 'aiStarterAnalysis', 'aiStarterAdd', 'aiStarterView'] as const
+const starters = ['aiStarterHelp', 'aiStarterAnalysis', 'aiStarterAdd', 'aiStarterMap'] as const
 const activities = {
   read_docs: 'aiChatReadingDocs',
   context: 'aiChatReadingContext',
   concepts: 'aiChatReadingConcepts',
   relations: 'aiChatReadingRelations',
-  views: 'aiChatReadingViews',
+  maps: 'aiChatReadingMaps',
   relation_types: 'aiChatReadingRelationTypes',
   selection: 'aiChatReadingSelection',
   edit: 'aiChatPreparingEdits',

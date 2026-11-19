@@ -28,14 +28,14 @@
         "zh-CN": "温暖的主题，搭配象牙色界面、墨色文字和陶土色点缀，提供浅色和深色。"
       },
       "documentation": {
-        "en": "Paper brings an understated editorial palette to Nesso, with Geist and IBM Plex Mono fonts. It does not change your graph or views.",
-        "it": "Paper porta in Nesso una palette editoriale sobria, con i font Geist e IBM Plex Mono. Non modifica il grafo o le viste.",
-        "zh-CN": "Paper 为 Nesso 带来简约的编辑风格配色，采用 Geist 和 IBM Plex Mono 字体，不会改变你的图谱或视图。"
+        "en": "Paper brings an understated editorial palette to Nesso, with Geist and IBM Plex Mono fonts. It does not change your graph or maps.",
+        "it": "Paper porta in Nesso una palette editoriale sobria, con i font Geist e IBM Plex Mono. Non modifica il grafo o le mappe.",
+        "zh-CN": "Paper 为 Nesso 带来简约的编辑风格配色，采用 Geist 和 IBM Plex Mono 字体，不会改变你的图谱或导图。"
       }
     }
   },
   "nesso": {
-    "apiVersion": 6,
+    "apiVersion": 7,
     "kind": "theme",
     "entry": "dist/definition.json",
     "writes": [],

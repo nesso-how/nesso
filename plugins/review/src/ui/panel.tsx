@@ -47,5 +47,5 @@ export function ReviewPanel(context: ActionContext) {
         )}
       </div>
     )
-  return <Practice state={state} viewId={context.viewId} review={review} reload={reload} />
+  return <Practice state={state} mapId={context.mapId} review={review} reload={reload} />
 }

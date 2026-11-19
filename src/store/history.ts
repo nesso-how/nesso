@@ -1,4 +1,4 @@
-import type { NessoState, SavedView } from '@nesso-how/core'
+import type { NessoState, WorkspaceMap } from '@nesso-how/core'
 import { relationKey } from '@nesso-how/schema'
 import {
   applyChanges,
@@ -10,7 +10,7 @@ import {
   sameType,
   type Change,
   type DocumentDelta,
-  type ViewChange,
+  type MapChange,
 } from './delta.ts'
 import { checkGraph, checkWorkspace, materialize, reconcileSelection } from './operations.ts'
 import { parseWorkspace } from './settings.ts'
@@ -20,24 +20,24 @@ export const historyLimit = 100
 const stable = ({ before, after }: Change<unknown>): boolean =>
   !!before && !!after && before.index === after.index
 
-const sameMetadata = (view: ViewChange): boolean =>
-  stable(view) &&
-  view.before!.value.name === view.after!.value.name &&
-  view.before!.value.pinned === view.after!.value.pinned
+const sameMetadata = (map: MapChange): boolean =>
+  stable(map) &&
+  map.before!.value.name === map.after!.value.name &&
+  map.before!.value.pinned === map.after!.value.pinned
 
 const mergeDelta = (left: DocumentDelta, right: DocumentDelta): DocumentDelta => {
-  const views = new Map(left.views.map((view) => [view.id, view]))
-  for (const view of right.views) {
-    const previous = views.get(view.id)
-    views.set(
-      view.id,
+  const maps = new Map(left.maps.map((map) => [map.id, map]))
+  for (const map of right.maps) {
+    const previous = maps.get(map.id)
+    maps.set(
+      map.id,
       previous
         ? {
             ...previous,
-            members: mergeChanges(previous.members, view.members, sameMember),
-            relationBends: mergeChanges(previous.relationBends, view.relationBends, sameBend),
+            members: mergeChanges(previous.members, map.members, sameMember),
+            relationBends: mergeChanges(previous.relationBends, map.relationBends, sameBend),
           }
-        : view,
+        : map,
     )
   }
   return {
@@ -48,23 +48,23 @@ const mergeDelta = (left: DocumentDelta, right: DocumentDelta): DocumentDelta =>
       (a, b) => relationKey(a) === relationKey(b),
     ),
     relationTypes: mergeChanges(left.relationTypes, right.relationTypes, sameType),
-    views: [...views.values()].filter(
-      (view) => view.members.length > 0 || view.relationBends.length > 0 || !sameMetadata(view),
+    maps: [...maps.values()].filter(
+      (map) => map.members.length > 0 || map.relationBends.length > 0 || !sameMetadata(map),
     ),
   }
 }
 
 const canMerge = (left: DocumentDelta, right: DocumentDelta): boolean =>
-  left.views.every(stable) && right.views.every(sameMetadata)
+  left.maps.every(stable) && right.maps.every(sameMetadata)
 
 const restoreViews = (
-  views: readonly SavedView[],
-  changes: readonly ViewChange[],
+  maps: readonly WorkspaceMap[],
+  changes: readonly MapChange[],
   forward: boolean,
-): readonly SavedView[] => {
-  if (changes.length === 0) return views
-  const existing = new Map(views.map((view) => [view.id, view]))
-  const patches: Change<SavedView>[] = changes.map((change) => {
+): readonly WorkspaceMap[] => {
+  if (changes.length === 0) return maps
+  const existing = new Map(maps.map((map) => [map.id, map]))
+  const patches: Change<WorkspaceMap>[] = changes.map((change) => {
     const target = forward ? change.after : change.before
     const relationBends = applyChanges(
       existing.get(change.id)?.relationBends ?? [],
@@ -91,7 +91,7 @@ const restoreViews = (
       after: forward ? entry : undefined,
     }
   })
-  return applyChanges(views, patches, (view) => view.id, forward)
+  return applyChanges(maps, patches, (map) => map.id, forward)
 }
 
 const restore = (state: NessoState, delta: DocumentDelta, forward: boolean): NessoState => {
@@ -115,25 +115,25 @@ const restore = (state: NessoState, delta: DocumentDelta, forward: boolean): Nes
       ? state.graph
       : { concepts, relations, relationTypes }
   if (graph !== state.graph) checkGraph(graph)
-  const savedViews = restoreViews(state.workspace.savedViews, delta.views, forward)
-  const activeViewId = savedViews.some((view) => view.id === state.workspace.activeViewId)
-    ? state.workspace.activeViewId
+  const maps = restoreViews(state.workspace.maps, delta.maps, forward)
+  const activeMapId = maps.some((map) => map.id === state.workspace.activeMapId)
+    ? state.workspace.activeMapId
     : null
   const workspace =
-    savedViews === state.workspace.savedViews && activeViewId === state.workspace.activeViewId
+    maps === state.workspace.maps && activeMapId === state.workspace.activeMapId
       ? state.workspace
-      : { ...state.workspace, savedViews, activeViewId }
+      : { ...state.workspace, maps, activeMapId }
   if (workspace !== state.workspace) {
     parseWorkspace(workspace)
     checkWorkspace(graph, workspace)
   }
-  const viewGraph = materialize(graph, workspace, state)
+  const mapGraph = materialize(graph, workspace, state)
   return {
     ...state,
     graph,
     workspace,
-    selected: reconcileSelection(viewGraph, state.selected),
-    viewGraph,
+    selected: reconcileSelection(mapGraph, state.selected),
+    mapGraph,
   }
 }
 

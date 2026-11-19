@@ -1,14 +1,14 @@
 # @nesso-how/review
 
-Isolated action plugin for spaced-repetition practice of a view’s concepts without changing the graph.
+Isolated action plugin for spaced-repetition practice of a map’s concepts without changing the graph.
 
 ## Usage
 
-Open the bundled **Review** action from a view’s actions. The overview includes every concept in that view, with new and due concepts first. Start a round and recall each concept: when it has in-view connections, the prompt lists their relation types and directions with the other concepts hidden, and also asks for an explanation if the concept has notes; otherwise it asks only for an explanation. Reveal its notes and in-view connections, then choose **Again / Hard / Good / Easy**. Space reveals; keys 1–4 rate. **Undo rating** or Backspace restores the concept’s previous progress and returns to it revealed for a new rating; it steps back through the round’s ratings, including from the completion summary, until the round ends or a new one starts. Escape or **End session** finishes the round immediately and returns to the overview, keeping completed reviews and leaving remaining concepts available.
+Open the bundled **Review** action from a map’s actions. The overview includes every concept in that map, with new and due concepts first. Start a round and recall each concept: when it has in-map connections, the prompt lists their relation types and directions with the other concepts hidden, and also asks for an explanation if the concept has notes; otherwise it asks only for an explanation. Reveal its notes and in-map connections, then choose **Again / Hard / Good / Easy**. Space reveals; keys 1–4 rate. **Undo rating** or Backspace restores the concept’s previous progress and returns to it revealed for a new rating; it steps back through the round’s ratings, including from the completion summary, until the round ends or a new one starts. Escape or **End session** finishes the round immediately and returns to the overview, keeping completed reviews and leaving remaining concepts available.
 
-The action badge counts new and due concepts in its target view, even with the panel closed. It updates after progress or graph changes and when the next scheduled concept becomes due; zero counts are hidden.
+The action badge counts new and due concepts in its target map, even with the panel closed. It updates after progress or graph changes and when the next scheduled concept becomes due; zero counts are hidden.
 
-Each round covers its currently due concepts once and returns to the overview. Ratings save progress shared across overlapping views; closing the panel discards only the unfinished round. Progress is private plugin data, excluded from JSON-LD and graph history. Invalid records or failed writes block further ratings until progress is explicitly reloaded, without advancing the round or overwriting saved data.
+Each round covers its currently due concepts once and returns to the overview. Ratings save progress shared across overlapping maps; closing the panel discards only the unfinished round. Progress is private plugin data, excluded from JSON-LD and graph history. Invalid records or failed writes block further ratings until progress is explicitly reloaded, without advancing the round or overwriting saved data.
 
 ## API
 

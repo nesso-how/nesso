@@ -11,17 +11,17 @@ import {
   ListRowTitle,
 } from '@nesso-how/ui'
 import { Plus } from 'lucide-react'
-import type { SavedView } from '@nesso-how/core'
+import type { WorkspaceMap } from '@nesso-how/core'
 import { useRef, useState } from 'react'
 import { nessoStore, useNessoStore } from '@/store'
 import type { HostStore } from '@/store/types'
-import { maxViewNameLength } from '@/store/settings'
+import { maxMapNameLength } from '@/store/settings'
 import { InspectorSection } from './InspectorSection'
 import { useTranslation } from '@/i18n'
 
 type Option = { readonly id: string; readonly name: string; readonly create?: true }
 
-export function ConceptViews({
+export function ConceptMaps({
   store = nessoStore,
   conceptIds,
   readonly = false,
@@ -35,47 +35,47 @@ export function ConceptViews({
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const trigger = useRef<HTMLButtonElement>(null)
-  const coverage = (view: SavedView) =>
-    conceptIds.filter((id) => view.members.some((member) => member.id === id)).length
-  const listed = workspace.savedViews.filter((view) => coverage(view) > 0)
-  const others = workspace.savedViews.filter((view) => coverage(view) === 0)
+  const coverage = (map: WorkspaceMap) =>
+    conceptIds.filter((id) => map.members.some((member) => member.id === id)).length
+  const listed = workspace.maps.filter((map) => coverage(map) > 0)
+  const others = workspace.maps.filter((map) => coverage(map) === 0)
   const name = query.trim()
   const options: readonly Option[] =
-    name && !workspace.savedViews.some((view) => view.name === name)
+    name && !workspace.maps.some((map) => map.name === name)
       ? [...others, { id: '', name, create: true }]
       : others
-  const addTo = (viewId: string) =>
+  const addTo = (mapId: string) =>
     store.applyOperations([
       ...conceptIds.map((conceptId) => ({
-        kind: 'view.membership' as const,
-        viewId,
+        kind: 'map.membership' as const,
+        mapId,
         conceptId,
         included: true,
       })),
-      { kind: 'view.activate', id: viewId },
+      { kind: 'map.activate', id: mapId },
     ])
 
   return (
     <InspectorSection
       store={store}
-      id="inspector.views"
-      title={t('views')}
+      id="inspector.maps"
+      title={t('maps')}
       onOpenChange={(expanded) => {
         if (!expanded) setOpen(false)
       }}
     >
       {listed.length > 0 && (
         <div className="mt-1.5 flex flex-col gap-0.5">
-          {listed.map((view) => {
-            const count = coverage(view)
+          {listed.map((map) => {
+            const count = coverage(map)
             return (
-              <ListRow key={view.id} className="min-h-0 has-[[aria-current]]:bg-accent">
+              <ListRow key={map.id} className="min-h-0 has-[[aria-current]]:bg-accent">
                 <ListRowButton
                   className="py-1.5"
-                  onClick={() => store.setView(view.id)}
-                  aria-current={view.id === workspace.activeViewId ? 'page' : undefined}
+                  onClick={() => store.setMap(map.id)}
+                  aria-current={map.id === workspace.activeMapId ? 'page' : undefined}
                 >
-                  <ListRowTitle>{view.name}</ListRowTitle>
+                  <ListRowTitle>{map.name}</ListRowTitle>
                   {conceptIds.length > 1 && (
                     <ListRowDetail>
                       {count}/{conceptIds.length}
@@ -86,8 +86,8 @@ export function ConceptViews({
                   <IconButton
                     disabled={readonly}
                     className="mr-1"
-                    aria-label={t('addSelectionToView', { name: view.name })}
-                    onClick={() => addTo(view.id)}
+                    aria-label={t('addSelectionToMap', { name: map.name })}
+                    onClick={() => addTo(map.id)}
                   >
                     <Plus />
                   </IconButton>
@@ -113,30 +113,30 @@ export function ConceptViews({
         }}
         onValueChange={(option) => {
           if (!option) return
-          if (option.create) store.createView(option.name, conceptIds)
+          if (option.create) store.createMap(option.name, conceptIds)
           else addTo(option.id)
           setOpen(false)
         }}
       >
         <Combobox.Trigger
           ref={trigger}
-          aria-label={t('otherViews')}
+          aria-label={t('otherMaps')}
           render={<Button variant="outline" className="mt-2 w-full justify-start bg-transparent" />}
         >
           <Plus />
-          {t('otherViews')}
+          {t('otherMaps')}
           {others.length > 0 && (
             <span className="ml-auto font-mono text-[10px] text-muted-foreground">
               {others.length}
             </span>
           )}
         </Combobox.Trigger>
-        <ComboboxPopup aria-label={t('otherViews')} finalFocus={trigger}>
+        <ComboboxPopup aria-label={t('otherMaps')} finalFocus={trigger}>
           <div className="p-1">
             <Combobox.Input
-              aria-label={t('findView')}
-              placeholder={t('findOrCreateView')}
-              maxLength={maxViewNameLength}
+              aria-label={t('findMap')}
+              placeholder={t('findOrCreateMap')}
+              maxLength={maxMapNameLength}
               render={<Input className="h-8 text-xs" />}
             />
           </div>
@@ -150,7 +150,7 @@ export function ConceptViews({
                 {option.create ? (
                   <>
                     <Plus />
-                    {t('newViewNamed', { name: option.name })}
+                    {t('newMapNamed', { name: option.name })}
                   </>
                 ) : (
                   option.name
@@ -160,7 +160,7 @@ export function ConceptViews({
           </Combobox.List>
           <Combobox.Empty>
             <p className="px-2.5 py-2 text-xs text-muted-foreground">
-              {t(name ? 'noMatchingViews' : 'createViewHint')}
+              {t(name ? 'noMatchingMaps' : 'createMapHint')}
             </p>
           </Combobox.Empty>
         </ComboboxPopup>

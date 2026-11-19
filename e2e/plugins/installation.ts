@@ -177,7 +177,7 @@ async function buildFixture(state: InstallState, name: string, version: string) 
     kind === 'actions'
       ? state.brokenActions
         ? 'export function create(){throw Object.assign(new Error("Hidden"),{issues:[{path:"create",message:"Broken plugin discovery"}]})}'
-        : 'export function create(){return [{id:"test-action",label:{en:"Test action"},async run({document}){const concept=document.getState().viewGraph.concepts[0];await document.setConceptLabel(concept.id,concept.label+"!");while(true){}}}]}'
+        : 'export function create(){return [{id:"test-action",label:{en:"Test action"},async run({document}){const concept=document.getState().mapGraph.concepts[0];await document.setConceptLabel(concept.id,concept.label+"!");while(true){}}}]}'
       : JSON.stringify(
           kind === 'theme'
             ? { ...theme, id: 'test-theme' }
@@ -198,7 +198,7 @@ async function buildFixture(state: InstallState, name: string, version: string) 
           }
         : {}),
       nesso: {
-        apiVersion: 6,
+        apiVersion: 7,
         kind,
         entry,
         writes: kind === 'actions' ? ['concept.label'] : [],
@@ -311,14 +311,14 @@ async function verifyBundledDetails(driver: Driver, state: InstallState, window:
                 'Move concepts',
                 'Connect relations',
                 'Adjust relation curves',
-                'Create views',
-                'Update view membership',
+                'Create maps',
+                'Update map membership',
               ],
               capabilities: [files],
             }
           : {
               writes: [],
-              capabilities: [files, 'Render an image of the invoked view', notifications],
+              capabilities: [files, 'Render an image of the invoked map', notifications],
             },
       )
     else assert.equal(await driver.declaredAccess(), null)
@@ -1144,7 +1144,7 @@ async function verifyLocalProposal(driver: Driver) {
     const manifest = {
       name,
       version: '1.0.0',
-      nesso: { apiVersion: 6, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+      nesso: { apiVersion: 7, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
       i18n: {
         metadata: {
           name: { en: 'Test local' },

@@ -54,7 +54,7 @@ function ImageFlow({ store, ready, presentation }: ImageProps) {
   const adapt = useMemo(() => createGraphElements(), [])
   const groups = !(state.preferences.relationGroups ?? true)
     ? []
-    : presentation?.graph === graph && presentation.viewId === state.workspace.activeViewId
+    : presentation?.graph === graph && presentation.mapId === state.workspace.activeMapId
       ? presentation.groups
       : groupRelations({
           concepts: graph.concepts,

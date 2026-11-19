@@ -3,7 +3,7 @@ import type { PanelSizes, Preferences, WorkspaceState } from '@nesso-how/core'
 import { isLocale } from '@nesso-how/i18n'
 import { aiConversation, aiTextLimits } from '@nesso-how/ai'
 import { NessoError, validationIssues } from '@nesso-how/errors'
-import { relationBendSchema, viewMemberSchema } from '@nesso-how/schema'
+import { relationBendSchema, conceptMapMemberSchema } from '@nesso-how/schema'
 import { sectionIds } from './types.ts'
 import { appearances } from '../../shared/appearance.ts'
 
@@ -16,7 +16,7 @@ export const panelLimits = {
   explorerWidth: { min: 180, max: 480 },
   inspectorWidth: { min: 200 },
 } as const
-export const maxViewNameLength = aiTextLimits.viewName
+export const maxMapNameLength = aiTextLimits.mapName
 export const maxConceptLabelLength = aiTextLimits.conceptLabel
 export const maxRelationLabelLength = aiTextLimits.relationLabel
 
@@ -44,11 +44,11 @@ export const parseConversation = (value: unknown) => ({
 })
 
 const viewportSchema = z.strictObject({ x: z.number(), y: z.number(), zoom: z.number().positive() })
-const savedViewSchema = z.strictObject({
+const mapSchema = z.strictObject({
   id: z.string().min(1),
-  name: z.string().trim().min(1).max(maxViewNameLength),
+  name: z.string().trim().min(1).max(maxMapNameLength),
   members: z
-    .array(viewMemberSchema)
+    .array(conceptMapMemberSchema)
     .refine(
       (members) => new Set(members.map(({ id }) => id)).size === members.length,
       'Duplicate concept id',
@@ -58,23 +58,23 @@ const savedViewSchema = z.strictObject({
 })
 const workspaceSchema = z
   .strictObject({
-    activeViewId: z.string().nullable(),
-    savedViews: z.array(savedViewSchema),
+    activeMapId: z.string().nullable(),
+    maps: z.array(mapSchema),
     viewports: z.record(z.string().min(1), viewportSchema),
   })
   .superRefine((workspace, context) => {
     const ids = new Set<string>()
-    for (const [index, view] of workspace.savedViews.entries()) {
-      if (ids.has(view.id))
+    for (const [index, map] of workspace.maps.entries()) {
+      if (ids.has(map.id))
         context.addIssue({
           code: 'custom',
-          path: ['savedViews', index, 'id'],
-          message: 'Duplicate view id',
+          path: ['maps', index, 'id'],
+          message: 'Duplicate map id',
         })
-      ids.add(view.id)
+      ids.add(map.id)
     }
-    if (workspace.activeViewId !== null && !ids.has(workspace.activeViewId))
-      context.addIssue({ code: 'custom', path: ['activeViewId'], message: 'Unknown view' })
+    if (workspace.activeMapId !== null && !ids.has(workspace.activeMapId))
+      context.addIssue({ code: 'custom', path: ['activeMapId'], message: 'Unknown map' })
   }) satisfies z.ZodType<WorkspaceState>
 
 export const preferencesSchema = z.strictObject({

@@ -27,9 +27,9 @@ export function ConceptConnections({
   const graph = useNessoStore((state) => state.graph, store)
   const vocabs = useNessoStore((state) => state.vocabs, store)
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale, store)
-  const viewGraph = useNessoStore((state) => state.viewGraph, store)
-  const activeViewId = useNessoStore((state) => state.workspace.activeViewId, store)
-  const visible = new Set(viewGraph.concepts.map((concept) => concept.id))
+  const mapGraph = useNessoStore((state) => state.mapGraph, store)
+  const activeMapId = useNessoStore((state) => state.workspace.activeMapId, store)
+  const visible = new Set(mapGraph.concepts.map((concept) => concept.id))
   const connections = graph.relations
     .filter((relation) => relation.source === conceptId || relation.target === conceptId)
     .map((relation) => {
@@ -58,12 +58,12 @@ export function ConceptConnections({
     renderer?.current?.focusConcept(id)
   }
   const add = (id: string) => {
-    if (activeViewId === null) return
-    if (renderer?.current) renderer.current.addToView(id)
-    else store.setViewMembership(activeViewId, id, true)
+    if (activeMapId === null) return
+    if (renderer?.current) renderer.current.addToMap(id)
+    else store.setMapMembership(activeMapId, id, true)
   }
   const row = ({ relation, otherId, label, type, included }: (typeof connections)[number]) => {
-    const detail = [type, included ? '' : t('notInView')].filter(Boolean).join(' · ')
+    const detail = [type, included ? '' : t('notInMap')].filter(Boolean).join(' · ')
     const content = (
       <>
         <ListRowTitle className={included ? undefined : 'text-muted-foreground'}>
@@ -84,8 +84,8 @@ export function ConceptConnections({
             <IconButton
               disabled={readonly}
               className="mr-1"
-              title={t('addToCurrentView')}
-              aria-label={t('addConceptToCurrentView', { name: label })}
+              title={t('addToCurrentMap')}
+              aria-label={t('addConceptToCurrentMap', { name: label })}
               onClick={() => add(otherId)}
             >
               <Plus />

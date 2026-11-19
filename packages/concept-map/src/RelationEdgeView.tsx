@@ -90,7 +90,7 @@ export function RelationEdgeView({
   interactionWidth,
 }: EdgeProps<RelationEdge>) {
   const { store } = useCanvasContext()
-  const viewId = useNesso((state) => state.workspace.activeViewId)
+  const mapId = useNesso((state) => state.workspace.activeMapId)
   const t = useTranslation()
   const { screenToFlowPosition } = useReactFlow()
   const [preview, setPreview] = useState<{ scope: string; value: number } | null>(null)
@@ -102,12 +102,12 @@ export function RelationEdgeView({
     value: number
   } | null>(null)
   const bend = data?.bend ?? 0
-  const editable = !!data?.editable && viewId !== null
+  const editable = !!data?.editable && mapId !== null
   const sourceShift = shift(sourcePosition, data?.sourceOffset)
   const targetShift = shift(targetPosition, data?.targetOffset)
   const from = { x: sourceX + sourceShift.x, y: sourceY + sourceShift.y }
   const to = { x: targetX + targetShift.x, y: targetY + targetShift.y }
-  const scope = JSON.stringify([id, viewId, bend, editable, from, to])
+  const scope = JSON.stringify([id, mapId, bend, editable, from, to])
   if (preview && preview.scope !== scope) setPreview(null)
   const value = preview?.scope === scope ? preview.value : bend
   const sourceNode = useInternalNode(source)
@@ -151,7 +151,7 @@ export function RelationEdgeView({
     }
   })
   const commit = (value: number) => {
-    if (editable && store.getState().workspace.activeViewId === viewId)
+    if (editable && store.getState().workspace.activeMapId === mapId)
       store.applyOperations([{ kind: 'relation.bend', id, value }])
   }
   return (
