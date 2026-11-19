@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.0.0-beta.25 — 2026-11-19
+
+### Breaking Changes
+
+- Rename views to maps and the overview to graph (#382)
+  plugin API 7 renames view operations to `map.*`, the
+  `view.create`/`view.membership` permissions to `map.create`/
+  `map.membership`, `viewGraph` to `mapGraph`, `viewId`/`targetViewId` to
+  `mapId`/`targetMapId`, `images.renderView` to `images.renderCanvas`, and
+  the plugin storage scope kind `view` to `map`. API 6 plugins must update
+  their manifest and rebuild against the current SDK. JSON-LD profile 4
+  renames the `View` term and type to `Map`, keeping the same IRI. Document
+  record 7 renames `activeViewId`/`savedViews` to `activeMapId`/`maps`,
+  preferences 4 renames the view section IDs, and plugin storage 4 renames
+  view scopes. Older supported data migrates on read; older hosts cannot
+  read the new formats.
+
+### Fixes
+
+- **mcp:** Serve requests without sessions (#381)
+
 ## 1.0.0-beta.24 — 2026-11-18
 
 ### Breaking Changes
