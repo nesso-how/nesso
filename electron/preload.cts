@@ -9,6 +9,7 @@ import type { PluginBridge } from '../shared/plugins.js'
 import type { NotesLinkBridge } from '../shared/link-policy.js'
 import type { BackupBridge } from '../shared/backup.js'
 import type { MenuBridge, MenuCommand } from '../shared/menu.js'
+import type { WhatsNewBridge } from '../shared/whats-new.js'
 
 const { contextBridge, ipcRenderer } = require('electron') as typeof import('electron')
 const beforeSave = (request: string, reply: string, save: () => Promise<boolean>) => {
@@ -51,6 +52,11 @@ const updater: UpdateBridge = {
     beforeSave('update:prepare', 'update:install', confirmSave('update:confirming', save, confirm)),
 }
 contextBridge.exposeInMainWorld('nessoUpdater', updater)
+let releaseStartup: ReturnType<WhatsNewBridge['startup']> | undefined
+const whatsNew: WhatsNewBridge = {
+  startup: () => (releaseStartup ??= ipcRenderer.invoke('whats-new:startup')),
+}
+contextBridge.exposeInMainWorld('nessoWhatsNew', whatsNew)
 let storageSession: Promise<number> | undefined
 const session = () => (storageSession ??= ipcRenderer.invoke('storage:session'))
 const persistence: PersistenceBridge = {

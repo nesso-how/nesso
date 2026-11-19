@@ -125,6 +125,7 @@ function createMenuTemplate(state: MenuState, dev: boolean): MenuItemConstructor
       role: 'help',
       label: t.help,
       submenu: [
+        command('whatsNew'),
         command('shortcuts'),
         {
           label: t.documentation,
@@ -161,6 +162,7 @@ export function connectMenu(trusted: TrustedRequest, dev: boolean) {
       settings: false,
       shortcuts: false,
       about: false,
+      whatsNew: false,
     },
   }
   let state = empty

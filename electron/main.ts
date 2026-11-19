@@ -32,6 +32,7 @@ import { createWindowState } from './shell/window-state.ts'
 import { connectWindowZoom } from './shell/zoom.ts'
 import { createRecordReplacement } from './persistence/record-replacement.ts'
 import { connectMenu, connectTabShortcuts } from './shell/menu.ts'
+import { connectReleaseLaunch } from './shell/release-launch.ts'
 import { createAutomaticBackups } from './persistence/automatic-backups.ts'
 import { createFileStorage } from './persistence/file-storage.ts'
 import { releasesUrl } from '../shared/link-policy.ts'
@@ -123,6 +124,12 @@ app
     connectPluginTermination(ipcMain, trusted, () => webContents.getAllWebContents())
     const location = await createDataLocation(app.getPath('userData'))
     await createRecordReplacement(() => location.directory()).recover()
+    connectReleaseLaunch(
+      ipcMain,
+      (event) => !dev && trusted(event),
+      app.getPath('userData'),
+      app.getVersion(),
+    )
     const ai = connectAi(trusted, location)
     const mcp = connectMcp(trusted, location)
     let installingUpdate = false

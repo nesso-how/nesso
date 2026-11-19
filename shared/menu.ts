@@ -4,7 +4,7 @@ import { z } from 'zod'
 export const menuState = z.strictObject({
   locale: z.enum(locales),
   enabled: z.record(
-    z.enum(['undo', 'redo', 'selectAll', 'settings', 'shortcuts', 'about']),
+    z.enum(['undo', 'redo', 'selectAll', 'settings', 'shortcuts', 'about', 'whatsNew']),
     z.boolean(),
   ),
 })

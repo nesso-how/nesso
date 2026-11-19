@@ -31,6 +31,8 @@ import { ConceptSheet } from '@/components/app/ConceptSheet'
 import { SearchDialog } from '@/components/app/SearchDialog'
 import { addToActiveMap, openSearchResult } from '@/graph/search'
 import { usePluginInstallNotifications } from '@/components/app/usePluginInstallNotifications'
+import { WhatsNewBanner, WhatsNewDialog } from '@/components/app/WhatsNew'
+import { useWhatsNew } from '@/whats-new'
 
 const compactQuery = '(max-width: 767px)'
 
@@ -60,13 +62,23 @@ export default function App({
   const [introOpen, setIntroOpen] = useState(
     () => !import.meta.env.DEV && !host.store.getState().preferences.introSeen,
   )
+  const whatsNew = useWhatsNew(loading)
   const [settingsPage, setSettingsPage] = useState('general')
   const [deleting, setDeleting] = useState<WorkspaceMap | 'complete-graph' | null>(null)
   const [deletingConcepts, setDeletingConcepts] = useState(false)
   const canvas = useRef<HTMLDivElement>(null)
+  const notesFocus = useRef<HTMLElement | null>(null)
+  const { openHistory } = whatsNew
+  const openWhatsNewFromMenu = useCallback(() => {
+    const active = document.activeElement
+    notesFocus.current = active instanceof HTMLElement && active !== document.body ? active : null
+    openHistory()
+  }, [openHistory])
   const renderer = useRef<ConceptMapHandle>(null)
   const pluginPanel = usePluginPanel()
   const compact = useMediaQuery(compactQuery)
+  const showSettings = !compact && settingsOpen
+  const notesDialog = { notes: whatsNew.openNotes, locale, onClose: whatsNew.close }
   const readonly = compact
   const workspaceRef = useRef<HTMLDivElement>(null)
   const [sheetCover, setSheetCover] = useState(0)
@@ -113,6 +125,7 @@ export default function App({
     focusRef: canvas,
     openSettings: openSettingsPage,
     openSearch,
+    openWhatsNew: openWhatsNewFromMenu,
     openTab: openCanvasTabAt,
   })
   const openSettings = () => openSettingsPage('general')
@@ -143,6 +156,17 @@ export default function App({
                     onActionsOpenChange={setActionsOpen}
                   />
                 )}
+                <WhatsNewBanner
+                  visible={whatsNew.newNotes.length > 0}
+                  onOpen={() => {
+                    notesFocus.current = null
+                    whatsNew.openLatest()
+                  }}
+                  onDismiss={() => {
+                    whatsNew.dismiss()
+                    canvas.current?.focus()
+                  }}
+                />
                 <div ref={workspaceRef} className="relative min-h-0 flex-1">
                   <div
                     className="graph-surface h-full"
@@ -207,7 +231,7 @@ export default function App({
         {compact && !introOpen && <ConceptSheet canvas={workspaceRef} onCover={setSheetCover} />}
         <PersistenceBanner persistence={persistence} />
       </SidebarProvider>
-      {(compact || !settingsOpen) && <ToastsHost />}
+      {!showSettings && <ToastsHost />}
       <SearchDialog
         store={host.store}
         open={!compact && !introOpen && searchOpen}
@@ -225,11 +249,25 @@ export default function App({
         }}
       />
       {window.nessoUpdater && <UpdateBar updater={window.nessoUpdater} />}
-      <Dialog.Root open={!compact && settingsOpen} onOpenChange={setSettingsOpen}>
-        {!compact && settingsOpen && (
+      {!showSettings && (
+        <WhatsNewDialog
+          {...notesDialog}
+          finalFocus={() => {
+            const target = notesFocus.current
+            return target?.getClientRects().length && !target.matches(':disabled')
+              ? target
+              : canvas.current
+          }}
+        />
+      )}
+      <Dialog.Root open={showSettings} onOpenChange={setSettingsOpen}>
+        {showSettings && (
           <SettingsDialog
             page={settingsPage}
             onPageChange={setSettingsPage}
+            whatsNew={
+              window.nessoWhatsNew && <WhatsNewDialog {...notesDialog} onOpen={openHistory} />
+            }
             onDiscover={() => {
               activePluginPanel.close()
               setSettingsOpen(false)
