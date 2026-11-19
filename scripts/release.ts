@@ -1,7 +1,9 @@
 import { execFileSync } from 'node:child_process'
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { parseArgs } from 'node:util'
 import { NessoError } from '@nesso-how/errors'
+import { releaseHighlights } from '../shared/whats-new.ts'
 import { releaseNotes } from './release-notes.ts'
 import releasePackages from './release-packages.json' with { type: 'json' }
 
@@ -14,7 +16,9 @@ type Version = {
   prerelease?: number
 }
 
-const usage = 'usage: pnpm release [version|--major|--minor|--patch|--alpha|--beta|--help]'
+const bumps = ['major', 'minor', 'patch', 'alpha', 'beta'] as const
+const usage =
+  'usage: pnpm release [version|--major|--minor|--patch|--alpha|--beta] (--preview|--highlights <file>|--no-highlights)'
 const help = `${usage}
 
 Release from a clean main branch. Without an argument, release the current version.
@@ -30,6 +34,9 @@ changes since the previous stable release, or all history for the first stable
 release. Internal changes are omitted unless breaking.
 GitHub releases use the same changelog entry.
 
+--preview            Print the generated changelog entry without changing files or Git.
+--highlights <file>  Bundle a translated JSON file in the release commit.
+--no-highlights      Release without desktop highlights for this version.
 --help, -h  Show this help without changing files or publishing a release.`
 
 function fail(path: string, message: string): never {
@@ -117,18 +124,37 @@ function resolveTarget(args: string[], current: Version): Version {
 }
 
 function main(): void {
-  const args = process.argv.slice(2)
-  if (args.length === 1 && (args[0] === '--help' || args[0] === '-h')) {
+  const { values, positionals } = parseArgs({
+    allowPositionals: true,
+    options: {
+      help: { type: 'boolean', short: 'h' },
+      major: { type: 'boolean' },
+      minor: { type: 'boolean' },
+      patch: { type: 'boolean' },
+      alpha: { type: 'boolean' },
+      beta: { type: 'boolean' },
+      preview: { type: 'boolean' },
+      highlights: { type: 'string' },
+      'no-highlights': { type: 'boolean' },
+    },
+  })
+  if (values.help) {
     console.log(help)
     return
   }
+  const { preview, highlights, 'no-highlights': noHighlights } = values
+  if ([preview, highlights !== undefined, noHighlights].filter(Boolean).length !== 1)
+    fail('release', 'choose exactly one of --preview, --highlights <file>, or --no-highlights')
   const location = new URL('../package.json', import.meta.url)
   const raw = readFileSync(location, 'utf8')
   const data = JSON.parse(raw) as { version?: unknown }
   if (typeof data.version !== 'string' || data.version === '')
     fail('package.json', 'missing version')
   const current = parseVersion(data.version)
-  const target = resolveTarget(args, current)
+  const target = resolveTarget(
+    [...positionals, ...bumps.filter((bump) => values[bump]).map((bump) => `--${bump}`)],
+    current,
+  )
   if (compareVersions(target, current) < 0)
     fail(
       'version',
@@ -168,7 +194,33 @@ function main(): void {
   if (changelog.split('\n').some((line) => line.startsWith(`## ${version} — `))) {
     fail('CHANGELOG.md', `entry for ${tag} already exists`)
   }
+  if (preview) {
+    console.log(entry)
+    return
+  }
   const updates = new Map<string, string>()
+  const notesPath = `src/whats-new/notes/${version}.json`
+  const notesLocation = new URL(`../${notesPath}`, import.meta.url)
+  if (highlights !== undefined) {
+    const contents = readFileSync(highlights, 'utf8')
+    const parsed = releaseHighlights.safeParse(JSON.parse(contents))
+    if (!parsed.success)
+      throw new NessoError(
+        parsed.error.issues.map(({ path, message }) => ({
+          path: [highlights, ...path].join(':'),
+          message,
+        })),
+      )
+    if (!existsSync(notesLocation))
+      updates.set(notesPath, `${JSON.stringify(parsed.data, null, 2)}\n`)
+    else if (readFileSync(notesLocation, 'utf8') !== contents)
+      fail(notesPath, 'highlights already exist and differ from the supplied file')
+  } else if (existsSync(notesLocation)) {
+    fail(
+      notesPath,
+      'highlights already exist; pass them with --highlights or remove them before release',
+    )
+  }
   if (version !== data.version) {
     const matches = raw.match(/"version":\s*"[^"]*"/g) ?? []
     if (matches.length !== 1) fail('package.json', 'expected exactly one version field')
@@ -213,6 +265,7 @@ function main(): void {
     'CHANGELOG.md',
     `# Changelog\n\n${entry}\n\n${changelog.replace(/^# Changelog\s*/, '')}`,
   )
+  if (updates.has(notesPath)) mkdirSync(new URL('.', notesLocation), { recursive: true })
   for (const [path, contents] of updates)
     writeFileSync(new URL(`../${path}`, import.meta.url), contents)
   run('git', ['add', ...updates.keys()])

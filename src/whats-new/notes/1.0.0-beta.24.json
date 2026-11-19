@@ -1,0 +1,14 @@
+{
+  "en": [
+    "Drag the handle on a relation to bend its line around other concepts. Each map remembers its own curves.",
+    "When deleting a map and its concepts, Nesso keeps any concepts that still appear in other maps."
+  ],
+  "it": [
+    "Trascina la maniglia di una relazione per curvare la linea attorno agli altri concetti. Ogni mappa conserva le proprie curve.",
+    "Quando elimini una mappa con i suoi concetti, Nesso conserva quelli che compaiono ancora in altre mappe."
+  ],
+  "zh-CN": [
+    "拖动关系线上的手柄，可以让连线绕开其他概念。每张导图会单独保存连线的弯曲形状。",
+    "删除导图及其中的概念时，Nesso 会保留仍出现在其他导图中的概念。"
+  ]
+}

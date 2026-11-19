@@ -1,10 +1,13 @@
-import { app, BrowserWindow, protocol, session } from 'electron'
+import { app, BrowserWindow, ipcMain, protocol, session } from 'electron'
 import { readFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import path from 'node:path'
 import assert from 'node:assert/strict'
 import { serveAppAsset } from '../electron/shell/asset-protocol.ts'
 import { desktopHostCsp } from '../shared/plugin-policy.ts'
+import { createTrustedRequest } from '../electron/ipc.ts'
+import { connectReleaseLaunch } from '../electron/shell/release-launch.ts'
+import appPackage from '../package.json' with { type: 'json' }
 import { scenarios, type Platform } from './scenarios.ts'
 
 const [scenario, name, profile] = process.argv.slice(2) as [string, Platform, string]
@@ -82,6 +85,8 @@ app
       assert.ok(address && typeof address === 'object')
       url = `http://127.0.0.1:${address.port}/`
     }
+    if (name === 'desktop' && !blank)
+      connectReleaseLaunch(ipcMain, createTrustedRequest(url), profile, appPackage.version)
     const window = new BrowserWindow({
       show: false,
       webPreferences: {

@@ -70,6 +70,10 @@ export const scenarios: Record<string, Scenario> = {
     platforms: desktop,
     load: () => import('./app/startup.ts').then(({ verifyStartup }) => verifyStartup),
   },
+  'whats-new': {
+    platforms: desktop,
+    load: () => import('./app/whats-new.ts').then(({ verifyWhatsNew }) => verifyWhatsNew),
+  },
   installation: {
     platforms: desktop,
     load: () =>

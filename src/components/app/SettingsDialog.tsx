@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { defaultLocale, isLocale, localeNames, locales } from '@nesso-how/i18n'
 import { Button, Dialog, DialogPopup, PanelHeader, PreferenceSelect } from '@nesso-how/ui'
 import { Info, Keyboard, MessageCircle, Package, Settings2, X } from 'lucide-react'
@@ -74,10 +74,12 @@ export function SettingsDialog({
   page,
   onPageChange: setPage,
   onDiscover,
+  whatsNew,
 }: {
   page: string
   onPageChange: (page: string) => void
   onDiscover: () => void
+  whatsNew: ReactNode
 }) {
   const preferences = useNessoStore((state) => state.preferences)
   const locale = preferences.locale ?? defaultLocale
@@ -185,7 +187,9 @@ export function SettingsDialog({
         >
           <PluginSettings page={page} onPageChange={setPage} titleRef={pageTitle} />
           {page === 'shortcuts' && <ShortcutSettings titleRef={pageTitle} />}
-          {page === 'about' && <About titleRef={pageTitle} onDiscover={onDiscover} />}
+          {page === 'about' && (
+            <About titleRef={pageTitle} onDiscover={onDiscover} whatsNew={whatsNew} />
+          )}
           {page === 'ai' && window.nessoAi && <AiPage ai={window.nessoAi} mcp={window.nessoMcp} />}
           {page === 'general' && (
             <>

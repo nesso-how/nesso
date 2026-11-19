@@ -21,20 +21,22 @@ function fixture(context: TestContext) {
   context.after(() => rmSync(directory, { recursive: true, force: true }))
   const cwd = join(directory, 'project')
   mkdirSync(join(cwd, 'scripts'), { recursive: true })
-  for (const file of ['scripts/release.ts', 'scripts/release-notes.ts', 'cliff.toml']) {
+  mkdirSync(join(cwd, 'shared'))
+  for (const file of [
+    'scripts/release.ts',
+    'scripts/release-notes.ts',
+    'shared/whats-new.ts',
+    'cliff.toml',
+  ]) {
     copyFileSync(new URL(`../${file}`, import.meta.url), join(cwd, file))
   }
   mkdirSync(join(cwd, 'node_modules', '@nesso-how'), { recursive: true })
-  symlinkSync(
-    fileURLToPath(new URL('../packages/errors', import.meta.url)),
-    join(cwd, 'node_modules', '@nesso-how', 'errors'),
-    'junction',
-  )
-  symlinkSync(
-    realpathSync(fileURLToPath(new URL('../node_modules/git-cliff', import.meta.url))),
-    join(cwd, 'node_modules', 'git-cliff'),
-    'junction',
-  )
+  for (const dependency of ['@nesso-how/errors', '@nesso-how/i18n', 'git-cliff', 'zod'])
+    symlinkSync(
+      realpathSync(fileURLToPath(new URL(`../node_modules/${dependency}`, import.meta.url))),
+      join(cwd, 'node_modules', dependency),
+      'junction',
+    )
   writeFileSync(join(cwd, '.gitignore'), 'node_modules\n')
   writeFileSync(join(cwd, 'package.json'), '{"type":"module","version":"1.0.0-alpha.1"}\n')
   writeFileSync(join(cwd, 'scripts/release-packages.json'), '[]\n')
@@ -52,14 +54,26 @@ function fixture(context: TestContext) {
   git('init', '--bare', join(directory, 'remote.git'))
   git('remote', 'add', 'origin', join(directory, 'remote.git'))
   const commit = (message: string) => git('commit', '--allow-empty', '-m', message)
-  const release = (...args: string[]) =>
-    execFileSync(process.execPath, ['scripts/release.ts', ...args], {
+  const runRelease = (...args: string[]) =>
+    spawnSync(process.execPath, ['scripts/release.ts', ...args], {
       cwd,
       encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'pipe'],
     })
+  const release = (...args: string[]) => {
+    const result = runRelease(...args)
+    assert.equal(result.status, 0, result.stderr)
+    return result.stdout
+  }
   const changelog = () => readFileSync(join(cwd, 'CHANGELOG.md'), 'utf8')
-  return { cwd, git, commit, release, changelog }
+  return {
+    cwd,
+    git,
+    commit,
+    release,
+    runRelease,
+    changelog,
+    highlightsFile: join(directory, 'highlights.json'),
+  }
 }
 
 test('releases commit incremental prerelease notes and roll them up for stable versions', (context) => {
@@ -71,8 +85,26 @@ test('releases commit incremental prerelease notes and roll them up for stable v
   project.commit(
     'refactor(storage)!: replace document format\n\nBREAKING CHANGE: saved documents need reimporting',
   )
-  project.release('--alpha')
+  const before = project.git('rev-parse', 'HEAD')
+  const preview = project.release('--alpha', '--preview').trim()
+  assert.equal(project.runRelease('--alpha').status, 1)
+  writeFileSync(project.highlightsFile, '{"en":["Zoom"]}')
+  const invalid = project.runRelease('--alpha', '--highlights', project.highlightsFile)
+  assert.equal(invalid.status, 1)
+  assert.match(invalid.stderr, /highlights\.json:it/)
+  assert.equal(project.git('rev-parse', 'HEAD'), before)
+  assert.equal(project.git('status', '--porcelain'), '')
+  assert.equal(project.git('tag', '--list', 'v1.0.0-alpha.2'), '')
+
+  const highlights = {
+    en: ['Zoom the canvas'],
+    it: ['Ingrandisci la mappa'],
+    'zh-CN': ['缩放画布'],
+  }
+  writeFileSync(project.highlightsFile, JSON.stringify(highlights))
+  project.release('--alpha', '--highlights', project.highlightsFile)
   const alpha = releaseNotes(project.changelog(), 'v1.0.0-alpha.2')
+  assert.equal(alpha.trim(), preview)
   assert.match(alpha, /### Features/)
   assert.match(alpha, /### Fixes/)
   assert.match(alpha, /### Performance/)
@@ -82,7 +114,11 @@ test('releases commit incremental prerelease notes and roll them up for stable v
   assert.equal(project.git('status', '--porcelain'), '')
   assert.equal(
     project.git('show', '--format=', '--name-only', 'HEAD'),
-    'CHANGELOG.md\npackage.json',
+    'CHANGELOG.md\npackage.json\nsrc/whats-new/notes/1.0.0-alpha.2.json',
+  )
+  assert.deepEqual(
+    JSON.parse(project.git('show', 'v1.0.0-alpha.2:src/whats-new/notes/1.0.0-alpha.2.json')),
+    highlights,
   )
   assert.equal(project.git('rev-parse', 'HEAD'), project.git('rev-parse', 'v1.0.0-alpha.2'))
   assert.match(
@@ -90,18 +126,18 @@ test('releases commit incremental prerelease notes and roll them up for stable v
     /refs\/tags\/v1\.0\.0-alpha\.2/,
   )
   project.commit('fix: restore viewport')
-  project.release('--beta')
+  project.release('--beta', '--no-highlights')
   const beta = releaseNotes(project.changelog(), 'v1.0.0-beta.1')
   assert.match(beta, /Restore viewport/)
   assert.doesNotMatch(beta, /add zoom/i)
-  project.release('1.0.0')
+  project.release('1.0.0', '--no-highlights')
   const stable = releaseNotes(project.changelog(), 'v1.0.0')
   assert.match(stable, /Add zoom/)
   assert.match(stable, /Restore viewport/)
   project.commit('feat: export images')
-  project.release('1.1.0-alpha.1')
+  project.release('1.1.0-alpha.1', '--no-highlights')
   project.commit('fix: preserve image size')
-  project.release('1.1.0')
+  project.release('1.1.0', '--no-highlights')
   const next = releaseNotes(project.changelog(), 'v1.1.0')
   assert.match(next, /Export images/)
   assert.match(next, /Preserve image size/)
@@ -117,11 +153,11 @@ test('releasing the current version still commits its changelog before tagging',
   const project = fixture(context)
   project.git('tag', '-d', 'v1.0.0-alpha.1')
   project.commit('chore: refresh dependencies')
-  project.release()
+  project.release('--no-highlights')
   assert.match(releaseNotes(project.changelog(), 'v1.0.0-alpha.1'), /No user-facing changes/)
   assert.equal(project.git('show', '--format=', '--name-only', 'HEAD'), 'CHANGELOG.md')
   assert.equal(project.git('rev-parse', 'HEAD'), project.git('rev-parse', 'v1.0.0-alpha.1'))
-  project.release('--alpha')
+  project.release('--alpha', '--no-highlights')
   assert.match(releaseNotes(project.changelog(), 'v1.0.0-alpha.2'), /No user-facing changes/)
 })
 
@@ -159,7 +195,7 @@ test('releases sync published packages, built-in plugins and example dependencie
   )
   project.git('add', '.')
   project.commit('feat: add plugins and published packages')
-  project.release('--beta')
+  project.release('--beta', '--no-highlights')
   for (const path of packages) {
     const manifest = JSON.parse(readFileSync(join(project.cwd, path, 'package.json'), 'utf8')) as {
       version?: unknown
@@ -195,10 +231,7 @@ test('invalid release metadata fails before changing versions, history or tags',
     project.git('add', '.')
     project.commit('test: use invalid release metadata')
     const head = project.git('rev-parse', 'HEAD')
-    const result = spawnSync(process.execPath, ['scripts/release.ts', '--alpha'], {
-      cwd: project.cwd,
-      encoding: 'utf8',
-    })
+    const result = project.runRelease('--alpha', '--no-highlights')
     assert.equal(result.status, 1)
     assert.match(result.stderr, /expected exactly one|JSON/)
     assert.equal(project.git('status', '--porcelain'), '')
@@ -211,10 +244,7 @@ test('releases refuse an existing tag without changing files or history', (conte
   const project = fixture(context)
   project.git('tag', 'v1.0.0-alpha.2')
   const head = project.git('rev-parse', 'HEAD')
-  const result = spawnSync(process.execPath, ['scripts/release.ts', '--alpha'], {
-    cwd: project.cwd,
-    encoding: 'utf8',
-  })
+  const result = project.runRelease('--alpha', '--no-highlights')
   assert.equal(result.status, 1)
   assert.match(result.stderr, /tag v1.0.0-alpha.2 already exists/)
   assert.equal(project.git('status', '--porcelain'), '')
@@ -227,10 +257,7 @@ test('changelog generation failures leave the version, history and tags unchange
   project.git('add', 'cliff.toml')
   project.git('commit', '-m', 'chore: configure changelog')
   const head = project.git('rev-parse', 'HEAD')
-  const result = spawnSync(process.execPath, ['scripts/release.ts', '--alpha'], {
-    cwd: project.cwd,
-    encoding: 'utf8',
-  })
+  const result = project.runRelease('--alpha', '--no-highlights')
   assert.equal(result.status, 1)
   assert.match(result.stderr, /TOML parse error/)
   assert.equal(project.git('status', '--porcelain'), '')

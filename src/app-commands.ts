@@ -14,6 +14,7 @@ export function useAppCommands({
   focusRef,
   openSettings,
   openSearch,
+  openWhatsNew,
   openTab,
 }: {
   store: HostStore
@@ -23,6 +24,7 @@ export function useAppCommands({
   focusRef: RefObject<HTMLElement | null>
   openSettings: (page: string) => void
   openSearch: () => void
+  openWhatsNew: () => void
   openTab: (index: number) => void
 }) {
   useEffect(() => {
@@ -94,6 +96,8 @@ export function useAppCommands({
           store.setSelection(graphSelection(store.getState().mapGraph))
           focusRef.current?.focus()
         }
+      } else if (command === 'whatsNew') {
+        if (current.canOpenSettings && !current.dialog) openWhatsNew()
       } else if (current.canOpenSettings) {
         openSettings(command === 'settings' ? 'general' : command)
       }
@@ -117,6 +121,7 @@ export function useAppCommands({
           settings: current.canOpenSettings,
           shortcuts: current.canOpenSettings,
           about: current.canOpenSettings,
+          whatsNew: current.canOpenSettings && !current.dialog,
         },
       }
       const serialized = JSON.stringify(state)
@@ -143,5 +148,15 @@ export function useAppCommands({
       document.removeEventListener('focusin', onFocus)
       document.removeEventListener('focusout', onFocus)
     }
-  }, [store, readonly, introOpen, pluginPanel, focusRef, openSettings, openSearch, openTab])
+  }, [
+    store,
+    readonly,
+    introOpen,
+    pluginPanel,
+    focusRef,
+    openSettings,
+    openSearch,
+    openWhatsNew,
+    openTab,
+  ])
 }
