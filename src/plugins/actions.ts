@@ -13,7 +13,7 @@ import { conceptPlacementOffset } from '../store/operations.ts'
 import { connectActionChannel } from './action-channel.ts'
 import { createPluginFrame } from './frame.ts'
 import { createPluginFiles } from './files.ts'
-import { renderMapImage } from './images.ts'
+import { renderCanvasImage } from './images.ts'
 import type { createPluginEntry } from './entry.ts'
 
 export type ActionPackage = {
@@ -108,7 +108,8 @@ export function loadActions(
           },
           {
             presentation: panel ? presentation : undefined,
-            renderImage: (mapId, options, signal) => renderMapImage(store, mapId, options, signal),
+            renderImage: (mapId, options, signal) =>
+              renderCanvasImage(store, mapId, options, signal),
             files: {
               open: (options) => files.open(options),
               save: (options) => files.save(options),

@@ -44,7 +44,7 @@ export const create = (): readonly ActionContribution[] =>
       const result = await files.save({
         name: `nesso-${filename}.${format}`,
         ...(format === 'png'
-          ? await images.renderMap({ format: 'png', scale: 4 })
+          ? await images.renderCanvas({ format: 'png', scale: 4 })
           : {
               mediaType: 'application/ld+json',
               text: JSON.stringify(serializeMap(state.mapGraph, map?.name), null, 2),

@@ -26,7 +26,7 @@ test('image requests restrict format, scale and target selection', () => {
     type: 'request',
     id: 1,
     contextId: 'context',
-    method: 'images.renderMap',
+    method: 'images.renderCanvas',
     params: { format: 'png', scale: 4 },
   }
   assert.deepEqual(parsePluginMessage(request), request)

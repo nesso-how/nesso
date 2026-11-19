@@ -296,7 +296,7 @@ const request = z.discriminatedUnion('method', [
   z.strictObject({ ...envelope, method: z.literal('files.save'), params: fileSaveOptions }),
   z.strictObject({
     ...envelope,
-    method: z.literal('images.renderMap'),
+    method: z.literal('images.renderCanvas'),
     params: imageRenderOptions,
   }),
 ])
@@ -443,7 +443,7 @@ export type ActionContext = {
   }
   readonly storage: PluginStorage
   readonly images: {
-    readonly renderMap: (options: ImageRenderOptions) => Promise<RenderedImage>
+    readonly renderCanvas: (options: ImageRenderOptions) => Promise<RenderedImage>
   }
   readonly signal: AbortSignal
 }
@@ -507,7 +507,7 @@ const results = {
   'notifications.notify': id,
   'files.open': fileOpenResult,
   'files.save': z.strictObject({ saved: z.boolean() }),
-  'images.renderMap': renderedImage,
+  'images.renderCanvas': renderedImage,
 } satisfies Record<RequestMethod, z.ZodType>
 
 export function parsePluginMessage(value: unknown): z.infer<typeof message> {
@@ -705,7 +705,7 @@ export function createPluginClient(port: MessagePort, initial: unknown) {
       applyOperations,
     },
     notifications: { notify: (value) => call('notifications.notify', value) },
-    images: { renderMap: (options) => call('images.renderMap', options) },
+    images: { renderCanvas: (options) => call('images.renderCanvas', options) },
     files: {
       open: (options) => call('files.open', options),
       save: (options) => call('files.save', options),

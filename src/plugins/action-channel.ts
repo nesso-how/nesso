@@ -282,7 +282,7 @@ export function connectActionChannel(
       notifications.push({ id, tone: message.params.tone })
       return id
     }
-    if (message.method === 'images.renderMap') {
+    if (message.method === 'images.renderCanvas') {
       if (!capabilities.has('images')) fail('denied', 'Capability not declared')
       if (!effects.renderImage) fail('unavailable', 'Image rendering is unavailable')
       if (rendering) fail('unavailable', 'Another image render is pending')

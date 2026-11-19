@@ -8,18 +8,18 @@ import {
   type RenderedImage,
 } from '@nesso-how/plugin/runtime'
 
-class MapImageError extends NessoError {
-  override name = 'MapImageError'
+class CanvasImageError extends NessoError {
+  override name = 'CanvasImageError'
 }
 
-export async function renderMapImage(
+export async function renderCanvasImage(
   store: HostStore,
   mapId: string | null,
   options: ImageRenderOptions,
   signal: AbortSignal,
 ): Promise<RenderedImage> {
-  const canvas = await renderMapCanvas(store, mapId, options, signal)
-  const fail = (message: string) => new MapImageError([{ path: 'image', message }])
+  const canvas = await drawCanvas(store, mapId, options, signal)
+  const fail = (message: string) => new CanvasImageError([{ path: 'image', message }])
   const blob = await new Promise<Blob>((resolve, reject) =>
     canvas.toBlob(
       (value) => (value ? resolve(value) : reject(fail('Could not encode PNG'))),
@@ -35,7 +35,7 @@ export async function renderMapImage(
   return { mediaType: 'image/png', base64: btoa(binary) }
 }
 
-async function renderMapCanvas(
+async function drawCanvas(
   store: HostStore,
   mapId: string | null,
   options: ImageRenderOptions,

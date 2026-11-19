@@ -64,7 +64,7 @@ test('export uses only the supplied target graph and notifies after accepted sav
       applyOperations: async () => assert.fail('Export must not write'),
     },
     files: { open: async () => assert.fail('Export must not open files'), save },
-    images: { renderMap: async () => assert.fail('JSON-LD export must not render images') },
+    images: { renderCanvas: async () => assert.fail('JSON-LD export must not render images') },
     storage: { list: noStorage, set: noStorage, delete: noStorage },
     notifications: { notify },
     signal: new AbortController().signal,

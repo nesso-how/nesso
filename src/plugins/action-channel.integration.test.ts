@@ -144,17 +144,17 @@ test('image rendering requires its own capability, is scoped to the invoked map 
   const denied = fixture(false, undefined, [], ['files'], undefined, undefined, false, render)
   t.after(denied.close)
   await denied.start()
-  await assert.rejects(denied.client.context.images.renderMap({ format: 'png' }), {
+  await assert.rejects(denied.client.context.images.renderCanvas({ format: 'png' }), {
     code: 'denied',
   })
   assert.equal(render.mock.callCount(), 0)
   const allowed = fixture(false, undefined, [], ['images'], undefined, undefined, false, render)
   t.after(allowed.close)
   await allowed.start()
-  const pending = allowed.client.context.images.renderMap({ format: 'png' })
+  const pending = allowed.client.context.images.renderCanvas({ format: 'png' })
   const rejected = assert.rejects(pending, { code: 'closed' })
   const signal = await started.promise
-  await assert.rejects(allowed.client.context.images.renderMap({ format: 'png' }), {
+  await assert.rejects(allowed.client.context.images.renderCanvas({ format: 'png' }), {
     code: 'unavailable',
   })
   assert.deepEqual(render.mock.calls[0].arguments.slice(0, 2), [allowed.target, { format: 'png' }])
