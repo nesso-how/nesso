@@ -21,6 +21,26 @@ const call = {
   params: { name: 'context', arguments: {} },
 }
 const token = '1'.repeat(64)
+const post = (url: string, override: Record<string, string>, body = JSON.stringify(call)) =>
+  new Promise<number>((resolve, reject) => {
+    const req = request(
+      url,
+      { method: 'POST', headers: { ...headers(token), ...override } },
+      (response) => {
+        response.resume()
+        resolve(response.statusCode!)
+      },
+    )
+    req.on('error', reject)
+    req.end(body)
+  })
+const connect = async (url: string) => {
+  const client = new Client({ name: 'test', version: '1' })
+  await client.connect(
+    new StreamableHTTPClientTransport(new URL(url), { requestInit: { headers: headers(token) } }),
+  )
+  return client
+}
 
 test('MCP authenticates local requests and exposes validated tools with host results and errors', async (t) => {
   const calls: unknown[] = []
@@ -42,29 +62,11 @@ test('MCP authenticates local requests and exposes validated tools with host res
     [{ Origin: 'https://evil.example' }, 403],
     [{ Host: 'evil.example' }, 403],
     [{}, 413, 'x'.repeat(1_048_577)],
-  ] as const) {
-    const actual = await new Promise<number>((resolve, reject) => {
-      const req = request(
-        server.state.url,
-        { method: 'POST', headers: { ...headers(token), ...override } },
-        (response) => {
-          response.resume()
-          resolve(response.statusCode!)
-        },
-      )
-      req.on('error', reject)
-      req.end(body)
-    })
-    assert.equal(actual, status)
-  }
+  ] as const)
+    assert.equal(await post(server.state.url, override, body), status)
   assert.equal(calls.length, 0)
-  const client = new Client({ name: 'test', version: '1' })
+  const client = await connect(server.state.url)
   t.after(() => client.close())
-  await client.connect(
-    new StreamableHTTPClientTransport(new URL(server.state.url), {
-      requestInit: { headers: headers(server.token) },
-    }),
-  )
   const { tools } = await client.listTools()
   assert.deepEqual(
     tools.map(({ name }) => name).sort(),
@@ -94,6 +96,18 @@ test('MCP authenticates local requests and exposes validated tools with host res
   })
   assert.equal(invalidDocs.isError, true)
   assert.equal(calls.length, 2)
+})
+
+test('MCP clients keep working across server restarts and stale sessions', async (t) => {
+  const execute = async () => ({ value: { status: 'applied' } })
+  const first = await startMcpServer(execute, 'test', token, 0)
+  const client = await connect(first.state.url)
+  t.after(() => client.close())
+  await first.close()
+  const second = await startMcpServer(execute, 'test', token, Number(new URL(first.state.url).port))
+  t.after(() => second.close())
+  assert.equal((await client.callTool({ name: 'context', arguments: {} })).isError, false)
+  assert.equal(await post(second.state.url, { 'Mcp-Session-Id': 'stale' }), 200)
 })
 
 test('MCP plugin proposals forward only the package entry read from its directory', async (t) => {
@@ -130,13 +144,8 @@ test('MCP plugin proposals forward only the package entry read from its director
     0,
   )
   t.after(() => server.close())
-  const client = new Client({ name: 'test', version: '1' })
+  const client = await connect(server.state.url)
   t.after(() => client.close())
-  await client.connect(
-    new StreamableHTTPClientTransport(new URL(server.state.url), {
-      requestInit: { headers: headers(server.token) },
-    }),
-  )
   const propose = async (target: string) =>
     JSON.parse(
       (
@@ -197,13 +206,8 @@ test(
         0,
       )
       t.after(() => server.close())
-      const client = new Client({ name: 'test', version: '1' })
+      const client = await connect(server.state.url)
       t.after(() => client.close())
-      await client.connect(
-        new StreamableHTTPClientTransport(new URL(server.state.url), {
-          requestInit: { headers: headers(server.token) },
-        }),
-      )
       const controller = new AbortController()
       const response = client
         .callTool({ name: 'context', arguments: {} }, undefined, { signal: controller.signal })
