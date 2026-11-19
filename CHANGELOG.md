@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-beta.26 — 2026-11-19
+
+### Features
+
+- **desktop:** Show what's new after upgrades (#384)
+
 ## 1.0.0-beta.25 — 2026-11-19
 
 ### Breaking Changes
