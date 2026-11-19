@@ -14,12 +14,12 @@
   font-display: swap;
 }
 
-@view-transition {
+@map-transition {
   navigation: auto;
 }
 
-::view-transition-old(root),
-::view-transition-new(root) {
+::map-transition-old(root),
+::map-transition-new(root) {
   animation-duration: 140ms;
 }
 
@@ -682,7 +682,7 @@ pre:focus-visible {
   html {
     scroll-behavior: auto;
   }
-  @view-transition {
+  @map-transition {
     navigation: none;
   }
   *,

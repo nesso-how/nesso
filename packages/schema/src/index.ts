@@ -18,8 +18,8 @@ export {
   presentationSchema,
   relationBendSchema,
   relationTypeSchema,
-  viewGraphSchema,
-  viewMemberSchema,
+  mapGraphSchema,
+  conceptMapMemberSchema,
 } from './types.ts'
 export type {
   Concept,
@@ -29,6 +29,6 @@ export type {
   Relation,
   RelationBend,
   RelationType,
-  View,
-  ViewMember,
+  ConceptMap,
+  ConceptMapMember,
 } from './types.ts'

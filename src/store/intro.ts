@@ -6,8 +6,8 @@ import { createNessoStore } from './create.ts'
 import { sameGraph, sameWorkspace } from './operations.ts'
 import type { HostOperation, HostState, HostStore } from './types.ts'
 
-const conceptViewId = 'intro-concept'
-const connectionViewId = 'intro-connection'
+const conceptMapId = 'intro-concept'
+const connectionMapId = 'intro-connection'
 export const introConnection = {
   source: 'urn:nesso:example:coffee',
   target: 'urn:nesso:example:sleep',
@@ -21,7 +21,7 @@ export function canDiscardIntroExample({ graph, workspace, preferences }: HostSt
   return (
     sameGraph(graph, seed.graph) &&
     sameWorkspace(
-      { ...workspace, activeViewId: seed.workspace.activeViewId, viewports: {} },
+      { ...workspace, activeMapId: seed.workspace.activeMapId, viewports: {} },
       seed.workspace,
     )
   )
@@ -45,13 +45,13 @@ export function setIntroStep(store: NessoStore, step: number) {
     ({ source, target }) => source === introConnection.source && target === introConnection.target,
   )
   const defaultTypeId = vocabs.find(({ id }) => id === preferences.activeVocabId)?.defaultTypeId
-  const temporaryId = step === 0 ? conceptViewId : step === 1 ? connectionViewId : null
+  const temporaryId = step === 0 ? conceptMapId : step === 1 ? connectionMapId : null
   const fallback = step > 1 && (!relation || relation.predicate === defaultTypeId)
   store.applyOperations([
-    ...(temporaryId && !workspace.savedViews.some(({ id }) => id === temporaryId)
+    ...(temporaryId && !workspace.maps.some(({ id }) => id === temporaryId)
       ? [
           {
-            kind: 'view.create' as const,
+            kind: 'map.create' as const,
             id: temporaryId,
             name: graph.concepts[0].label,
             conceptIds:
@@ -61,10 +61,10 @@ export function setIntroStep(store: NessoStore, step: number) {
           },
         ]
       : []),
-    { kind: 'view.activate', id: temporaryId ?? (step === 3 ? 'rest' : 'coffee') },
-    ...workspace.savedViews.flatMap(({ id }) =>
-      (id === conceptViewId || id === connectionViewId) && id !== temporaryId
-        ? [{ kind: 'view.remove' as const, id }]
+    { kind: 'map.activate', id: temporaryId ?? (step === 3 ? 'rest' : 'coffee') },
+    ...workspace.maps.flatMap(({ id }) =>
+      (id === conceptMapId || id === connectionMapId) && id !== temporaryId
+        ? [{ kind: 'map.remove' as const, id }]
         : [],
     ),
     ...(fallback

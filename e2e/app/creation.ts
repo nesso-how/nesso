@@ -158,7 +158,7 @@ export async function verifyCreation(context: CheckContext) {
   }
 
   await click(coffee)
-  await click('[aria-label="New view"]')
+  await click('[aria-label="New map"]')
   await ready(`!!document.querySelector('[role="dialog"] input')`)
   await evaluate(`document.querySelector('[role="dialog"] input').focus()`)
   await context.window.webContents.insertText('Single')
@@ -172,9 +172,9 @@ export async function verifyCreation(context: CheckContext) {
   await ready(`!!document.querySelector('${focus}')`)
   await click(focus)
   await evaluate(
-    `[...document.querySelectorAll('button')].find(button=>button.textContent.trim().startsWith('Other views')).click()`,
+    `[...document.querySelectorAll('button')].find(button=>button.textContent.trim().startsWith('Other maps')).click()`,
   )
-  await ready(`document.activeElement?.matches('[aria-label="Find a view"]')`)
+  await ready(`document.activeElement?.matches('[aria-label="Find a map"]')`)
   await context.window.webContents.insertText('Single')
   await ready(`document.querySelector('[role="option"]')?.textContent==='Single'`)
   await click('[role="option"]')

@@ -17,8 +17,8 @@ function fixture(t: TestContext) {
     relations: [],
     relationTypes: [],
   })
-  const first = host.store.createView('First', ['urn:a'])
-  const second = host.store.createView('Second', ['urn:a', 'urn:b'])
+  const first = host.store.createMap('First', ['urn:a'])
+  const second = host.store.createMap('Second', ['urn:a', 'urn:b'])
   const plugin: PluginEntry = {
     id: 'nesso-plugin-badges',
     version: '1.0.0',
@@ -55,22 +55,22 @@ function fixture(t: TestContext) {
 
 const settle = () => Promise.resolve()
 
-test('consumers share queries; storage changes invalidate overlapping views and discard stale results', async (t) => {
+test('consumers share queries; storage changes invalidate overlapping maps and discard stale results', async (t) => {
   const f = fixture(t)
   f.badges.watch('count', f.first, () => {})
   f.badges.watch('count', f.first, () => {})
   f.badges.watch('count', f.second, () => {})
   t.mock.timers.tick(0)
   assert.equal(f.calls.length, 1)
-  assert.equal(f.calls[0].input.viewGraph.concepts.length, 1)
+  assert.equal(f.calls[0].input.mapGraph.concepts.length, 1)
   f.calls[0].resolve({ value: 1 })
   await settle()
   t.mock.timers.tick(badgeLimits.rate)
   assert.equal(f.calls.length, 2)
   assert.equal(f.badges.getValue('count', f.first), 1)
-  assert.equal(f.calls[1].input.viewGraph.concepts.length, 2)
-  f.host.store.renameView(f.first, 'Renamed')
-  f.host.store.applyOperations([{ kind: 'view.pin', id: f.first, pinned: true }])
+  assert.equal(f.calls[1].input.mapGraph.concepts.length, 2)
+  f.host.store.renameMap(f.first, 'Renamed')
+  f.host.store.applyOperations([{ kind: 'map.pin', id: f.first, pinned: true }])
   assert.equal(f.badges.getValue('count', f.first), 1)
   assert.equal(f.calls[1].signal.aborted, false)
   f.host.store.applyOperations([
@@ -96,11 +96,11 @@ test('consumers share queries; storage changes invalidate overlapping views and 
   await settle()
   assert.equal(f.badges.getValue('count', f.first), 2)
   f.host.store.applyOperations([
-    { kind: 'view.membership', viewId: f.second, conceptId: 'urn:b', included: false },
+    { kind: 'map.membership', mapId: f.second, conceptId: 'urn:b', included: false },
   ])
   assert.equal(f.badges.getValue('count', f.first), 2)
   t.mock.timers.tick(badgeLimits.rate)
-  assert.equal(f.calls[3].input.viewGraph.concepts.length, 1)
+  assert.equal(f.calls[3].input.mapGraph.concepts.length, 1)
 })
 
 test('cached results survive consumers until refresh; foreground and last-consumer cancellation remain enforced', async (t) => {
@@ -167,7 +167,7 @@ test('observed badges retain their count during refresh but clear on failures an
     true,
   )
   f.host.store.applyOperations([
-    { kind: 'view.membership', viewId: f.first, conceptId: 'urn:b', included: true },
+    { kind: 'map.membership', mapId: f.first, conceptId: 'urn:b', included: true },
   ])
   assert.equal(f.badges.getValue('count', f.first), 1)
   t.mock.timers.tick(badgeLimits.rate)
@@ -181,52 +181,52 @@ test('observed badges retain their count during refresh but clear on failures an
   await settle()
   assert.equal(f.badges.getValue('count', f.first), null)
   stop()
-  for (const reason of ['document', 'plugin', 'view', 'execution'] as const) {
+  for (const reason of ['document', 'plugin', 'map', 'execution'] as const) {
     f.registry.replace([f.plugin])
-    const view = f.host.store.createView(
+    const map = f.host.store.createMap(
       'Observed',
       f.host.store.getState().graph.concepts.map(({ id }) => id),
     )
-    const stop = f.badges.watch('count', view, () => {})
+    const stop = f.badges.watch('count', map, () => {})
     t.mock.timers.tick(badgeLimits.rate)
     f.calls.at(-1)!.resolve({ value: 2 })
     await settle()
-    assert.equal(f.badges.getValue('count', view), 2)
+    assert.equal(f.badges.getValue('count', map), 2)
     f.host.store.setConceptLabel(f.host.store.getState().graph.concepts[0].id, `Pending ${reason}`)
     t.mock.timers.tick(badgeLimits.rate)
     const pending = f.calls.at(-1)!
-    assert.equal(f.badges.getValue('count', view), 2)
+    assert.equal(f.badges.getValue('count', map), 2)
     if (reason === 'document')
       f.host.store.applyOperations([
         { kind: 'document.reset', id: f.host.store.getState().documentId },
       ])
     if (reason === 'plugin') f.registry.replace([{ ...f.plugin, disabled: true }])
-    if (reason === 'view') f.host.store.deleteView(view)
+    if (reason === 'map') f.host.store.deleteMap(map)
     if (reason === 'execution') f.badges.invalidatePlugin(f.plugin.id)
-    assert.equal(f.badges.getValue('count', view), null, reason)
+    assert.equal(f.badges.getValue('count', map), null, reason)
     assert.equal(pending.signal.aborted, true, reason)
     pending.resolve({ value: 99 })
     await settle()
-    assert.equal(f.badges.getValue('count', view), null, reason)
+    assert.equal(f.badges.getValue('count', map), null, reason)
     stop()
   }
 })
 
-test('inactive cache is bounded, ignores view metadata and is invalidated by graph or storage changes', async (t) => {
+test('inactive cache is bounded, ignores map metadata and is invalidated by graph or storage changes', async (t) => {
   const f = fixture(t)
-  const views = Array.from({ length: 65 }, (_, index) =>
-    f.host.store.createView(`Cached ${index}`, ['urn:a']),
+  const maps = Array.from({ length: 65 }, (_, index) =>
+    f.host.store.createMap(`Cached ${index}`, ['urn:a']),
   )
-  for (const view of views) {
-    const stop = f.badges.watch('count', view, () => {})
+  for (const map of maps) {
+    const stop = f.badges.watch('count', map, () => {})
     t.mock.timers.tick(badgeLimits.rate)
     f.calls.at(-1)!.resolve({ value: 1 })
     await settle()
     stop()
   }
-  assert.equal(f.badges.getValue('count', views[0]), null)
-  assert.equal(f.badges.getValue('count', views[1]), 1)
-  const stop = f.badges.watch('count', views[1], () => {})
+  assert.equal(f.badges.getValue('count', maps[0]), null)
+  assert.equal(f.badges.getValue('count', maps[1]), 1)
+  const stop = f.badges.watch('count', maps[1], () => {})
   t.mock.timers.tick(badgeLimits.rate)
   assert.equal(f.calls.length, 65)
   stop()
@@ -235,16 +235,16 @@ test('inactive cache is bounded, ignores view metadata and is invalidated by gra
   f.calls.at(-1)!.resolve({ value: 3 })
   await settle()
   stopOverview()
-  f.host.store.renameView(views[1], 'Renamed')
-  f.host.store.applyOperations([{ kind: 'view.pin', id: views[1], pinned: true }])
-  assert.equal(f.badges.getValue('count', views[1]), 1)
+  f.host.store.renameMap(maps[1], 'Renamed')
+  f.host.store.applyOperations([{ kind: 'map.pin', id: maps[1], pinned: true }])
+  assert.equal(f.badges.getValue('count', maps[1]), 1)
   f.host.store.applyOperations([
-    { kind: 'view.membership', viewId: views[1], conceptId: 'urn:b', included: true },
+    { kind: 'map.membership', mapId: maps[1], conceptId: 'urn:b', included: true },
   ])
-  assert.equal(f.badges.getValue('count', views[1]), null)
+  assert.equal(f.badges.getValue('count', maps[1]), null)
   assert.equal(f.badges.getValue('count', null), 3)
   f.host.store.setConceptLabel('urn:a', 'Changed')
-  assert.equal(f.badges.getValue('count', views[2]), null)
+  assert.equal(f.badges.getValue('count', maps[2]), null)
   assert.equal(f.badges.getValue('count', null), null)
   const stopStorage = f.badges.watch('count', null, () => {})
   t.mock.timers.tick(badgeLimits.rate)

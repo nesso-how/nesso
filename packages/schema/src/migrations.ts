@@ -9,6 +9,7 @@ const legacyDocument = z.strictObject({ '@context': jsonObject, '@graph': z.arra
 const legacyPresentation = presentationSchema.partial()
 const versionSchema = z.object({ schemaVersion: z.number().int().positive().optional() })
 const documentV1 = legacyDocument.extend({ schemaVersion: z.literal(1) })
+const documentV3 = legacyDocument.extend({ schemaVersion: z.literal(3) })
 const presetHex = new Map<string, ColorPreset>([
   ['#ffffff', 'neutral'],
   ['#f3ead5', 'sand'],
@@ -45,12 +46,12 @@ function upgradeLegacy(document: z.infer<typeof legacyDocument>) {
     })
     return concept
   })
-  if (legacy && entries.some((entry) => entry['@type'] === 'View'))
-    fail('@graph', 'Concept presentation belongs to views')
+  if (legacy && entries.some((entry) => entry['@type'] === 'View' || entry['@type'] === 'Map'))
+    fail('@graph', 'Concept presentation belongs to maps')
   const newTerms = {
     schemaVersion: schemaContext.schemaVersion,
     ...(legacy
-      ? { View: schemaContext.View, members: schemaContext.members, concept: schemaContext.concept }
+      ? { View: schemaContext.Map, members: schemaContext.members, concept: schemaContext.concept }
       : {}),
   }
   for (const term of Object.keys(newTerms)) {
@@ -91,8 +92,23 @@ export function migrateGraph(value: unknown): unknown {
       })
     }
     case 2:
-      return { ...(value as JsonObject), schemaVersion: 3 }
-    case 3:
+      return migrateGraph({ ...(value as JsonObject), schemaVersion: 3 })
+    case 3: {
+      const document = parseSchema(documentV3, value)
+      const { View: term, ...context } = document['@context']
+      const renamed = term === schemaContext.Map
+      if (renamed && 'Map' in context && context.Map !== term)
+        fail('@context.Map', 'Conflicting context term')
+      return {
+        ...document,
+        schemaVersion: 4,
+        '@context': renamed ? { ...context, Map: term } : document['@context'],
+        '@graph': document['@graph'].map((entry) =>
+          entry['@type'] === 'View' ? { ...entry, '@type': 'Map' } : entry,
+        ),
+      }
+    }
+    case 4:
       return value
     default:
       return fail('schemaVersion', 'Unsupported JSON-LD schema version')

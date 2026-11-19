@@ -690,7 +690,7 @@
 .canvas-tabs-more:disabled {
   opacity: 0.5;
 }
-.compact-view-switcher {
+.compact-map-switcher {
   display: flex;
   min-width: 0;
   max-width: 100%;
@@ -703,17 +703,17 @@
   font-size: 15px;
   font-weight: 500;
 }
-.compact-view-switcher svg {
+.compact-map-switcher svg {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
   color: var(--muted-foreground);
 }
-.compact-view-switcher:active,
-.compact-view-switcher[data-popup-open] {
+.compact-map-switcher:active,
+.compact-map-switcher[data-popup-open] {
   background: var(--hover);
 }
-.compact-view-switcher:focus-visible,
+.compact-map-switcher:focus-visible,
 .compact-tab:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: -2px;

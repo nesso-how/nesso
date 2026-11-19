@@ -1,7 +1,7 @@
 {
   "name": "@nesso-how/notes",
   "version": "1.0.0-beta.24",
-  "description": "Free-form Markdown notes for each view",
+  "description": "Free-form Markdown notes for each map",
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -28,19 +28,19 @@
         "zh-CN": "笔记"
       },
       "description": {
-        "en": "Write ideas, questions and project notes for each view.",
-        "it": "Scrivi idee, domande e appunti di progetto per ogni vista.",
-        "zh-CN": "为每个视图记录想法、问题和项目笔记。"
+        "en": "Write ideas, questions and project notes for each map.",
+        "it": "Scrivi idee, domande e appunti di progetto per ogni mappa.",
+        "zh-CN": "为每个导图记录想法、问题和项目笔记。"
       },
       "documentation": {
-        "en": "Open Notes on a view to write freely with live Markdown preview. Notes save automatically in private plugin storage, separately from concept notes and graph history. Overview uses document-level notes. Deleting a view retains its notes; undoing the deletion reconnects them.",
-        "it": "Apri Note su una vista per scrivere liberamente con anteprima Markdown. Le note si salvano automaticamente nello storage privato del plugin, separate dalle note dei concetti e dalla cronologia del grafo. Panoramica usa note a livello di documento. Eliminare una vista conserva le note; annullare l’eliminazione le ricollega.",
-        "zh-CN": "在视图中打开笔记，自由书写并实时预览 Markdown。笔记自动保存到插件私有存储，与概念笔记和图谱历史记录分开。概览使用文档级笔记。删除视图会保留其笔记；撤销删除会重新关联笔记。"
+        "en": "Open Notes on a map to write freely with live Markdown preview. Notes save automatically in private plugin storage, separately from concept notes and graph history. The graph uses document-level notes. Deleting a map retains its notes; undoing the deletion reconnects them.",
+        "it": "Apri Note su una mappa per scrivere liberamente con anteprima Markdown. Le note si salvano automaticamente nello storage privato del plugin, separate dalle note dei concetti e dalla cronologia del grafo. Il grafo usa note a livello di documento. Eliminare una mappa conserva le note; annullare l’eliminazione le ricollega.",
+        "zh-CN": "在导图中打开笔记，自由书写并实时预览 Markdown。笔记自动保存到插件私有存储，与概念笔记和图谱历史记录分开。图谱使用文档级笔记。删除导图会保留其笔记；撤销删除会重新关联笔记。"
       }
     }
   },
   "nesso": {
-    "apiVersion": 6,
+    "apiVersion": 7,
     "kind": "actions",
     "entry": "dist/index.js",
     "writes": [],

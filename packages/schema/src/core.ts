@@ -7,7 +7,7 @@ export const schemaContext = {
   bold: { '@id': 'urn:uuid:5d843456-1cae-4e78-9121-80dc1eaaec41' },
   italic: { '@id': 'urn:uuid:a532a410-360e-4449-9750-9934b49b2d39' },
   strikethrough: { '@id': 'urn:uuid:f65c7360-213f-4e93-8c93-ff2dbd395463' },
-  View: 'urn:uuid:266b403a-90c8-470f-b9e0-73c712ba2cf8',
+  Map: 'urn:uuid:266b403a-90c8-470f-b9e0-73c712ba2cf8',
   members: { '@id': 'urn:uuid:ea405e81-beae-4cb7-a13c-3b31c1f2c82f' },
   concept: { '@id': 'urn:uuid:011331b1-50a3-4d46-aa1a-9f87193f0844' },
   relationBends: { '@id': 'urn:uuid:dab77135-0c36-448a-8b98-bc04b2cdb3b4', '@type': '@json' },

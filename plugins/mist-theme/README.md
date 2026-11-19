@@ -4,7 +4,7 @@ Mist is a cool light-only theme with misty blue surfaces, slate text, and steel 
 
 ## Usage
 
-Select Mist in Settings → General → Theme, or open Mist under Plugins and choose Use. Kernel remains the default and fallback theme. Changing themes does not modify the graph or views.
+Select Mist in Settings → General → Theme, or open Mist under Plugins and choose Use. Kernel remains the default and fallback theme. Changing themes does not modify the graph or maps.
 
 The package supplies the manifest and `definition.json`. The host validates and applies these data without executing plugin code, and supplies the fonts independently of themes. The trusted renderer inherits the same tokens and host fonts.
 

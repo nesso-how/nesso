@@ -31,13 +31,13 @@ export function useGraphInteractions(
   {
     readOnly,
     preview,
-    onDeleteView,
+    onDeleteMap,
     onConfirmDelete,
     focusRef,
   }: {
     readOnly: boolean
     preview: boolean
-    onDeleteView?: () => void
+    onDeleteMap?: () => void
     onConfirmDelete?: () => void
     focusRef: RefObject<HTMLElement | null>
   },
@@ -72,8 +72,8 @@ export function useGraphInteractions(
     else store.applyOperations(deleteOperations(state))
   }
   const selectAll = useCallback(() => {
-    const { viewGraph } = store.getState()
-    store.setSelection(graphSelection(viewGraph))
+    const { mapGraph } = store.getState()
+    store.setSelection(graphSelection(mapGraph))
   }, [store])
   useEffect(() => {
     if (readOnly) return
@@ -100,8 +100,8 @@ export function useGraphInteractions(
   const commands = {
     deleteSelection: () => {
       if (readOnly) return
-      const { selected, viewGraph } = store.getState()
-      if (selectionCoversGraph(selected, viewGraph)) onDeleteView?.()
+      const { selected, mapGraph } = store.getState()
+      if (selectionCoversGraph(selected, mapGraph)) onDeleteMap?.()
       else if (canCut()) remove()
     },
     copy: async (cut = false, event?: ClipboardEvent<HTMLDivElement>) => {
@@ -116,7 +116,7 @@ export function useGraphInteractions(
       const before = store.getState()
       const element = canvas.current
       const version = clipboardEpoch.current
-      const text = copyGraph(before.viewGraph, before.selected)
+      const text = copyGraph(before.mapGraph, before.selected)
       if (!text) return
       try {
         if (event) {
@@ -170,9 +170,9 @@ export function useGraphInteractions(
           text,
           position,
           count * 40,
-          before.workspace.activeViewId !== null,
+          before.workspace.activeMapId !== null,
           cutText.current.epoch === epoch && cutText.current.text === text
-            ? { graph: before.graph, viewId: before.workspace.activeViewId }
+            ? { graph: before.graph, mapId: before.workspace.activeMapId }
             : undefined,
         )
       } catch {

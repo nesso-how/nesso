@@ -17,8 +17,8 @@ import {
   MarkdownInput,
 } from '@nesso-how/ui'
 import { ArrowUpDown, Trash2 } from 'lucide-react'
-import { ViewDetails } from './ViewDetails'
-import { ConceptViews } from './ConceptViews'
+import { MapDetails } from './MapDetails'
+import { ConceptMaps } from './ConceptMaps'
 import { ConceptConnections } from './ConceptConnections'
 import { ConceptColor } from './ConceptColor'
 import { InspectorSection } from './InspectorSection'
@@ -191,7 +191,7 @@ export function Inspector({
   const [confirming, setConfirming] = useState(false)
   const graph = useNessoStore((state) => state.graph, store)
   const selected = useNessoStore((state) => state.selected, store)
-  const viewGraph = useNessoStore((state) => state.viewGraph, store)
+  const mapGraph = useNessoStore((state) => state.mapGraph, store)
   const vocabs = useNessoStore((state) => state.vocabs, store)
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale, store)
   const activeVocabId = useNessoStore((state) => state.preferences.activeVocabId, store)
@@ -208,11 +208,11 @@ export function Inspector({
   const conceptIds = selected.filter((item) => item.kind === 'concept').map((item) => item.id)
   const relationCount = selected.length - conceptIds.length
   const visibleIds = useMemo(
-    () => new Set(viewGraph.concepts.map((concept) => concept.id)),
-    [viewGraph.concepts],
+    () => new Set(mapGraph.concepts.map((concept) => concept.id)),
+    [mapGraph.concepts],
   )
   const outsideCount = conceptIds.filter((id) => !visibleIds.has(id)).length
-  const styled = viewGraph.concepts.filter(
+  const styled = mapGraph.concepts.filter(
     (concept) => concept.position && conceptIds.includes(concept.id),
   )
   const concept =
@@ -264,7 +264,7 @@ export function Inspector({
         <ContextLabel>{t(selectedEdge ? 'relation' : item ? item.kind : 'selection')}</ContextLabel>
       )}
       {selected.length === 0 ? (
-        <ViewDetails store={store} readonly={readonly} />
+        <MapDetails store={store} readonly={readonly} />
       ) : selected.length > 1 && !selectedEdge ? (
         <div className="flex flex-col gap-1.5">
           <p className="text-xs text-muted-foreground">
@@ -420,7 +420,7 @@ export function Inspector({
         />
       )}
       {conceptIds.length > 0 && (
-        <ConceptViews
+        <ConceptMaps
           key={JSON.stringify(conceptIds)}
           store={store}
           conceptIds={conceptIds}

@@ -91,7 +91,7 @@ export function useAppCommands({
       } else if (command === 'selectAll') {
         if (current.nativeEditing) menu.edit(command)
         else if (!current.blocked) {
-          store.setSelection(graphSelection(store.getState().viewGraph))
+          store.setSelection(graphSelection(store.getState().mapGraph))
           focusRef.current?.focus()
         }
       } else if (current.canOpenSettings) {

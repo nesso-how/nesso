@@ -42,15 +42,15 @@ test('a graph with compact and custom predicates survives a JSON-LD round trip',
   graph.relations.push(...targets.map((target) => ({ source: subject, predicate: custom, target })))
   const original = structuredClone(graph)
   const serialized = serializeGraph(graph)
-  assert.equal(serialized.schemaVersion, 3)
+  assert.equal(serialized.schemaVersion, 4)
   const entry = (serialized['@graph'] as Record<string, unknown>[]).find(
     (entry) => entry['@id'] === subject,
   )!
   assert.equal(entry['rdfs:comment'], graph.concepts[0].notes)
-  const { graph: restored, views } = parseGraph(serialized)
-  assert.deepEqual(views, [])
+  const { graph: restored, maps } = parseGraph(serialized)
+  assert.deepEqual(maps, [])
   const { schemaVersion: _, ...unversioned } = serialized
-  assert.deepEqual(parseGraph(unversioned), { graph, views: [] })
+  assert.deepEqual(parseGraph(unversioned), { graph, maps: [] })
   assert.deepEqual(graph, original)
   assert.deepEqual(restored.concepts, graph.concepts)
   assert.deepEqual(restored.relationTypes, graph.relationTypes)
@@ -167,7 +167,7 @@ test('legacy documents preserve presentation and relation aliases when migrated'
     '@context': {
       ...Object.fromEntries(
         Object.entries(fixture['@context']).filter(
-          ([term]) => !['schemaVersion', 'View', 'members', 'concept'].includes(term),
+          ([term]) => !['schemaVersion', 'Map', 'members', 'concept'].includes(term),
         ),
       ),
       schemaVersion: { '@id': predicate, '@type': '@id' },
@@ -187,7 +187,7 @@ test('legacy documents preserve presentation and relation aliases when migrated'
     ],
   }
   const original = structuredClone(legacy)
-  const { graph, views } = parseGraph(legacy)
+  const { graph, maps } = parseGraph(legacy)
   assert.deepEqual(graph.concepts[0], {
     id: subject,
     label: 'One',
@@ -203,9 +203,9 @@ test('legacy documents preserve presentation and relation aliases when migrated'
       .map(relationKey)
       .sort(),
   )
-  assert.equal(views.length, 1)
-  assert.equal(views[0].name, '')
-  assert.deepEqual(views[0].members, [
+  assert.equal(maps.length, 1)
+  assert.equal(maps[0].name, '')
+  assert.deepEqual(maps[0].members, [
     { id: subject, position: { x: 10, y: 20 }, color: 'sage', bold: false, italic: true },
     { id: targets[0], position: { x: 30, y: 40 } },
     { id: targets[1], position: { x: 0, y: 0 } },
@@ -213,27 +213,60 @@ test('legacy documents preserve presentation and relation aliases when migrated'
   assert.deepEqual(legacy, original)
 })
 
-test('views keep their members presentation across a JSON-LD round trip', () => {
-  const { graph, views } = parseGraph(fixture)
-  const view = {
-    id: 'https://example.org/view/project',
+test('maps keep their members presentation across a JSON-LD round trip', () => {
+  const { graph, maps } = parseGraph(fixture)
+  const map = {
+    id: 'https://example.org/map/project',
     name: 'Project',
     members: [
       { id: targets[1], position: { x: -5, y: 7 }, bold: true, italic: true, strikethrough: true },
-      { ...views[0].members[0], strikethrough: false },
+      { ...maps[0].members[0], strikethrough: false },
     ],
   }
-  const serialized = serializeGraph(graph, [view])
+  const serialized = serializeGraph(graph, [map])
   const entries = serialized['@graph'] as Record<string, unknown>[]
-  assert.ok(entries.every((entry) => entry['@type'] === 'View' || !('position' in entry)))
-  assert.deepEqual(parseGraph(serialized), { graph, views: [view] })
+  assert.ok(entries.every((entry) => entry['@type'] === 'Map' || !('position' in entry)))
+  assert.deepEqual(parseGraph(serialized), { graph, maps: [map] })
   const { schemaVersion: _, ...unversioned } = serialized
-  assert.deepEqual(parseGraph(unversioned), { graph, views: [view] })
+  assert.deepEqual(parseGraph(unversioned), { graph, maps: [map] })
+})
+
+test('version 3 documents rename views to maps', () => {
+  const { graph, maps } = parseGraph(fixture)
+  const serialized = serializeGraph(graph, maps)
+  const { Map: term, ...context } = serialized['@context'] as Record<string, unknown>
+  const v3 = {
+    ...serialized,
+    schemaVersion: 3,
+    '@context': { ...context, View: term },
+    '@graph': (serialized['@graph'] as Record<string, unknown>[]).map((entry) =>
+      entry['@type'] === 'Map' ? { ...entry, '@type': 'View' } : entry,
+    ),
+  }
+  assert.deepEqual(parseGraph(v3), { graph, maps })
+  const aliased = {
+    ...serializeGraph(graph),
+    schemaVersion: 3,
+    '@context': { ...context, View: { '@id': predicate, '@type': '@id' } },
+  }
+  assert.deepEqual(parseGraph(aliased).graph, graph)
+  assert.deepEqual(parseGraph({ ...v3, '@context': { ...v3['@context'], Map: term } }), {
+    graph,
+    maps,
+  })
+  assert.throws(
+    () =>
+      parseGraph({
+        ...v3,
+        '@context': { ...v3['@context'], Map: { '@id': predicate, '@type': '@id' } },
+      }),
+    /Conflicting context term/,
+  )
 })
 
 test('versioned documents reject unknown versions, invalid mappings and legacy presentation', () => {
   const document = serializeGraph(parse(fixture))
-  for (const schemaVersion of [4, '3'])
+  for (const schemaVersion of [5, '4'])
     assert.throws(
       () => parseGraph({ ...document, schemaVersion }),
       (error: unknown) =>
@@ -255,40 +288,40 @@ test('versioned documents reject unknown versions, invalid mappings and legacy p
   )
 })
 
-test('views are validated against the graph', () => {
+test('maps are validated against the graph', () => {
   const graph = parse(fixture)
-  const view = (members: { id: string; position: { x: number; y: number } }[]) => ({
-    id: 'https://example.org/view/project',
+  const map = (members: { id: string; position: { x: number; y: number } }[]) => ({
+    id: 'https://example.org/map/project',
     name: 'Project',
     members,
   })
   const at = { x: 0, y: 0 }
-  for (const [views, message] of [
-    [[view([{ id: 'urn:uuid:missing', position: at }])], /Unknown view member/],
+  for (const [maps, message] of [
+    [[map([{ id: 'urn:uuid:missing', position: at }])], /Unknown map member/],
     [
       [
-        view([
+        map([
           { id: subject, position: at },
           { id: subject, position: at },
         ]),
       ],
-      /Duplicate view member/,
+      /Duplicate map member/,
     ],
-    [[view([]), view([])], /Duplicate view IRI/],
+    [[map([]), map([])], /Duplicate map IRI/],
   ] as const) {
     assert.match(
-      validateGraph(graph, views)
+      validateGraph(graph, maps)
         .map((issue) => issue.message)
         .join('\n'),
       message,
     )
-    assert.throws(() => serializeGraph(graph, views), SchemaError)
+    assert.throws(() => serializeGraph(graph, maps), SchemaError)
   }
 })
 
-test('documents cannot mix inline concept presentation with views', () => {
+test('documents cannot mix inline concept presentation with maps', () => {
   const { schemaVersion: _, ...serialized } = serializeGraph(parse(fixture), [
-    { id: 'https://example.org/view/project', name: 'Project', members: [] },
+    { id: 'https://example.org/map/project', name: 'Project', members: [] },
   ])
   const entries = serialized['@graph'] as Record<string, unknown>[]
   assert.throws(
@@ -299,15 +332,15 @@ test('documents cannot mix inline concept presentation with views', () => {
           entry['@id'] === subject ? { ...entry, position: { x: 0, y: 0 } } : entry,
         ),
       }),
-    /Concept presentation belongs to views/,
+    /Concept presentation belongs to maps/,
   )
 })
 
-test('colors must be six-digit hex strings or preset ids at view and JSON-LD boundaries', () => {
+test('colors must be six-digit hex strings or preset ids at map and JSON-LD boundaries', () => {
   for (const color of ['e1ecde', '#abc', 'Sand', 42]) {
-    const { graph, views } = parseGraph(fixture)
-    views[0].members[0].color = color as never
-    assert.throws(() => serializeGraph(graph, views), SchemaError)
+    const { graph, maps } = parseGraph(fixture)
+    maps[0].members[0].color = color as never
+    assert.throws(() => serializeGraph(graph, maps), SchemaError)
     assert.throws(
       () =>
         parseGraph({

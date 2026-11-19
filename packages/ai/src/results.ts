@@ -6,24 +6,24 @@ type Page<T> = {
   readonly total: number
   readonly nextOffset: number | null
 }
-type View = { readonly id: string | null; readonly name: string }
+type MapSummary = { readonly id: string | null; readonly name: string }
 
 export type AiEffects = {
   readonly concepts: Counts
   readonly relations: Counts
   readonly relationTypes: Counts
-  readonly views: Counts
+  readonly maps: Counts
   readonly memberships: number
 }
 
 export type AiToolResults = {
   readonly read_docs: { readonly topic: keyof AiDocumentation; readonly content: string }
   readonly context: {
-    readonly activeView: View
+    readonly activeMap: MapSummary
     readonly counts: {
       readonly concepts: number
       readonly relations: number
-      readonly views: number
+      readonly maps: number
     }
     readonly visible: { readonly concepts: number; readonly relations: number }
     readonly selection: readonly { readonly kind: 'concept' | 'relation'; readonly id: string }[]
@@ -47,9 +47,9 @@ export type AiToolResults = {
     readonly predicate: string
     readonly target: string
   }>
-  readonly views:
-    | Page<View & { readonly concepts: number; readonly pinned: boolean }>
-    | (View & { readonly members: Page<string> })
+  readonly maps:
+    | Page<MapSummary & { readonly concepts: number; readonly pinned: boolean }>
+    | (MapSummary & { readonly members: Page<string> })
   readonly relation_types: Page<{ readonly id: string; readonly label: string }>
   readonly selection: Page<{ readonly kind: 'concept' | 'relation'; readonly id: string }>
   readonly edit: AiEffects

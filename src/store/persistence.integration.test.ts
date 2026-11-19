@@ -31,11 +31,11 @@ const positions = new Map([
   ['urn:hidden', { x: 50, y: 60 }],
 ])
 const workspace = (): WorkspaceState => ({
-  activeViewId: 'urn:view',
+  activeMapId: 'urn:map',
   viewports: {},
-  savedViews: [
+  maps: [
     {
-      id: 'urn:view',
+      id: 'urn:map',
       name: 'Pair',
       pinned: false,
       members: ['urn:one', 'urn:two'].map((id) => ({ id, position: positions.get(id)! })),
@@ -55,10 +55,10 @@ const legacyDocument = () => {
       ),
     },
     workspace: {
-      activeViewId: 'urn:view',
+      activeViewId: 'urn:map',
       viewports: {},
       savedViews: [
-        { id: 'urn:view', name: 'Pair', pinned: false, conceptIds: ['urn:one', 'urn:two'] },
+        { id: 'urn:map', name: 'Pair', pinned: false, conceptIds: ['urn:one', 'urn:two'] },
       ],
     },
   }
@@ -114,12 +114,12 @@ const savedStorage = () => {
   host.store.setChatMessages([{ id: 'user', role: 'user', content: 'Hello' }])
   const state = host.store.getState()
   storage.records.set('document', {
-    version: 6,
+    version: 7,
     documentId: state.documentId,
     graph: serializeGraph(state.graph as Graph),
     workspace: state.workspace,
   })
-  storage.records.set('preferences', { version: 3, preferences: state.preferences })
+  storage.records.set('preferences', { version: 4, preferences: state.preferences })
   storage.records.set('conversation', { version: 2, messages: state.conversation.messages })
   return storage
 }
@@ -195,7 +195,7 @@ test('plugin data waits for the migrated document identity to be saved without r
   await persistence.dispose()
 })
 
-test('legacy documents migrate view presentation and viewports and collect unsorted concepts', async () => {
+test('legacy documents migrate map presentation and viewports and collect unsorted concepts', async () => {
   const storage = savedStorage()
   const original = { version: 2, documentId: 'urn:document', ...legacyDocument() }
   const viewport = { x: 100, y: -200, zoom: 0.8 }
@@ -204,10 +204,10 @@ test('legacy documents migrate view presentation and viewports and collect unsor
   const loaded = await loadPersistence(storage)
   assert.deepEqual(loaded.graph, fixture())
   assert.equal(loaded.documentId, 'urn:document')
-  assert.deepEqual(loaded.workspace!.viewports, { [viewportKey('graph', 'urn:view')]: viewport })
-  const [pair, unsorted, ...rest] = loaded.workspace!.savedViews
+  assert.deepEqual(loaded.workspace!.viewports, { [viewportKey('graph', 'urn:map')]: viewport })
+  const [pair, unsorted, ...rest] = loaded.workspace!.maps
   assert.deepEqual(rest, [])
-  assert.deepEqual(pair, workspace().savedViews[0])
+  assert.deepEqual(pair, workspace().maps[0])
   assert.deepEqual(
     { ...unsorted, id: undefined },
     {
@@ -225,33 +225,74 @@ test('legacy documents migrate view presentation and viewports and collect unsor
     version: number
     graph: { schemaVersion: number }
   }
-  assert.equal(saved.version, 6)
-  assert.equal(saved.graph.schemaVersion, 3)
-  assert.deepEqual(parseGraph(saved.graph).views, [])
+  assert.equal(saved.version, 7)
+  assert.equal(saved.graph.schemaVersion, 4)
+  assert.deepEqual(parseGraph(saved.graph).maps, [])
   await persistence.dispose()
 })
 
 test('document records replace legacy preset colors with preset ids', async () => {
   const storage = savedStorage()
   const saved = storage.records.get('document') as { workspace: WorkspaceState }
-  const [view] = saved.workspace.savedViews
+  const {
+    activeMapId,
+    viewports,
+    maps: [map],
+  } = saved.workspace
   const members = [
-    { ...view.members[0], color: '#F3EAD5' },
-    { ...view.members[1], color: '#123456' },
+    { ...map.members[0], color: '#F3EAD5' },
+    { ...map.members[1], color: '#123456' },
   ]
   storage.records.set('document', {
     ...saved,
     version: 4,
-    workspace: { ...saved.workspace, savedViews: [{ ...view, members }] },
+    workspace: { activeViewId: activeMapId, viewports, savedViews: [{ ...map, members }] },
   })
   const loaded = await loadPersistence(storage)
   assert.deepEqual(
-    loaded.workspace!.savedViews[0].members.map(({ color }) => color),
+    loaded.workspace!.maps[0].members.map(({ color }) => color),
     ['sand', '#123456'],
   )
 })
 
-test('each view and Overview retain their viewport across navigation and reopening', async () => {
+test('earlier records rename views to maps in documents, sections and plugin scopes', async () => {
+  const storage = savedStorage()
+  const saved = storage.records.get('document') as { documentId: string; workspace: WorkspaceState }
+  const { activeMapId, maps, viewports } = saved.workspace
+  storage.records.set('document', {
+    ...saved,
+    version: 6,
+    workspace: { activeViewId: activeMapId, viewports, savedViews: maps },
+  })
+  const { preferences } = storage.records.get('preferences') as { preferences: Preferences }
+  storage.records.set('preferences', {
+    version: 3,
+    preferences: {
+      ...preferences,
+      collapsedSections: ['sidebar.pinned-views', 'sidebar.views', 'inspector.views'],
+    },
+  })
+  const record = { key: 'notes', scope: { kind: 'view', id: activeMapId }, value: 'Notes' }
+  const plugin = { pluginId: '@nesso-how/notes', local: false, revision: 1 }
+  storage.records.set('plugin-storage', {
+    version: 3,
+    documentId: saved.documentId,
+    plugins: [{ ...plugin, records: [record] }],
+  })
+  const loaded = await loadPersistence(storage)
+  assert.deepEqual(loaded.blocked, [])
+  assert.deepEqual(loaded.workspace, saved.workspace)
+  assert.deepEqual(loaded.preferences?.collapsedSections, [
+    'sidebar.pinned-maps',
+    'sidebar.maps',
+    'inspector.maps',
+  ])
+  assert.deepEqual(loaded.pluginStorage, [
+    { ...plugin, records: [{ ...record, scope: { kind: 'map', id: activeMapId } }] },
+  ])
+})
+
+test('each map and the graph retain their viewport across navigation and reopening', async () => {
   const storage = savedStorage()
   const loaded = await loadPersistence(storage)
   const host = registeredHost(loaded.graph!, loaded)
@@ -260,22 +301,22 @@ test('each view and Overview retain their viewport across navigation and reopeni
   const persistence = connectPersistence(host, storage, loaded)
   const first = { x: 100, y: 200, zoom: 0.8 }
   const second = { x: -50, y: 30, zoom: 1.2 }
-  const overview = { x: 20, y: -70, zoom: 0.5 }
+  const graphViewport = { x: 20, y: -70, zoom: 0.5 }
   store.setViewport('graph', first)
-  const other = store.createView('Other', ['urn:two'])
+  const other = store.createMap('Other', ['urn:two'])
   store.setViewport('graph', second)
-  store.setView(null)
-  store.setViewport('knowledge-graph', overview, null)
-  store.setView('urn:view')
+  store.setMap(null)
+  store.setViewport('knowledge-graph', graphViewport, null)
+  store.setMap('urn:map')
   const expected = {
-    [viewportKey('graph', 'urn:view')]: first,
+    [viewportKey('graph', 'urn:map')]: first,
     [viewportKey('graph', other)]: second,
-    [viewportKey('knowledge-graph', null)]: overview,
+    [viewportKey('knowledge-graph', null)]: graphViewport,
   }
   assert.equal(await persistence.flush(), true)
   const reopened = await loadPersistence(storage)
   assert.deepEqual(reopened.workspace?.viewports, expected)
-  assert.equal(reopened.workspace?.activeViewId, 'urn:view')
+  assert.equal(reopened.workspace?.activeMapId, 'urn:map')
   await persistence.dispose()
 })
 
@@ -316,7 +357,7 @@ test('earlier preferences migrate losslessly and seed the tab order after preser
     assert.deepEqual(storage.writes, ['preferences'])
     assert.equal(storage.backups.length, 1)
     assert.deepEqual(storage.backups[0].get('preferences'), original)
-    assert.deepEqual(storage.records.get('preferences'), { version: 3, preferences: expected })
+    assert.deepEqual(storage.records.get('preferences'), { version: 4, preferences: expected })
     await persistence.dispose()
   }
 })
@@ -357,7 +398,7 @@ test('plugin resolution saves corrected preferences without rewriting other reco
   const storage = savedStorage()
   const original = await loadPersistence(storage)
   storage.records.set('preferences', {
-    version: 3,
+    version: 4,
     preferences: {
       ...original.preferences,
       activeVocabId: 'unavailable-vocab',
@@ -466,8 +507,8 @@ test('record reads start in parallel and isolate failures in section order', asy
 test('durable state round-trips without rewriting restored records or persisting runtime state', async () => {
   const storage = memoryStorage()
   const host = registeredHost(fixture())
-  const viewId = host.store.createView('Pair', ['urn:one', 'urn:two'])
-  host.store.setViewPinned(viewId, true)
+  const mapId = host.store.createMap('Pair', ['urn:one', 'urn:two'])
+  host.store.setMapPinned(mapId, true)
   host.store.setPanelSizes({ explorerWidth: 310, inspectorWidth: 330 })
   host.store.setLocale('zh-CN')
   host.store.applyOperations([{ kind: 'preferences.relationGroups', value: false }])
@@ -490,11 +531,11 @@ test('durable state round-trips without rewriting restored records or persisting
   ])
   host.store.setSelection([{ kind: 'concept', id: 'urn:one' }])
   const persistence = connectPersistence(host, storage, await loadPersistence(storage))
-  host.store.renameView(viewId, 'Renamed pair')
+  host.store.renameMap(mapId, 'Renamed pair')
   await persistence.flush()
   const saved = storage.records.get('document') as { graph: unknown }
   assert.deepEqual(Object.keys(saved), ['version', 'documentId', 'graph', 'workspace'])
-  assert.deepEqual(parseGraph(saved.graph), { graph: host.store.getState().graph, views: [] })
+  assert.deepEqual(parseGraph(saved.graph), { graph: host.store.getState().graph, maps: [] })
   const restored = await loadPersistence(storage)
   const reopenedHost = registeredHost(restored.graph!, restored)
   const reopened = reopenedHost.store.getState()
@@ -507,7 +548,7 @@ test('durable state round-trips without rewriting restored records or persisting
   assert.deepEqual(reopened.history, { canUndo: false, canRedo: false })
   assert.deepEqual(reopened.persistenceIssues, [])
   assert.deepEqual(
-    reopened.viewGraph.concepts.map(({ id }) => id),
+    reopened.mapGraph.concepts.map(({ id }) => id),
     ['urn:one', 'urn:two'],
   )
   assert.deepEqual(Object.keys(storage.records.get('conversation') as object), [
@@ -526,11 +567,11 @@ test('durable state round-trips without rewriting restored records or persisting
   const reset = await loadPersistence(storage)
   assert.equal(reset.graph?.concepts.length, 1)
   assert.deepEqual(reset.workspace, {
-    activeViewId: reset.workspace?.savedViews[0].id,
-    savedViews: [
+    activeMapId: reset.workspace?.maps[0].id,
+    maps: [
       {
-        id: reset.workspace?.savedViews[0].id,
-        name: 'View 1',
+        id: reset.workspace?.maps[0].id,
+        name: 'Map 1',
         pinned: false,
         members: [{ id: reset.graph?.concepts[0].id, position: { x: 0, y: 0 } }],
       },
@@ -660,9 +701,9 @@ test('malformed records stay protected while the other sections save', async () 
     [
       'document',
       {
-        version: 3,
+        version: 7,
         documentId: state.documentId,
-        graph: { ...serializeGraph(fixture()), schemaVersion: 4 },
+        graph: { ...serializeGraph(fixture()), schemaVersion: 5 },
         workspace: state.workspace,
       },
       'document.schemaVersion',
@@ -670,7 +711,7 @@ test('malformed records stay protected while the other sections save', async () 
     [
       'document',
       {
-        version: 3,
+        version: 7,
         documentId: state.documentId,
         graph: serializeGraph(longConcept),
         workspace: state.workspace,
@@ -679,7 +720,7 @@ test('malformed records stay protected while the other sections save', async () 
     [
       'document',
       {
-        version: 3,
+        version: 7,
         documentId: state.documentId,
         graph: serializeGraph(longType),
         workspace: state.workspace,
@@ -688,7 +729,7 @@ test('malformed records stay protected while the other sections save', async () 
     [
       'document',
       {
-        version: 3,
+        version: 7,
         documentId: state.documentId,
         graph: serializeGraph({ concepts: [], relations: [], relationTypes: [] }),
         workspace: state.workspace,
@@ -697,21 +738,21 @@ test('malformed records stay protected while the other sections save', async () 
     [
       'document',
       {
-        version: 3,
+        version: 7,
         documentId: state.documentId,
         graph: serializeGraph(fixture()),
-        workspace: { ...state.workspace, activeViewId: 'unknown' },
+        workspace: { ...state.workspace, activeMapId: 'unknown' },
       },
     ],
     [
       'document',
       {
-        version: 3,
+        version: 7,
         documentId: state.documentId,
         graph: serializeGraph(fixture()),
         workspace: {
           ...state.workspace,
-          savedViews: [
+          maps: [
             {
               id: 'bad',
               name: 'Bad',
@@ -725,35 +766,35 @@ test('malformed records stay protected while the other sections save', async () 
     [
       'document',
       {
-        version: 3,
+        version: 7,
         documentId: state.documentId,
         graph: legacyDocument().graph,
         workspace: state.workspace,
       },
     ],
-    ['preferences', { version: 3, preferences: { ...state.preferences, activeThemeId: null } }],
+    ['preferences', { version: 4, preferences: { ...state.preferences, activeThemeId: null } }],
     ...[null, 'invalid', 1].map((inspectorTab): [PersistenceSection, unknown] => [
       'preferences',
-      { version: 3, preferences: { ...state.preferences, inspectorTab } },
+      { version: 4, preferences: { ...state.preferences, inspectorTab } },
     ]),
     [
       'preferences',
       {
-        version: 3,
+        version: 4,
         preferences: { ...state.preferences, panels: { explorerWidth: 0, inspectorWidth: 280 } },
       },
     ],
     ...[null, ['missing'], ['sidebar', 'sidebar']].map(
       (collapsedSections): [PersistenceSection, unknown] => [
         'preferences',
-        { version: 3, preferences: { ...state.preferences, collapsedSections } },
+        { version: 4, preferences: { ...state.preferences, collapsedSections } },
       ],
     ),
-    ['preferences', { version: 3, preferences: { ...state.preferences, locale: 'fr' } }],
-    ['preferences', { version: 3, preferences: { ...state.preferences, introSeen: 'true' } }],
+    ['preferences', { version: 4, preferences: { ...state.preferences, locale: 'fr' } }],
+    ['preferences', { version: 4, preferences: { ...state.preferences, introSeen: 'true' } }],
     [
       'preferences',
-      { version: 3, preferences: { ...state.preferences, inspectorTab: 'content' } },
+      { version: 4, preferences: { ...state.preferences, inspectorTab: 'content' } },
       'preferences.inspectorTab',
     ],
   ]

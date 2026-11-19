@@ -5,7 +5,7 @@ type WriteMethods = Omit<
   NessoStore,
   | 'getState'
   | 'subscribe'
-  | 'getViewGraph'
+  | 'getMapGraph'
   | 'conceptPlacementOffset'
   | 'applyOperations'
   | 'setViewport'
@@ -19,13 +19,13 @@ export function createWriteCommands<Commit, Created>(
 ): {
   readonly [K in keyof WriteMethods]: (
     ...args: Parameters<WriteMethods[K]>
-  ) => K extends 'addConcept' | 'createView' ? Created : Commit
+  ) => K extends 'addConcept' | 'createMap' ? Created : Commit
 } {
   return {
     undo: () => applyOperations([{ kind: 'history.undo' }]),
     redo: () => applyOperations([{ kind: 'history.redo' }]),
     setSelection: (value) => applyOperations([{ kind: 'selection.set', value }]),
-    setView: (id) => applyOperations([{ kind: 'view.activate', id }]),
+    setMap: (id) => applyOperations([{ kind: 'map.activate', id }]),
     setConceptPosition: (id, value, historyGroup) =>
       applyOperations(
         [{ kind: 'concept.position', id, value }],
@@ -94,14 +94,14 @@ export function createWriteCommands<Commit, Created>(
     setLocale: (value) => applyOperations([{ kind: 'preferences.locale', value }]),
     setPanelSizes: (value) => applyOperations([{ kind: 'preferences.panels', value }]),
     setSectionOpen: (id, open) => applyOperations([{ kind: 'preferences.section', id, open }]),
-    createView: (name, conceptIds) => {
+    createMap: (name, conceptIds) => {
       const id = newIri()
-      return created(id, applyOperations([{ kind: 'view.create', id, name, conceptIds }]))
+      return created(id, applyOperations([{ kind: 'map.create', id, name, conceptIds }]))
     },
-    renameView: (id, name) => applyOperations([{ kind: 'view.rename', id, name }]),
-    setViewPinned: (id, pinned) => applyOperations([{ kind: 'view.pin', id, pinned }]),
-    setViewMembership: (viewId, conceptId, included) =>
-      applyOperations([{ kind: 'view.membership', viewId, conceptId, included }]),
-    deleteView: (id) => applyOperations([{ kind: 'view.remove', id }]),
+    renameMap: (id, name) => applyOperations([{ kind: 'map.rename', id, name }]),
+    setMapPinned: (id, pinned) => applyOperations([{ kind: 'map.pin', id, pinned }]),
+    setMapMembership: (mapId, conceptId, included) =>
+      applyOperations([{ kind: 'map.membership', mapId, conceptId, included }]),
+    deleteMap: (id) => applyOperations([{ kind: 'map.remove', id }]),
   }
 }

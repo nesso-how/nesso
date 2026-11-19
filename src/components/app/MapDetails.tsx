@@ -1,40 +1,40 @@
-import type { SavedView } from '@nesso-how/core'
+import type { WorkspaceMap } from '@nesso-how/core'
 import { Button, ContextLabel, Input, Label } from '@nesso-how/ui'
 import { Trash2 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { nessoStore, useNessoStore } from '@/store'
 import type { HostStore } from '@/store/types'
 import { ConceptColor } from './ConceptColor'
-import { DeleteViewDialog } from './DeleteViewDialog'
-import { maxViewNameLength } from '@/store/settings'
+import { DeleteMapDialog } from './DeleteMapDialog'
+import { maxMapNameLength } from '@/store/settings'
 import { useTranslation } from '@/i18n'
 
-function ViewName({
+function MapName({
   store,
-  view,
+  map,
   readonly,
 }: {
   store: HostStore
-  view: SavedView
+  map: WorkspaceMap
   readonly: boolean
 }) {
   const t = useTranslation(store)
-  const [name, setName] = useState(view.name)
+  const [name, setName] = useState(map.name)
 
   return (
     <div className="flex flex-col gap-1.5">
-      <Label htmlFor="view-name">{t('name')}</Label>
+      <Label htmlFor="map-name">{t('name')}</Label>
       <Input
-        id="view-name"
+        id="map-name"
         readOnly={readonly}
         value={name}
-        maxLength={maxViewNameLength}
+        maxLength={maxMapNameLength}
         onChange={(event) => setName(event.target.value)}
         onBlur={() => {
           if (readonly) return
           const value = name.trim()
-          if (value && value !== view.name) store.renameView(view.id, value)
-          setName(value || view.name)
+          if (value && value !== map.name) store.renameMap(map.id, value)
+          setName(value || map.name)
         }}
         onKeyDown={(event) => {
           if (event.key === 'Enter' && !event.nativeEvent.isComposing) event.currentTarget.blur()
@@ -44,7 +44,7 @@ function ViewName({
   )
 }
 
-export function ViewDetails({
+export function MapDetails({
   store = nessoStore,
   readonly = false,
 }: {
@@ -55,30 +55,28 @@ export function ViewDetails({
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const deleteTrigger = useRef<HTMLButtonElement>(null)
   const workspace = useNessoStore((state) => state.workspace, store)
-  const viewGraph = useNessoStore((state) => state.viewGraph, store)
-  const view = workspace.savedViews.find((view) => view.id === workspace.activeViewId)
+  const mapGraph = useNessoStore((state) => state.mapGraph, store)
+  const map = workspace.maps.find((map) => map.id === workspace.activeMapId)
   const stats = [
-    { label: t('concepts'), count: viewGraph.concepts.length },
-    { label: t('relations'), count: viewGraph.relations.length },
-    ...(!view ? [{ label: t('views'), count: workspace.savedViews.length }] : []),
+    { label: t('concepts'), count: mapGraph.concepts.length },
+    { label: t('relations'), count: mapGraph.relations.length },
+    ...(!map ? [{ label: t('maps'), count: workspace.maps.length }] : []),
   ]
 
   return (
     <>
-      <ContextLabel>{t(view ? 'activeView' : 'graphOverview')}</ContextLabel>
-      {view && (
-        <ViewName key={`${view.id}:${view.name}`} store={store} view={view} readonly={readonly} />
-      )}
-      {view && (
+      <ContextLabel>{t(map ? 'activeMap' : 'completeGraph')}</ContextLabel>
+      {map && <MapName key={`${map.id}:${map.name}`} store={store} map={map} readonly={readonly} />}
+      {map && (
         <ConceptColor
-          key={view.id}
+          key={map.id}
           store={store}
-          concepts={viewGraph.concepts}
-          readonly={readonly || viewGraph.concepts.length === 0}
+          concepts={mapGraph.concepts}
+          readonly={readonly || mapGraph.concepts.length === 0}
         />
       )}
-      <section aria-labelledby="view-content-heading">
-        <h3 id="view-content-heading" className="text-xs font-medium">
+      <section aria-labelledby="map-content-heading">
+        <h3 id="map-content-heading" className="text-xs font-medium">
           {t('content')}
         </h3>
         <dl className="mt-3 space-y-2">
@@ -90,17 +88,17 @@ export function ViewDetails({
           ))}
         </dl>
       </section>
-      {view && (
+      {map && (
         <div className="flex items-center justify-between gap-3">
-          <Label id="view-pin-label">{t('pinned')}</Label>
+          <Label id="map-pin-label">{t('pinned')}</Label>
           <Button
             role="switch"
-            aria-checked={view.pinned}
-            aria-labelledby="view-pin-label"
+            aria-checked={map.pinned}
+            aria-labelledby="map-pin-label"
             disabled={readonly}
             variant="ghost"
             className="h-5 min-h-0 w-8 rounded-sm border-border bg-background p-0.5 aria-checked:border-muted-foreground/60"
-            onClick={() => store.setViewPinned(view.id, !view.pinned)}
+            onClick={() => store.setMapPinned(map.id, !map.pinned)}
           >
             <span className="size-3 rounded-[2px] bg-muted-foreground transition-transform [[aria-checked=true]_&]:translate-x-1.5 [[aria-checked=true]_&]:bg-foreground [[aria-checked=false]_&]:-translate-x-1.5" />
           </Button>
@@ -114,10 +112,10 @@ export function ViewDetails({
         onClick={() => setConfirmingDelete(true)}
       >
         <Trash2 />
-        {t('deleteView')}
+        {t('deleteMap')}
       </Button>
-      <DeleteViewDialog
-        target={confirmingDelete ? (view ?? 'complete-graph') : null}
+      <DeleteMapDialog
+        target={confirmingDelete ? (map ?? 'complete-graph') : null}
         onClose={() => setConfirmingDelete(false)}
         finalFocus={() => deleteTrigger.current}
       />

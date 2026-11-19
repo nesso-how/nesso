@@ -33,7 +33,7 @@ test('a saved language choice takes precedence over browser preferences when see
 test('restored documents retain their content and edits even when detecting a different interface language', () => {
   const host = initializeNessoStore(empty, ['zh-CN'])
   host.store.setConceptLabel(host.store.getState().graph.concepts[0].id, 'My edited concept')
-  host.store.renameView('energy', 'My edited view')
+  host.store.renameMap('energy', 'My edited map')
   const before = host.store.getState()
   const restored = initializeNessoStore(
     { ...empty, graph: structuredClone(before.graph) as Graph, workspace: before.workspace },
@@ -66,11 +66,11 @@ test('deleted and unreadable documents start with one fresh concept rather than 
     assert.equal(state.graph.concepts[0].label, 'Concept 1')
     assert.deepEqual(state.graph.relations, [])
     assert.deepEqual(
-      state.workspace.savedViews.map(({ id, name, members }) => [id, name, members]),
+      state.workspace.maps.map(({ id, name, members }) => [id, name, members]),
       [
         [
-          state.workspace.activeViewId,
-          'View 1',
+          state.workspace.activeMapId,
+          'Map 1',
           [{ id: state.graph.concepts[0].id, position: { x: 0, y: 0 } }],
         ],
       ],

@@ -44,7 +44,7 @@ test('storage contracts accept scoped JSON records and single writes without nam
   const set = {
     ...list,
     method: 'storage.set',
-    params: { revision: 0, key: 'notes', scope: { kind: 'view', id: 'urn:view' }, value: null },
+    params: { revision: 0, key: 'notes', scope: { kind: 'map', id: 'urn:map' }, value: null },
   }
   assert.deepEqual(parsePluginMessage(set), set)
   const remove = {
@@ -62,7 +62,7 @@ test('storage contracts accept scoped JSON records and single writes without nam
     assert.throws(() => parsePluginMessage({ ...list, method: 'storage.set', params }), PluginError)
   }
   const manifest = {
-    apiVersion: 6,
+    apiVersion: 7,
     kind: 'actions',
     entry: 'index.js',
     writes: [],
@@ -107,9 +107,9 @@ test('storage payloads reject non-JSON values, unsupported fields, excessive nes
     { conceptId: 'urn:legacy' },
     { scope: null },
     { scope: { kind: 'document' } },
-    { scope: { kind: 'view', id: null } },
-    { scope: { kind: 'view', id: 'x'.repeat(2049) } },
-    { scope: { kind: 'view', id: 'urn:view', extra: true } },
+    { scope: { kind: 'map', id: null } },
+    { scope: { kind: 'map', id: 'x'.repeat(2049) } },
+    { scope: { kind: 'map', id: 'urn:map', extra: true } },
   ]) {
     assert.throws(() => parsePluginStorageRecord({ ...key, value: null, ...change }), PluginError)
   }

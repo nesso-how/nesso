@@ -1,6 +1,6 @@
 export const messages = {
   en: {
-    all: 'Overview',
+    graph: 'Graph',
     placeholder: 'Add project notes, ideas, questions…',
     loading: 'Loading notes…',
     restoreError: 'Saved notes could not be restored. Nothing has been overwritten.',
@@ -9,7 +9,7 @@ export const messages = {
     reload: 'Reload notes',
   },
   it: {
-    all: 'Panoramica',
+    graph: 'Grafo',
     placeholder: 'Aggiungi note di progetto, idee, domande…',
     loading: 'Caricamento delle note…',
     restoreError: 'Impossibile recuperare le note salvate. Nessun dato è stato sovrascritto.',
@@ -18,7 +18,7 @@ export const messages = {
     reload: 'Ricarica note',
   },
   'zh-CN': {
-    all: '概览',
+    graph: '图谱',
     placeholder: '添加项目笔记、想法、问题…',
     loading: '正在加载笔记…',
     restoreError: '无法恢复已保存的笔记。未覆盖任何数据。',

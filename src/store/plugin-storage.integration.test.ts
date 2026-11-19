@@ -85,13 +85,13 @@ test('plugin progress round-trips independently of graph JSON-LD without rewriti
   await persistence.dispose()
 })
 
-test('startup and backups retain concept and view orphans without executing plugins or rewriting storage', async () => {
+test('startup and backups retain concept and map orphans without executing plugins or rewriting storage', async () => {
   const { storage, host, persistence } = await fixture()
   put(host, 'settings', { enabled: true })
   put(host, 'progress', 'live', 'urn:a')
   put(host, 'progress', 'deleted', 'urn:b')
-  const viewId = host.store.createView('Project', ['urn:a'])
-  const record = { key: 'notes', scope: { kind: 'view', id: viewId }, value: 'Keep me' } as const
+  const mapId = host.store.createMap('Project', ['urn:a'])
+  const record = { key: 'notes', scope: { kind: 'map', id: mapId }, value: 'Keep me' } as const
   host.store.applyOperations([
     {
       kind: 'plugin-storage.set',
@@ -102,7 +102,7 @@ test('startup and backups retain concept and view orphans without executing plug
       record,
     },
   ])
-  host.store.deleteView(viewId)
+  host.store.deleteMap(mapId)
   host.store.removeConcept('urn:b')
   await persistence.dispose()
   const original = structuredClone(storage.records.get('plugin-storage'))
@@ -118,7 +118,7 @@ test('startup and backups retain concept and view orphans without executing plug
   const restored = await loadPersistence(storage)
   assert.deepEqual(
     restored.pluginStorage?.[0].records.map(({ scope }) => scope?.id),
-    [undefined, 'urn:a', 'urn:b', viewId],
+    [undefined, 'urn:a', 'urn:b', mapId],
   )
   assert.deepEqual(restored.pluginStorage?.[0].records[3], record)
   const backup = await parseBackup({
@@ -155,7 +155,7 @@ test('failed, missing or mismatched document/storage restoration never overwrite
     if (failure === 'future-version')
       storage.records.set('plugin-storage', {
         ...(storage.records.get('plugin-storage') as object),
-        version: 4,
+        version: 5,
       })
     const original = structuredClone(storage.records.get('plugin-storage'))
     const loaded = await loadPersistence(storage)
@@ -269,7 +269,7 @@ test('legacy storage migrates losslessly to published namespaces through startup
     backupFails = false
     assert.equal(await upgraded.flush(), true)
     assert.equal(backedUp, true)
-    assert.equal((storage.records.get('plugin-storage') as { version: number }).version, 3)
+    assert.equal((storage.records.get('plugin-storage') as { version: number }).version, 4)
     assert.equal((await loadPersistence(storage)).upgrades, undefined)
     await upgraded.dispose()
     const restored = await parseBackup(backup)

@@ -3,7 +3,7 @@ import type {
   NessoOperation,
   NessoState,
   Selection,
-  ViewGraphSnapshot,
+  MapGraphSnapshot,
 } from '@nesso-how/core'
 import {
   newIri,
@@ -29,26 +29,26 @@ export const selectionCoversGraph = (selected: Selection, graph: GraphSnapshot):
 
 type DeletionState = Pick<NessoState, 'selected' | 'workspace'>
 
-const inOtherView = ({ workspace }: DeletionState, id: string) =>
-  workspace.savedViews.some(
-    (view) => view.id !== workspace.activeViewId && view.members.some((member) => member.id === id),
+const inOtherMap = ({ workspace }: DeletionState, id: string) =>
+  workspace.maps.some(
+    (map) => map.id !== workspace.activeMapId && map.members.some((member) => member.id === id),
   )
 
 export const deleteOperations = (state: DeletionState): NessoOperation[] => {
-  const viewId = state.workspace.activeViewId
+  const mapId = state.workspace.activeMapId
   return state.selected.map(({ kind, id }): NessoOperation => {
     if (kind === 'relation') return { kind: 'relation.remove', id }
-    return viewId && inOtherView(state, id)
-      ? { kind: 'view.membership', viewId, conceptId: id, included: false }
+    return mapId && inOtherMap(state, id)
+      ? { kind: 'map.membership', mapId, conceptId: id, included: false }
       : { kind: 'concept.remove', id }
   })
 }
 
 export const deletionNeedsConfirmation = (state: DeletionState): boolean =>
-  state.workspace.activeViewId === null &&
-  state.selected.some(({ kind, id }) => kind === 'concept' && inOtherView(state, id))
+  state.workspace.activeMapId === null &&
+  state.selected.some(({ kind, id }) => kind === 'concept' && inOtherMap(state, id))
 
-export function copyGraph(graph: ViewGraphSnapshot, selected: Selection): string | null {
+export function copyGraph(graph: MapGraphSnapshot, selected: Selection): string | null {
   const concepts = new Set(
     selected.filter((item) => item.kind === 'concept').map((item) => item.id),
   )
@@ -93,8 +93,8 @@ export function pasteOperations(
   text: string,
   position?: Readonly<Position>,
   offset = 40,
-  inView = true,
-  reuse?: { readonly graph: GraphSnapshot; readonly viewId: string | null },
+  inMap = true,
+  reuse?: { readonly graph: GraphSnapshot; readonly mapId: string | null },
 ): NessoOperation[] {
   let document: unknown
   try {
@@ -102,7 +102,7 @@ export function pasteOperations(
   } catch {
     throw new SchemaError([{ path: 'clipboard', message: 'Expected a JSON-LD graph' }])
   }
-  const { graph, views } = parseGraph(document)
+  const { graph, maps } = parseGraph(document)
   if (!graph.concepts.length)
     throw new SchemaError([{ path: 'clipboard', message: 'Expected at least one concept' }])
   const kept = new Set(reuse?.graph.concepts.map(({ id }) => id))
@@ -110,7 +110,7 @@ export function pasteOperations(
   const ids = new Map(
     graph.concepts.map((concept) => [concept.id, kept.has(concept.id) ? concept.id : newIri()]),
   )
-  const members = inView ? (views[0]?.members ?? []) : []
+  const members = inMap ? (maps[0]?.members ?? []) : []
   const origin = members.reduce(
     (point, { position }) => ({
       x: Math.min(point.x, position.x),
@@ -172,9 +172,9 @@ export function pasteOperations(
             : [{ kind: 'concept.notes' as const, id: concept.id, value: concept.notes }]),
           ...style,
         ]
-      if (!reuse?.viewId) return []
+      if (!reuse?.mapId) return []
       return [
-        { kind: 'view.membership', viewId: reuse.viewId, conceptId: concept.id, included: true },
+        { kind: 'map.membership', mapId: reuse.mapId, conceptId: concept.id, included: true },
         ...(concept.position
           ? [{ kind: 'concept.position' as const, id: concept.id, value: concept.position }]
           : []),
@@ -189,8 +189,8 @@ export function pasteOperations(
         target: relation.target,
         type: graph.relationTypes.find((type) => type.id === relation.predicate)!,
       })),
-    ...(inView
-      ? (views[0]?.relationBends ?? []).map((relation): NessoOperation => ({
+    ...(inMap
+      ? (maps[0]?.relationBends ?? []).map((relation): NessoOperation => ({
           kind: 'relation.bend',
           id: relationKey({
             source: ids.get(relation.source)!,

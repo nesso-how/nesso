@@ -14,23 +14,23 @@ A desktop app for learning, with a personal knowledge graph that grows with you.
 
 We often understand and remember through associations: one idea brings another to mind, and new knowledge gains meaning through what we already know. Nesso gives you a place to map these associations, follow the relations between ideas, and build on them.
 
-Your knowledge isn’t scattered across files and folders but lives in **one connected graph that grows with your understanding**. **Views** let you focus on a project, question, or theme without splitting that knowledge into separate copies. The same concept can appear in several views, with edits shared across them.
+Your knowledge isn’t scattered across files and folders but lives in **one connected graph that grows with your understanding**. **Maps** let you focus on a project, question, or theme without splitting that knowledge into separate copies. The same concept can appear in several maps, with edits shared across them.
 
-![Nesso showing a learning graph where concepts sharing a relation are grouped, with the selected concept’s notes, connections, and views in the Inspector.](site/public/nesso-understanding.png)
+![Nesso showing a learning graph where concepts sharing a relation are grouped, with the selected concept’s notes, connections, and maps in the Inspector.](site/public/nesso-understanding.png)
 
 Nesso keeps things minimal and efficient, with just a few key elements:
 
 - **Concepts** represent ideas. They have a label and Markdown notes (bold, italic, inline code, lists, links).
 - **Relations** connect concepts with a direction and a type that describes the connection.
-- **Views** offer different perspectives on the same graph. The default **Overview** shows the complete graph as a map of bubbles for navigation and cannot be deleted. Saved views are named subsets of its concepts, each with its own positions, colors, and bold, italic, or strikethrough labels.
+- **Maps** offer different perspectives on the same graph. Each map is a named subset of its concepts, with its own positions, colors, and bold, italic, or strikethrough labels. The **Graph** shows every concept as a bubble for navigation and cannot be deleted.
 - **Vocabularies** provide relation types. You can name your own relation types or define vocabularies as plugins.
 - **Plugins** add vocabularies, themes, and actions. They can also work as mini-apps inside Nesso, with their own interface and persistent data. Install published packages from Settings → Plugins on desktop, or [create your own with an agent](packages/plugin/README.md#create-a-plugin) and approve a local install through MCP, without publishing to npm. Nesso’s built-in plugins use the same system:
-  - **Review** for FSRS spaced repetition over a view’s concepts.
-  - **Notes** live-preview Markdown editor for each view’s project notes and brainstorming.
+  - **Review** for FSRS spaced repetition over a map’s concepts.
+  - **Notes** live-preview Markdown editor for each map’s project notes and brainstorming.
 - **AI** helps you explore, expand, and organize your graph on desktop. Chat using your own API key (BYOK), a local model, or ChatGPT sign-in, or connect external assistants through the local MCP server.
 - **Automatic backups** keep the latest 10 copies of your work on desktop, saved every 15 minutes and before a reset or restore. Choose a backup folder or restore a copy in Settings → Local data → Backup.
 
-Use the Explorer to navigate views, the canvas to build the graph, and the Inspector to edit the selection, manage views, or chat with AI on desktop.
+Use the Explorer to navigate maps, the canvas to build the graph, and the Inspector to edit the selection, manage maps, or chat with AI on desktop.
 
 > [!WARNING]
 > Windows installers are currently unsigned and may trigger SmartScreen warnings.
@@ -47,7 +47,7 @@ The [web demo](https://app.nesso.how) lets you try the graph editor in your brow
 flowchart TB
   subgraph RendererProcess["Electron - Renderer"]
     Canvas("<b>Trusted renderers</b><br/>canvas · geometry · gestures")
-    Host("<b>Host</b><br/>UI · graph · views · history<br/>AI tools")
+    Host("<b>Host</b><br/>UI · graph · maps · history<br/>AI tools")
 
     subgraph Plugins["Plugin contributions"]
       Actions("<b>Actions</b><br/>sandboxed workers")
@@ -121,12 +121,12 @@ Desktop services are grouped by responsibility in `electron/ai/`, `electron/mcp/
 | [`@nesso-how/ui`](packages/ui/)                           | Core     | Shared React controls and styles.                                         |
 | [`@nesso-how/ai`](packages/ai/)                           | Core     | Shared chat and MCP tool contracts, policies, and assistant instructions. |
 | [`@nesso-how/concept-map`](packages/concept-map/)         | Renderer | Trusted React Flow canvas for the host-provided visible graph.            |
-| [`@nesso-how/knowledge-graph`](packages/knowledge-graph/) | Renderer | Trusted Canvas 2D overview of the complete graph.                         |
+| [`@nesso-how/knowledge-graph`](packages/knowledge-graph/) | Renderer | Trusted Canvas 2D renderer of the complete graph.                         |
 | [`@nesso-how/base-vocab`](plugins/base-vocab/)            | Plugin   | Default relation vocabulary.                                              |
-| [`@nesso-how/export`](plugins/export/)                    | Plugin   | Graph and view export as JSON-LD or PNG.                                  |
+| [`@nesso-how/export`](plugins/export/)                    | Plugin   | Graph and map export as JSON-LD or PNG.                                   |
 | [`@nesso-how/import`](plugins/import/)                    | Plugin   | Merge a Nesso JSON-LD file into the current graph.                        |
 | [`@nesso-how/review`](plugins/review/)                    | Plugin   | Isolated concept review with FSRS and private concept-scoped progress.    |
-| [`@nesso-how/notes`](plugins/notes/)                      | Plugin   | Free-form Markdown notes scoped to each view, with autosave.              |
+| [`@nesso-how/notes`](plugins/notes/)                      | Plugin   | Free-form Markdown notes scoped to each map, with autosave.               |
 | [`@nesso-how/kernel-theme`](plugins/kernel-theme/)        | Plugin   | Kernel theme tokens.                                                      |
 | [`@nesso-how/paper-theme`](plugins/paper-theme/)          | Plugin   | Warm ivory surfaces and restrained terracotta accents.                    |
 | [`@nesso-how/mist-theme`](plugins/mist-theme/)            | Plugin   | Cool misty blue surfaces and steel blue accents.                          |
@@ -152,7 +152,7 @@ Configure npm trusted publishing for all published packages to use the GitHub Ac
 
 ### Where is my data stored?
 
-On your device. The desktop app saves everything in a local data folder, which you can change in Settings → Local data. The web demo keeps data in your browser. Nesso has no account and no server of its own. You can export your graph or any view as JSON-LD, an open format, and import it back.
+On your device. The desktop app saves everything in a local data folder, which you can change in Settings → Local data. The web demo keeps data in your browser. Nesso has no account and no server of its own. You can export your graph or any map as JSON-LD, an open format, and import it back.
 
 ### Can I sync Nesso across devices?
 

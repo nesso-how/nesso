@@ -118,14 +118,14 @@ import.meta.hot?.dispose(() => {
   window.removeEventListener('pageshow', refreshBadges)
   actionBadges.dispose()
 })
-export const useViewActionBadge = (actionId: string, viewId: string | null, visible: boolean) =>
+export const useMapActionBadge = (actionId: string, mapId: string | null, visible: boolean) =>
   useSyncExternalStore(
     useCallback(
       (listener: () => void) =>
-        visible ? actionBadges.watch(actionId, viewId, listener) : () => {},
-      [actionId, viewId, visible],
+        visible ? actionBadges.watch(actionId, mapId, listener) : () => {},
+      [actionId, mapId, visible],
     ),
-    () => (visible ? actionBadges.getValue(actionId, viewId) : null),
+    () => (visible ? actionBadges.getValue(actionId, mapId) : null),
   )
 const getTranslation = () => translate(nessoStore.getState().preferences.locale ?? defaultLocale)
 export const getThemePresentation = (id: string) => themes.get(id)
@@ -136,7 +136,7 @@ export const usePluginActionsRunning = (name: string) =>
   useSyncExternalStore(subscribeActions, () =>
     [...active].some(([controller, source]) => source === name && !controller.signal.aborted),
   )
-export const useViewActions = () => usePlugins().flatMap(pluginMenuActions)
+export const useMapActions = () => usePlugins().flatMap(pluginMenuActions)
 export const useCanvasTabs = () => {
   const plugins = usePlugins()
   const order = useNessoStore((state) => state.preferences.canvasTabOrder)
@@ -675,7 +675,7 @@ export const preloadPluginPanels = () => pluginPanel.preload([...actions.values(
 
 export async function invokeAction(
   actionId: string,
-  viewId = nessoStore.getState().workspace.activeViewId,
+  mapId = nessoStore.getState().workspace.activeMapId,
 ) {
   const plugin = registry
     .getSnapshot()
@@ -688,7 +688,7 @@ export async function invokeAction(
   active.set(controller, source.name)
   publishActions()
   try {
-    const invocation = { actionId, viewId, descriptors: plugin.contribution }
+    const invocation = { actionId, mapId, descriptors: plugin.contribution }
     if (plugin.contribution.find(({ id }) => id === actionId)?.ui)
       await pluginPanel.open(source, invocation, controller.signal)
     else

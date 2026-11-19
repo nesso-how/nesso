@@ -302,14 +302,14 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     `window.__externalFrame=document.querySelector('[data-plugin-panel] iframe:not([hidden])')`,
   )
   await reused.executeJavaScript(`window.__retainedDocument=document`)
-  for (const view of ['Rest', 'Overview', 'Coffee']) {
+  for (const map of ['Rest', 'Graph', 'Coffee']) {
     await evaluate(
-      `[...document.querySelectorAll('button')].find(button=>button.textContent.trim().startsWith(${JSON.stringify(view)})).click()`,
+      `[...document.querySelectorAll('button')].find(button=>button.textContent.trim().startsWith(${JSON.stringify(map)})).click()`,
     )
     await waitFor(
       () =>
         evaluate<boolean>(
-          `document.querySelector('[data-plugin-panel] iframe:not([hidden])')?.style.visibility==='visible' && document.querySelector('#canvas .nesso-panel-actions button')?.getAttribute('aria-label')===${JSON.stringify(`Actions for ${view}`)}`,
+          `document.querySelector('[data-plugin-panel] iframe:not([hidden])')?.style.visibility==='visible' && document.querySelector('#canvas .nesso-panel-actions button')?.getAttribute('aria-label')===${JSON.stringify(`Actions for ${map}`)}`,
         ),
       Boolean,
     )

@@ -35,7 +35,7 @@ export function ConceptSheet({
 }) {
   const t = useTranslation()
   const selected = useNessoStore((state) => state.selected)
-  const graph = useNessoStore((state) => state.viewGraph)
+  const graph = useNessoStore((state) => state.mapGraph)
   const vocabs = useNessoStore((state) => state.vocabs)
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
   const pluginPanel = usePluginPanel()
@@ -128,9 +128,9 @@ export function ConceptSheet({
             />
           )}
           <section className="flex flex-col">
-            <ContextLabel className="mb-1">{t('connectionsInView')}</ContextLabel>
+            <ContextLabel className="mb-1">{t('connectionsInMap')}</ContextLabel>
             {connections.length === 0 ? (
-              <p className="py-2 text-xs text-muted-foreground">{t('noConnectionsInView')}</p>
+              <p className="py-2 text-xs text-muted-foreground">{t('noConnectionsInMap')}</p>
             ) : (
               <ul className="flex flex-col">
                 {connections.map((relation) => {

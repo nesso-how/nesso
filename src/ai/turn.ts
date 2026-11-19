@@ -20,8 +20,8 @@ const errorOf = (error: unknown): NessoError => {
 }
 const sameContext = (before: NessoState, after: NessoState): boolean =>
   before.graph === after.graph &&
-  before.workspace.savedViews === after.workspace.savedViews &&
-  before.workspace.activeViewId === after.workspace.activeViewId &&
+  before.workspace.maps === after.workspace.maps &&
+  before.workspace.activeMapId === after.workspace.activeMapId &&
   before.selected === after.selected &&
   before.vocabs === after.vocabs &&
   before.preferences.activeVocabId === after.preferences.activeVocabId &&
@@ -91,7 +91,7 @@ export function createAiTurn(
           }
         }
         const result = readAiTool(candidate, name, input)
-        if (result === undefined) return fail('tool', 'Unknown tool or view')
+        if (result === undefined) return fail('tool', 'Unknown tool or map')
         return structuredClone(result)
       } catch (error) {
         cancel()

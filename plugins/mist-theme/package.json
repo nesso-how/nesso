@@ -28,14 +28,14 @@
         "zh-CN": "冷色主题，雾蓝界面、石板文字和钢蓝色点缀，提供浅色和深色。"
       },
       "documentation": {
-        "en": "Mist brings a cool, calm palette to Nesso, with Geist and IBM Plex Mono fonts. It does not change your graph or views.",
-        "it": "Mist porta in Nesso una palette fredda e calma, con i font Geist e IBM Plex Mono. Non modifica il grafo o le viste.",
-        "zh-CN": "Mist 为 Nesso 带来冷静的冷色调，采用 Geist 和 IBM Plex Mono 字体，不会改变你的图谱或视图。"
+        "en": "Mist brings a cool, calm palette to Nesso, with Geist and IBM Plex Mono fonts. It does not change your graph or maps.",
+        "it": "Mist porta in Nesso una palette fredda e calma, con i font Geist e IBM Plex Mono. Non modifica il grafo o le mappe.",
+        "zh-CN": "Mist 为 Nesso 带来冷静的冷色调，采用 Geist 和 IBM Plex Mono 字体，不会改变你的图谱或导图。"
       }
     }
   },
   "nesso": {
-    "apiVersion": 6,
+    "apiVersion": 7,
     "kind": "theme",
     "entry": "dist/definition.json",
     "writes": [],

@@ -4,7 +4,7 @@ import { cues, relationTypeLabels } from '../cues.ts'
 import type { messages } from '../i18n.ts'
 
 type Props = {
-  current: ActionState['viewGraph']['concepts'][number]
+  current: ActionState['mapGraph']['concepts'][number]
   state: ActionState
   t: (typeof messages)[keyof typeof messages]
 }
@@ -31,7 +31,7 @@ export function Prompt({ current, state, t }: Props) {
 }
 
 export function Reference({ current, state, t }: Props) {
-  const graph = state.viewGraph
+  const graph = state.mapGraph
   const concepts = new Map(graph.concepts.map((concept) => [concept.id, concept]))
   const types = relationTypeLabels(state)
   const relations = graph.relations.filter(

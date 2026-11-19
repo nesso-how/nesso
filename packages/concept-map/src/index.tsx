@@ -12,13 +12,10 @@ export const ConceptMap = memo(function ConceptMap({
   connection,
   ...props
 }: ConceptMapContext & CanvasProps) {
-  const viewId = useSyncExternalStore(
-    store.subscribe,
-    () => store.getState().workspace.activeViewId,
-  )
+  const mapId = useSyncExternalStore(store.subscribe, () => store.getState().workspace.activeMapId)
   return (
     <StoreContext.Provider value={{ store, commands, connection }}>
-      <ReactFlowProvider key={viewId}>
+      <ReactFlowProvider key={mapId}>
         <Canvas {...props} />
       </ReactFlowProvider>
     </StoreContext.Provider>

@@ -18,7 +18,7 @@ test('creation suggestions match outside labels, normalize accents and rank exac
     relations: [],
     relationTypes: [],
   }
-  const state = { graph, viewGraph: { ...graph, concepts: graph.concepts.slice(0, 1) } }
+  const state = { graph, mapGraph: { ...graph, concepts: graph.concepts.slice(0, 1) } }
   assert.deepEqual(
     creationSuggestions(state, 'MEMOIRE').map(({ id }) => id),
     ['urn:accent'],
@@ -33,5 +33,5 @@ test('creation suggestions match outside labels, normalize accents and rank exac
   )
   assert.deepEqual(creationSuggestions(state, '   '), [])
   assert.deepEqual(creationSuggestions(state, 'notes-only'), [])
-  assert.deepEqual(creationSuggestions({ graph, viewGraph: graph }, 'memory'), [])
+  assert.deepEqual(creationSuggestions({ graph, mapGraph: graph }, 'memory'), [])
 })

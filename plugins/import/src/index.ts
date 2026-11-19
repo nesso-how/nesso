@@ -5,7 +5,7 @@ import source from '../package.json' with { type: 'json' }
 
 const { i18n } = source
 
-export function deriveViewName(fileName: string): string {
+export function deriveMapName(fileName: string): string {
   const base = fileName.replace(/\.(jsonld|json)$/i, '')
   const stripped = base.toLowerCase().startsWith('nesso-') ? base.slice(6) : base
   const spaced = stripped.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim()
@@ -15,14 +15,14 @@ export function deriveViewName(fileName: string): string {
 }
 
 export function buildImportOperations(
-  { graph, views }: ReturnType<typeof parseGraph>,
-  activeViewId: string | null,
-  viewName: string,
+  { graph, maps }: ReturnType<typeof parseGraph>,
+  activeMapId: string | null,
+  mapName: string,
 ): NessoOperation[] {
   if (graph.concepts.length === 0) return []
   const ids = new Map(graph.concepts.map((concept) => [concept.id, newIri()]))
   const concepts = new Map(graph.concepts.map((concept) => [concept.id, concept]))
-  const listed = new Set(views.flatMap(({ members }) => members.map(({ id }) => id)))
+  const listed = new Set(maps.flatMap(({ members }) => members.map(({ id }) => id)))
   const added = new Set<string>()
   const operations: NessoOperation[] = []
   const add = (concept: Concept, position?: Position) => {
@@ -55,27 +55,27 @@ export function buildImportOperations(
   for (const concept of graph.concepts) {
     if (listed.has(concept.id)) continue
     add(concept)
-    if (activeViewId !== null)
+    if (activeMapId !== null)
       operations.push({
-        kind: 'view.membership',
-        viewId: activeViewId,
+        kind: 'map.membership',
+        mapId: activeMapId,
         conceptId: ids.get(concept.id)!,
         included: false,
       })
   }
-  for (const view of views) {
-    const viewId = newIri()
+  for (const map of maps) {
+    const mapId = newIri()
     operations.push({
-      kind: 'view.create',
-      id: viewId,
-      name: view.name.trim() || viewName,
+      kind: 'map.create',
+      id: mapId,
+      name: map.name.trim() || mapName,
       conceptIds: [],
     })
-    for (const member of view.members) {
+    for (const member of map.members) {
       const id = ids.get(member.id)!
       if (added.has(member.id))
         operations.push(
-          { kind: 'view.membership', viewId, conceptId: id, included: true },
+          { kind: 'map.membership', mapId, conceptId: id, included: true },
           { kind: 'concept.position', id, value: { ...member.position } },
         )
       else add(concepts.get(member.id)!, member.position)
@@ -89,7 +89,7 @@ export function buildImportOperations(
         operations.push({ kind: 'concept.strikethrough', id, value: member.strikethrough })
     }
     connect()
-    for (const relation of view.relationBends ?? [])
+    for (const relation of map.relationBends ?? [])
       operations.push({
         kind: 'relation.bend',
         id: relationKey({
@@ -128,8 +128,8 @@ export const create = (): readonly ActionContribution[] => [
       try {
         operations = buildImportOperations(
           parseGraph(JSON.parse(file.text)),
-          state.workspace.activeViewId,
-          deriveViewName(file.name),
+          state.workspace.activeMapId,
+          deriveMapName(file.name),
         )
       } catch {
         throw new ImportError()

@@ -14,31 +14,31 @@ const graph = {
   relationTypes: [{ id: 'urn:p', label: 'links' }],
   relations: [relation, { ...relation, target: 'urn:a' }],
 }
-const view = {
-  id: 'urn:view',
-  name: 'View',
+const map = {
+  id: 'urn:map',
+  name: 'Map',
   members: graph.concepts.map(({ id }) => ({ id, position: { x: 0, y: 0 } })),
   relationBends: [{ ...relation, bend: -0.25 }],
 }
 
-test('view relation bends survive JSON-LD round trips without changing semantic triples', () => {
-  const document = serializeGraph(graph, [view])
-  assert.equal(document.schemaVersion, 3)
-  assert.deepEqual(parseGraph(document), { graph, views: [view] })
+test('map relation bends survive JSON-LD round trips without changing semantic triples', () => {
+  const document = serializeGraph(graph, [map])
+  assert.equal(document.schemaVersion, 4)
+  assert.deepEqual(parseGraph(document), { graph, maps: [map] })
 })
 
-test('bends reject unknown, duplicate, self, off-view, zero and nonfinite references and values', () => {
+test('bends reject unknown, duplicate, self, off-map, zero and nonfinite references and values', () => {
   for (const relationBends of [
     [{ ...relation, target: 'urn:c', bend: 0.2 }],
     [{ ...relation, target: 'urn:a', bend: 0.2 }],
-    [view.relationBends[0], view.relationBends[0]],
+    [map.relationBends[0], map.relationBends[0]],
     [{ ...relation, bend: Infinity }],
     [{ ...relation, bend: 0 }],
   ]) {
-    assert.throws(() => serializeGraph(graph, [{ ...view, relationBends }]), SchemaError)
+    assert.throws(() => serializeGraph(graph, [{ ...map, relationBends }]), SchemaError)
   }
-  assert.ok(validateGraph(graph, [{ ...view, members: view.members.slice(0, 1) }]).length)
-  const document = serializeGraph(graph, [view])
+  assert.ok(validateGraph(graph, [{ ...map, members: map.members.slice(0, 1) }]).length)
+  const document = serializeGraph(graph, [map])
   assert.throws(
     () =>
       parseGraph({

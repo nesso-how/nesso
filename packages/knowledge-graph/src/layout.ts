@@ -136,7 +136,7 @@ export const remember = (bubbles: readonly Bubble[], layout: KnowledgeGraphLayou
   for (const { id, x, y } of bubbles) layout.set(id, { x: x!, y: y! })
 }
 
-export const viewPositions = (layout: KnowledgeGraphLayout, ids: readonly string[]) =>
+export const mapPositions = (layout: KnowledgeGraphLayout, ids: readonly string[]) =>
   ids.flatMap((id) => {
     const position = layout.get(id)
     return position

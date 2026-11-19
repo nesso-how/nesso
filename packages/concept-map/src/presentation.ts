@@ -3,6 +3,6 @@ import type { RelationGroup } from './groups.ts'
 
 export type ConceptMapPresentation = {
   graph: PresentedGraph
-  viewId: string | null
+  mapId: string | null
   groups: readonly RelationGroup[]
 }

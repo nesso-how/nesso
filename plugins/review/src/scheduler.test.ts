@@ -49,7 +49,7 @@ function fixture() {
   }
 }
 
-test('badges count only target-view concepts and request the next change using shared progress', async () => {
+test('badges count only target-map concepts and request the next change using shared progress', async () => {
   const f = fixture()
   const review = await createReview(f.storage, f.now)
   review.setScope(['urn:a'])
@@ -58,8 +58,8 @@ test('badges count only target-view concepts and request the next change using s
   await review.rate(3)
   const due = review.getSnapshot().progress.get('urn:a')!.card.dueAt.getTime()
   const input = {
-    viewId: null,
-    viewGraph: {
+    mapId: null,
+    mapGraph: {
       concepts: ['urn:a', 'urn:b'].map((id) => ({ id, label: id, position: { x: 0, y: 0 } })),
       relations: [],
       relationTypes: [],
@@ -69,7 +69,7 @@ test('badges count only target-view concepts and request the next change using s
   }
   assert.deepEqual(reviewBadge(input), { value: 1, refreshAt: due })
   assert.deepEqual(reviewBadge({ ...input, now: due }), { value: 2 })
-  assert.deepEqual(reviewBadge({ ...input, viewGraph: { ...input.viewGraph, concepts: [] } }), {
+  assert.deepEqual(reviewBadge({ ...input, mapGraph: { ...input.mapGraph, concepts: [] } }), {
     value: 0,
   })
 })
@@ -109,7 +109,7 @@ test('each rating persists its preview and log, then completes the round', async
   }
 })
 
-test('progress restores across views and repeated reviews update one schedule', async () => {
+test('progress restores across maps and repeated reviews update one schedule', async () => {
   const f = fixture()
   const first = await createReview(f.storage, f.now)
   first.setScope(['urn:a', 'urn:b'])

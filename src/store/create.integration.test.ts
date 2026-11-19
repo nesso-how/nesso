@@ -17,9 +17,9 @@ const fixture = (): Graph => ({
   ],
 })
 
-test('paste uses one atomic undoable batch, preserves parallel types, and joins the active view without implicit links', () => {
+test('paste uses one atomic undoable batch, preserves parallel types, and joins the active map without implicit links', () => {
   const { store } = createNessoStore(fixture())
-  store.createView('Active', ['urn:n1'])
+  store.createMap('Active', ['urn:n1'])
   store.setSelection([{ kind: 'concept', id: 'urn:n1' }])
   const before = store.getState()
   const graph = fixture()
@@ -39,7 +39,7 @@ test('paste uses one atomic undoable batch, preserves parallel types, and joins 
   store.applyOperations(pasteOperations(text))
   const after = store.getState()
   const copies = after.graph.concepts.slice(3)
-  const placed = after.viewGraph.concepts.slice(1)
+  const placed = after.mapGraph.concepts.slice(1)
   const relations = after.graph.relations.slice(2)
   assert.equal(copies[0].notes, copied.concepts[0].notes)
   assert.equal(Object.hasOwn(copies[1], 'notes'), false)
@@ -59,7 +59,7 @@ test('paste uses one atomic undoable batch, preserves parallel types, and joins 
   )
   assert.deepEqual(after.graph.relationTypes, copied.relationTypes)
   assert.deepEqual(
-    after.viewGraph.concepts.map((concept) => concept.id),
+    after.mapGraph.concepts.map((concept) => concept.id),
     ['urn:n1', ...copies.map((concept) => concept.id)],
   )
   assert.deepEqual(after.selected, [
@@ -68,7 +68,7 @@ test('paste uses one atomic undoable batch, preserves parallel types, and joins 
   ])
   store.undo()
   assert.deepEqual(store.getState().graph, before.graph)
-  assert.deepEqual(store.getState().workspace.savedViews, before.workspace.savedViews)
+  assert.deepEqual(store.getState().workspace.maps, before.workspace.maps)
 })
 
 test('operation batches preserve disconnected concepts and parallel relations in either order as one undoable edit', () => {
@@ -84,7 +84,7 @@ test('operation batches preserve disconnected concepts and parallel relations in
       defaultTypeId: 'urn:links',
     })
     const store = host.store
-    host.store.createView('Target', ['urn:n1'])
+    host.store.createMap('Target', ['urn:n1'])
     store.setSelection([{ kind: 'concept', id: 'urn:n1' }])
     const before = store.getState()
     store.applyOperations([
@@ -116,7 +116,7 @@ test('operation batches preserve disconnected concepts and parallel relations in
       })),
     )
     assert.deepEqual(
-      after.viewGraph.concepts.map((concept) => concept.id),
+      after.mapGraph.concepts.map((concept) => concept.id),
       ['urn:n1', ...copies.map((concept) => concept.id)],
     )
     host.store.undo()

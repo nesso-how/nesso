@@ -52,7 +52,7 @@ export const create = (): readonly ActionContribution[] => {
     run: async ({ document }) => {
       const state = document.getState()
 
-      const operations: readonly NessoOperation[] = state.viewGraph.concepts.map(
+      const operations: readonly NessoOperation[] = state.mapGraph.concepts.map(
         ({ id, label }) => ({
           kind: 'concept.label',
           id,
@@ -68,7 +68,7 @@ export const create = (): readonly ActionContribution[] => {
 }
 ```
 
-`create()` defines the action; Nesso calls `run` when the user invokes it. This action uppercases every concept label in that view with one undoable batch. Shared concepts change in every view containing them.
+`create()` defines the action; Nesso calls `run` when the user invokes it. This action uppercases every concept label in that map with one undoable batch. Shared concepts change in every map containing them.
 
 ### Package metadata and permissions
 
@@ -80,7 +80,7 @@ Keep the example's build configuration and set these fields in `package.json`:
   "version": "1.0.0",
   "keywords": ["nesso-plugin"],
   "nesso": {
-    "apiVersion": 6,
+    "apiVersion": 7,
     "kind": "actions",
     "entry": "dist/index.js",
     "writes": ["concept.label"],
@@ -89,7 +89,7 @@ Keep the example's build configuration and set these fields in `package.json`:
   "i18n": {
     "metadata": {
       "name": { "en": "Label tools" },
-      "description": { "en": "Uppercase concept labels in a view." },
+      "description": { "en": "Uppercase concept labels in a map." },
       "documentation": { "en": "Updates labels in one undoable batch." }
     }
   }
@@ -150,11 +150,11 @@ Local plugins stay installed across restarts and appear in Settings → Plugins 
 
 To update a local plugin the user has asked to replace, call `plugins`, find its entry with `local: true`, and pass its current `contentId` as `replacing` alongside `directory`. MCP cannot replace or shadow npm-installed or bundled plugins; use a different package name for your local copy.
 
-Try the installed action from a view's actions menu, or choose the theme/vocabulary in Settings. Check that the plugin handles cancellation and stale-state errors, closes cleanly, and restores saved data after restarting Nesso.
+Try the installed action from a map's actions menu, or choose the theme/vocabulary in Settings. Check that the plugin handles cancellation and stale-state errors, closes cleanly, and restores saved data after restarting Nesso.
 
 ## Action API
 
-Nesso passes `{ document, storage, files, images, notifications, signal, viewId }` to `run` as `ActionContext`. `document` exposes the shared graph, view membership, and transient selection; `storage` holds the plugin's private data for that document.
+Nesso passes `{ document, storage, files, images, notifications, signal, mapId }` to `run` as `ActionContext`. `document` exposes the shared graph, map membership, and transient selection; `storage` holds the plugin's private data for that document.
 
 `create()` receives no arguments and returns an array of actions with unique lowercase kebab-case IDs, localized labels, optional icons, and either a `run(context)` handler or a React component in `ui`. The two forms are mutually exclusive. Use `ActionIconName` for supported icons.
 
@@ -172,7 +172,7 @@ function Browse({ document }: ActionContext) {
   const state = useSyncExternalStore(document.subscribe, document.getState)
   return (
     <ul>
-      {state.viewGraph.concepts.map(({ id, label }) => (
+      {state.mapGraph.concepts.map(({ id, label }) => (
         <li key={id}>{label}</li>
       ))}
     </ul>
@@ -186,7 +186,7 @@ export const create = (): readonly ActionContribution[] => [
 
 #### Context
 
-Components receive `ActionContext` directly as props, with the same APIs and permissions as `run`. `viewId` and the supplied `viewGraph` refer to the invoked view. Subscribe with `useSyncExternalStore` when rendering snapshot data. Discovery runs `create()` in a Worker, so keep DOM access and effects inside components or `run`, not at module scope or in `create()`. The panel can access its own DOM, but not the host DOM, native bridge, network, or direct persistent storage; use the injected APIs for files and storage.
+Components receive `ActionContext` directly as props, with the same APIs and permissions as `run`. `mapId` and the supplied `mapGraph` refer to the invoked map. Subscribe with `useSyncExternalStore` when rendering snapshot data. Discovery runs `create()` in a Worker, so keep DOM access and effects inside components or `run`, not at module scope or in `create()`. The panel can access its own DOM, but not the host DOM, native bridge, network, or direct persistent storage; use the injected APIs for files and storage.
 
 #### Styling
 
@@ -194,7 +194,7 @@ Nesso supplies React, the `@nesso-how/ui` component stylesheet, and theme CSS va
 
 #### Lifecycle
 
-Nesso provides the panel title, close control, and loading/error screens. Opening a panel or changing the active view starts a new React instance and invalidates the previous context. Closing it, changing documents, replacing/removing the plugin, or a runtime failure ends the session.
+Nesso provides the panel title, close control, and loading/error screens. Opening a panel or changing the active map starts a new React instance and invalidates the previous context. Closing it, changing documents, replacing/removing the plugin, or a runtime failure ends the session.
 
 Keep mutable state inside the component and clean up subscriptions in React effects. Module-scope state is not guaranteed between sessions: Nesso may reuse or discard the runtime, so keep state in the instance or `storage`. Save progress through `storage` as it changes; cleanup may not finish. Panels have no action execution timeout, but initialization and API requests have deadlines. Handle expected errors in the UI; uncaught errors or rejected promises fail the session.
 
@@ -203,18 +203,18 @@ Keep mutable state inside the component and clean up subscriptions in React effe
 Add optional `badge(input)` to a `run` or `ui` action. It may return synchronously or asynchronously:
 
 ```ts
-badge: ({ viewGraph }) => ({
-  value: viewGraph.concepts.length,
+badge: ({ mapGraph }) => ({
+  value: mapGraph.concepts.length,
 })
 ```
 
-- `input`: readonly `viewId` (`null` for All), target `viewGraph`, private document storage `records` (requires `storage`; otherwise empty), and `now` in Unix milliseconds.
+- `input`: readonly `mapId` (`null` for the graph), target `mapGraph`, private document storage `records` (requires `storage`; otherwise empty), and `now` in Unix milliseconds.
 - Return `{ value: number | null, refreshAt?: number }`. `value` is an integer from 0 to 999,999; zero and `null` hide the badge.
 - For time-dependent counts, calculate from `now` and return `refreshAt` as an absolute Unix-millisecond timestamp. Omit it otherwise. Timed refreshes run no more often than every 15 seconds.
 
-Runs in an isolated Worker with no action APIs and a 2-second calculation limit. Nesso calculates only visible badges and refreshes them after graph, saved-view, or plugin storage changes. Results are not persisted; failures hide the badge.
+Runs in an isolated Worker with no action APIs and a 2-second calculation limit. Nesso calculates only visible badges and refreshes them after graph, map, or plugin storage changes. Results are not persisted; failures hide the badge.
 
-### Read the invoked view
+### Read the invoked map
 
 - `document.getState()` returns the latest readonly local snapshot synchronously and makes it the basis for subsequent writes.
 - `await document.refresh()` fetches and reads a fresh snapshot. Use it after deferred work, such as a file dialog, before computing edits.
@@ -222,12 +222,12 @@ Runs in an isolated Worker with no action APIs and a 2-second calculation limit.
 
 The graph snapshot provides:
 
-- `viewGraph`: `{ concepts, relations, relationTypes }` for the invoked view. In a saved view, concepts carry its `position`, `color`, `bold`, `italic`, and `strikethrough`; relations may carry a view-local `bend`. `color` is a preset id such as `sand`, shown with `var(--preset-sand)`, or a fixed `#rrggbb` value.
-- `selected`: the invoked view's selection.
-- `targetViewId`: the invoked view's ID, or `null` for All; fixed for each invocation. Headless actions keep their target during navigation; panels restart with a new invocation when the active view changes.
+- `mapGraph`: `{ concepts, relations, relationTypes }` for the invoked map. Outside the graph, concepts carry the map's `position`, `color`, `bold`, `italic`, and `strikethrough`; relations may carry a map-local `bend`. `color` is a preset id such as `sand`, shown with `var(--preset-sand)`, or a fixed `#rrggbb` value.
+- `selected`: the invoked map's selection.
+- `targetMapId`: the invoked map's ID, or `null` for the graph; fixed for each invocation. Headless actions keep their target during navigation; panels restart with a new invocation when the active map changes.
 - `activeVocab`: the current vocabulary, or `null`.
 
-`viewGraph` contains stored relation-type labels. `resolveRelationTypeLabel(type, vocabs, locale)`, exported by `@nesso-how/plugin`, returns a translated display label from the supplied vocabularies, preserving custom labels.
+`mapGraph` contains stored relation-type labels. `resolveRelationTypeLabel(type, vocabs, locale)`, exported by `@nesso-how/plugin`, returns a translated display label from the supplied vocabularies, preserving custom labels.
 
 Concept and relation-type IDs are absolute IRIs. Relations are `{ source, predicate, target }` triples; use `JSON.stringify([source, predicate, target])` as their selection/write ID.
 
@@ -254,17 +254,17 @@ Call helpers on `document` and declare their operation kinds in `nesso.writes`:
 | `removeRelation(id)`                                | `relation.remove`       |
 | `setRelationBend(id, value)`                        | `relation.bend`         |
 | `setSelection([{ kind, id }])`                      | `selection.set`         |
-| `setViewMembership(viewId, conceptId, included)`    | `view.membership`       |
+| `setMapMembership(mapId, conceptId, included)`      | `map.membership`        |
 
-Position, color, and style helpers edit the invoked saved view; they reject the batch in All, after navigation, or for concepts outside the view. `addConcept` returns the new IRI. New concepts join the active saved view, at the given position or near the single selected concept, and link to that concept, if any. These links and `connect` use the vocabulary's default relation type. `createRelationType` creates and assigns a type to the given relation. The selection keeps only concepts and relations visible in the active view.
+Position, color, and style helpers edit the invoked map; they reject the batch in the graph, after navigation, or for concepts outside the map. `addConcept` returns the new IRI. New concepts join the active map, at the given position or near the single selected concept, and link to that concept, if any. These links and `connect` use the vocabulary's default relation type. `createRelationType` creates and assigns a type to the given relation. The selection keeps only concepts and relations visible in the active map.
 
-`setRelationBend` follows the same active-view guard. Its finite value is the signed midpoint displacement as a fraction of the endpoint segment's length; `0` restores the automatic curve. Both endpoints must belong to the active view, and self-relations cannot be bent. Removing or reconnecting a relation clears its bends; changing only its predicate preserves them.
+`setRelationBend` follows the same active-map guard. Its finite value is the signed midpoint displacement as a fraction of the endpoint segment's length; `0` restores the automatic curve. Both endpoints must belong to the active map, and self-relations cannot be bent. Removing or reconnecting a relation clears its bends; changing only its predicate preserves them.
 
 For related edits, use `document.applyOperations(operations)` as in the quickstart. The entire batch succeeds or changes nothing. Editing, reconnecting, retyping, or removing an unknown concept or relation rejects the batch, as does reconnecting or retyping onto an existing relation; removing an item already removed earlier in the same batch, such as a relation of a removed concept, is allowed. Separate calls are separate transactions. Raw `concept.add` operations require an explicit new absolute IRI.
 
 Every write checks against the last snapshot you read, or the initial snapshot if you haven't read one. Successful writes advance that baseline, so awaited sequential writes work normally. Incoming updates alone do not advance it. A conflict rejects with `stale-state`; let the failure propagate so Nesso can ask the user to run the action again. Never retry mutations automatically or read a new snapshot just to submit edits calculated from old data.
 
-The invoked view is **not a write sandbox**: permitted writes can affect the whole document. Only the operations listed above are available to plugins.
+The invoked map is **not a write sandbox**: permitted writes can affect the whole document. Only the operations listed above are available to plugins.
 
 ### Files, images, notifications, and failures
 
@@ -273,12 +273,12 @@ The invoked view is **not a write sandbox**: permitted writes can affect the who
 | `files.open({ extensions: ['json'], mimeTypes: ['application/json'] })`                                | `files`             | `{ name, mediaType, text }`, or `null` on cancellation. Extensions omit the dot. |
 | `files.save({ name: 'graph.json', mediaType: 'application/json', text })`                              | `files`             | `{ saved: boolean }`; cancellation returns `false`.                              |
 | `files.save({ name: 'graph.png', mediaType: 'image/png', base64 })`                                    | `files`             | `{ saved: boolean }`; the host decodes canonical base64 before saving.           |
-| `images.renderView({ format: 'png', scale: 2 })`                                                       | `images`            | `{ mediaType: 'image/png', base64 }` for the invoked view.                       |
+| `images.renderCanvas({ format: 'png', scale: 2 })`                                                     | `images`            | `{ mediaType: 'image/png', base64 }` for the invoked canvas.                     |
 | `notifications.notify({ tone: 'info', title: { en: 'Done' }, description: { en: 'Labels updated' } })` | `notifications`     | A notification ID. Tone is `info` or `warning`; description is optional.         |
 
 File saves accept exactly one of UTF-8 `text` or canonical `base64` (without a data URL prefix), with a 16 MiB decoded byte limit. File opening remains UTF-8 text only. Host-managed dialogs or browser downloads grant no unrestricted filesystem access. Plugins have no Node, host DOM, direct filesystem, clipboard, or network access.
 
-`images.renderView` captures the invoked view with the current theme and fonts, without selection or canvas controls. In the Overview (`viewId` `null`) it captures the overview map of the complete graph. Scale defaults to `2`, or accepts `4`, and is a maximum: views too large for it render at the highest of `4`, `2`, or `1` within 8192 pixels per side and 16,777,216 pixels total. Empty views, views over that budget at scale `1`, and PNGs over 16 MiB fail. Save the result separately with `files.save({ name: 'view.png', ...image })`; this also requires `files`.
+`images.renderCanvas` captures the canvas the action was invoked from with the current theme and fonts, without selection or canvas controls: the map, or in the graph (`mapId` `null`) every concept as shown on the graph canvas. Scale defaults to `2`, or accepts `4`, and is a maximum: canvases too large for it render at the highest of `4`, `2`, or `1` within 8192 pixels per side and 16,777,216 pixels total. Empty canvases, canvases over that budget at scale `1`, and PNGs over 16 MiB fail. Save the result separately with `files.save({ name: 'map.png', ...image })`; this also requires `files`.
 
 Failures throw `PluginError` with `code` and `{ path, message }[]` issues. Let them propagate instead of reporting success. Files and notifications cannot be rolled back with graph edits.
 
@@ -295,24 +295,24 @@ await storage.set(
   { kind: 'concept', id: concept.id },
 )
 await storage.set('settings', { enabled: true })
-if (viewId !== null)
-  await storage.set('notes', { text: 'Project ideas' }, { kind: 'view', id: viewId })
+if (mapId !== null)
+  await storage.set('notes', { text: 'Project ideas' }, { kind: 'map', id: mapId })
 await storage.delete('progress', { kind: 'concept', id: concept.id })
 ```
 
-`storage.list()` returns all records as an array, including records associated with deleted concepts or views. Each record has a `key`, a JSON `value`, and an optional `scope`:
+`storage.list()` returns all records as an array, including records associated with deleted concepts or maps. Each record has a `key`, a JSON `value`, and an optional `scope`:
 
-- Without `scope`, the record belongs to the document, for example plugin configuration or notes for Overview (`viewId === null`).
-- With `{ kind: 'concept', id }`, it belongs to that concept. Its data is shared across all views containing the concept.
-- With `{ kind: 'view', id }`, it belongs to that saved view, independently of its name or membership. Use a non-null `viewId`.
-- Scopes identify records within the same plugin/document namespace; they do not create separate namespaces or revision baselines. The same key can be used at document scope and for different concepts and views, including a concept and view with the same ID.
+- Without `scope`, the record belongs to the document, for example plugin configuration or notes for the graph (`mapId === null`).
+- With `{ kind: 'concept', id }`, it belongs to that concept. Its data is shared across all maps containing the concept.
+- With `{ kind: 'map', id }`, it belongs to that map, independently of its name or membership. Use a non-null `mapId`.
+- Scopes identify records within the same plugin/document namespace; they do not create separate namespaces or revision baselines. The same key can be used at document scope and for different concepts and maps, including a concept and map with the same ID.
 - Your plugin owns the payload format and any migrations. Version it independently of the SDK and package version; Nesso does not interpret its fields.
 
 The [downgrade and backup policy](../../docs/compatibility.md#downgrades-and-backups) also applies to private plugin data.
 
 `storage.set(key, value, scope?)` saves one record and `storage.delete(key, scope?)` removes one. Each call is a single transaction returning `true` if data changed, or `false` if nothing changed, such as saving an identical value or deleting a missing record. Failed writes throw.
 
-Setting a scoped record requires the concept or saved view to exist. Concept IDs must be absolute IRIs; view IDs are opaque identifiers. Deleting a record also accepts references to deleted entities.
+Setting a scoped record requires the concept or map to exist. Concept IDs must be absolute IRIs; map IDs are opaque identifiers. Deleting a record also accepts references to deleted entities.
 
 Each write checks the storage revision from your last `storage.list()` or successful write. If you have not listed storage, the SDK reads the initial revision for you. Concurrent changes reject the write with `stale-state`; the SDK does not retry or refresh the revision. List storage again and recompute your changes rather than resubmitting old data.
 
@@ -323,9 +323,9 @@ Await all storage calls before the action returns. Success means the change is i
 #### Data lifecycle
 
 - A document has a persistent identity outside graph JSON-LD. Resetting it creates a new identity and empty plugin storage; a mismatched saved identity is reported and protected, never silently attached to another document.
-- Renaming a view or changing membership does not affect scoped records. Removing a view does not delete concept data.
-- Deleting a concept or saved view retains its records, including across restart and backup restoration. Document Undo/Redo can recover the entity during the current app session, reconnecting its records by the same ID; private storage changes themselves do not enter graph history. Creating a different entity with the same name does not reconnect old records.
-- Use scopes for concept or view data, including logs. Nesso does not interpret IDs embedded in keys or payloads and does not automatically delete orphaned records; your plugin must clean them up explicitly.
+- Renaming a map or changing membership does not affect scoped records. Removing a map does not delete concept data.
+- Deleting a concept or map retains its records, including across restart and backup restoration. Document Undo/Redo can recover the entity during the current app session, reconnecting its records by the same ID; private storage changes themselves do not enter graph history. Creating a different entity with the same name does not reconnect old records.
+- Use scopes for concept or map data, including logs. Nesso does not interpret IDs embedded in keys or payloads and does not automatically delete orphaned records; your plugin must clean them up explicitly.
 - Disabling, uninstalling, replacing, or crashing a plugin does not delete its stored data.
 
 #### Limits

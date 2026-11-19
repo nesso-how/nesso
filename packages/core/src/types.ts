@@ -6,7 +6,7 @@ import type {
   Relation,
   RelationBend,
   RelationType,
-  ViewMember,
+  ConceptMapMember,
 } from '@nesso-how/schema'
 import type { Locale } from '@nesso-how/i18n'
 
@@ -20,7 +20,7 @@ export type Selection = readonly { readonly kind: 'concept' | 'relation'; readon
 
 export type GraphSnapshot = DeepReadonly<Graph>
 
-export type ViewGraphSnapshot = DeepReadonly<
+export type MapGraphSnapshot = DeepReadonly<
   Omit<Graph, 'concepts' | 'relations'> & {
     concepts: (Concept & Partial<Presentation>)[]
     relations: (Relation & { bend?: number })[]
@@ -66,26 +66,26 @@ export type NessoOperation =
   | { readonly kind: 'history.undo' }
   | { readonly kind: 'history.redo' }
   | { readonly kind: 'selection.set'; readonly value: Selection }
-  | { readonly kind: 'view.activate'; readonly id: string | null }
+  | { readonly kind: 'map.activate'; readonly id: string | null }
   | {
-      readonly kind: 'view.create'
+      readonly kind: 'map.create'
       readonly id: string
       readonly name: string
       readonly conceptIds: readonly string[]
     }
-  | { readonly kind: 'view.rename'; readonly id: string; readonly name: string }
-  | { readonly kind: 'view.pin'; readonly id: string; readonly pinned: boolean }
+  | { readonly kind: 'map.rename'; readonly id: string; readonly name: string }
+  | { readonly kind: 'map.pin'; readonly id: string; readonly pinned: boolean }
   | {
-      readonly kind: 'view.membership'
-      readonly viewId: string
+      readonly kind: 'map.membership'
+      readonly mapId: string
       readonly conceptId: string
       readonly included: boolean
     }
-  | { readonly kind: 'view.remove'; readonly id: string }
+  | { readonly kind: 'map.remove'; readonly id: string }
   | {
       readonly kind: 'viewport.set'
       readonly rendererId: string
-      readonly viewId?: string | null
+      readonly mapId?: string | null
       readonly value: Viewport
     }
   | { readonly kind: 'preferences.vocab'; readonly id: string }
@@ -104,10 +104,10 @@ export type VocabDefinition = {
   readonly defaultTypeId: string
 }
 
-export type SavedView = {
+export type WorkspaceMap = {
   readonly id: string
   readonly name: string
-  readonly members: readonly DeepReadonly<ViewMember>[]
+  readonly members: readonly DeepReadonly<ConceptMapMember>[]
   readonly relationBends?: readonly DeepReadonly<RelationBend>[]
   readonly pinned: boolean
 }
@@ -119,8 +119,8 @@ export type Viewport = {
 }
 
 export type WorkspaceState = {
-  readonly activeViewId: string | null
-  readonly savedViews: readonly SavedView[]
+  readonly activeMapId: string | null
+  readonly maps: readonly WorkspaceMap[]
   readonly viewports: Readonly<Partial<Record<string, Viewport>>>
 }
 
@@ -131,11 +131,11 @@ export type PanelSizes = {
 
 export type SectionId =
   | 'sidebar'
-  | 'sidebar.pinned-views'
-  | 'sidebar.views'
+  | 'sidebar.pinned-maps'
+  | 'sidebar.maps'
   | 'inspector'
   | 'inspector.connections'
-  | 'inspector.views'
+  | 'inspector.maps'
   | 'inspector.nodes'
 
 export type Preferences = {
@@ -158,7 +158,7 @@ export type NessoState = {
   readonly graph: GraphSnapshot
   readonly workspace: WorkspaceState
   readonly preferences: Preferences
-  readonly viewGraph: ViewGraphSnapshot
+  readonly mapGraph: MapGraphSnapshot
   readonly selected: Selection
   readonly vocabs: readonly VocabDefinition[]
   readonly history: { readonly canUndo: boolean; readonly canRedo: boolean }
@@ -169,8 +169,8 @@ export type NessoStore = {
   readonly subscribe: (listener: () => void) => () => void
   readonly conceptPlacementOffset: Readonly<Position>
   readonly setSelection: (selection: Selection) => void
-  readonly setView: (id: string | null) => void
-  readonly setViewport: (rendererId: string, viewport: Viewport, viewId?: string | null) => void
+  readonly setMap: (id: string | null) => void
+  readonly setViewport: (rendererId: string, viewport: Viewport, mapId?: string | null) => void
   readonly setConceptPosition: (
     id: string,
     position: Readonly<Position>,
@@ -207,12 +207,12 @@ export type NessoStore = {
   readonly setPanelSizes: (sizes: PanelSizes) => void
   readonly setSectionOpen: (id: SectionId, open: boolean) => void
   readonly resetGraph: () => void
-  readonly createView: (name: string, conceptIds: readonly string[]) => string
-  readonly renameView: (id: string, name: string) => void
-  readonly setViewPinned: (id: string, pinned: boolean) => void
-  readonly setViewMembership: (viewId: string, conceptId: string, included: boolean) => void
-  readonly deleteView: (id: string) => void
-  readonly getViewGraph: (id: string) => ViewGraphSnapshot
+  readonly createMap: (name: string, conceptIds: readonly string[]) => string
+  readonly renameMap: (id: string, name: string) => void
+  readonly setMapPinned: (id: string, pinned: boolean) => void
+  readonly setMapMembership: (mapId: string, conceptId: string, included: boolean) => void
+  readonly deleteMap: (id: string) => void
+  readonly getMapGraph: (id: string) => MapGraphSnapshot
 }
 
 export type NotificationAction = {

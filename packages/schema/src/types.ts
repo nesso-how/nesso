@@ -17,7 +17,7 @@ export const presentationSchema = z.strictObject({
   italic: z.boolean().optional(),
   strikethrough: z.boolean().optional(),
 })
-export const viewMemberSchema = presentationSchema.extend({ id: iriSchema })
+export const conceptMapMemberSchema = presentationSchema.extend({ id: iriSchema })
 export const relationTypeSchema = z.strictObject({
   id: iriSchema.refine((id) => !conceptKeys.includes(id), 'Reserved concept property IRI'),
   label: z.string(),
@@ -30,10 +30,10 @@ const relationSchema = z.strictObject({
 export const relationBendSchema = relationSchema
   .extend({ bend: z.number().refine((value) => value !== 0, 'Manual bend must be nonzero') })
   .refine((relation) => relation.source !== relation.target, 'Self-relations cannot be bent')
-const viewSchema = z.strictObject({
+const mapSchema = z.strictObject({
   id: iriSchema,
   name: z.string(),
-  members: z.array(viewMemberSchema),
+  members: z.array(conceptMapMemberSchema),
   relationBends: z.array(relationBendSchema).optional(),
 })
 
@@ -93,7 +93,7 @@ const checkReferences = (
 }
 
 export const graphSchema = z.strictObject(graphShape).superRefine(checkReferences)
-export const viewGraphSchema = z
+export const mapGraphSchema = z
   .strictObject({
     ...graphShape,
     concepts: z.array(conceptSchema.extend(presentationSchema.partial().shape)),
@@ -101,31 +101,31 @@ export const viewGraphSchema = z
   })
   .superRefine(checkReferences)
 
-export const viewsSchema = (graph: Graph) =>
-  z.array(viewSchema).superRefine((views, context) => {
+export const mapsSchema = (graph: Graph) =>
+  z.array(mapSchema).superRefine((maps, context) => {
     const concepts = new Set(graph.concepts.map(({ id }) => id))
     const relations = new Set(graph.relations.map(relationKey))
     const taken = new Set([...concepts, ...graph.relationTypes.map(({ id }) => id)])
-    for (const [index, view] of views.entries()) {
-      if (taken.has(view.id))
+    for (const [index, map] of maps.entries()) {
+      if (taken.has(map.id))
         context.addIssue({
           code: 'custom',
           path: [index, 'id'],
-          message: `Duplicate view IRI: ${view.id}`,
+          message: `Duplicate map IRI: ${map.id}`,
         })
-      taken.add(view.id)
+      taken.add(map.id)
       const members = new Set<string>()
-      for (const [position, member] of view.members.entries()) {
+      for (const [position, member] of map.members.entries()) {
         if (!concepts.has(member.id) || members.has(member.id))
           context.addIssue({
             code: 'custom',
             path: [index, 'members', position, 'id'],
-            message: `${members.has(member.id) ? 'Duplicate' : 'Unknown'} view member: ${member.id}`,
+            message: `${members.has(member.id) ? 'Duplicate' : 'Unknown'} map member: ${member.id}`,
           })
         members.add(member.id)
       }
       const bends = new Set<string>()
-      for (const [position, relation] of (view.relationBends ?? []).entries()) {
+      for (const [position, relation] of (map.relationBends ?? []).entries()) {
         const key = relationKey(relation)
         if (
           bends.has(key) ||
@@ -146,8 +146,8 @@ export const viewsSchema = (graph: Graph) =>
 export type Position = z.infer<typeof positionSchema>
 export type Concept = z.infer<typeof conceptSchema>
 export type Presentation = z.infer<typeof presentationSchema>
-export type ViewMember = z.infer<typeof viewMemberSchema>
-export type View = z.infer<typeof viewSchema>
+export type ConceptMapMember = z.infer<typeof conceptMapMemberSchema>
+export type ConceptMap = z.infer<typeof mapSchema>
 export type RelationType = z.infer<typeof relationTypeSchema>
 export type Relation = z.infer<typeof relationSchema>
 export type RelationBend = z.infer<typeof relationBendSchema>

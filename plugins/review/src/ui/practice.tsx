@@ -10,12 +10,12 @@ import { Prompt, Reference } from './reference.tsx'
 
 export function Practice({
   state,
-  viewId,
+  mapId,
   review,
   reload,
 }: {
   state: ActionState
-  viewId: ActionContext['viewId']
+  mapId: ActionContext['mapId']
   review: Review
   reload: () => void
 }) {
@@ -26,12 +26,12 @@ export function Practice({
   const reading = useRef<HTMLDivElement>(null)
   const previous = useRef<string>(undefined)
   const { session, busy, failed } = snapshot
-  const concepts = state.viewGraph.concepts
+  const concepts = state.mapGraph.concepts
   const ids = concepts.map(({ id }) => id)
   const current = session ? concepts.find(({ id }) => id === session.ids[session.index]) : undefined
   const currentId = current?.id
   const revealed = session?.revealed ?? false
-  const title = state.workspace.savedViews.find(({ id }) => id === viewId)?.name ?? t.all
+  const title = state.workspace.maps.find(({ id }) => id === mapId)?.name ?? t.graph
   useEffect(() => {
     const tick = () => setTime(new Date())
     const timer = setInterval(tick, 15_000)

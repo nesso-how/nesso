@@ -4,7 +4,7 @@ Paper is a light-only theme with ivory surfaces, ink text, and restrained terrac
 
 ## Usage
 
-Select Paper in Settings → General → Theme, or open Paper under Plugins and choose Use. Kernel remains the default and fallback theme. Changing themes does not modify the graph or views.
+Select Paper in Settings → General → Theme, or open Paper under Plugins and choose Use. Kernel remains the default and fallback theme. Changing themes does not modify the graph or maps.
 
 The package supplies the manifest and `definition.json`. The host validates and applies these data without executing plugin code, and supplies the fonts independently of themes. The trusted renderer inherits the same tokens and host fonts.
 

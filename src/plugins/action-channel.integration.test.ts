@@ -45,8 +45,8 @@ function fixture(
   const contributions = panel
     ? descriptors.map((action) => ({ ...action, ui: true as const }))
     : descriptors
-  const target = host.store.createView('Target', ['urn:a'])
-  host.store.setView(null)
+  const target = host.store.createMap('Target', ['urn:a'])
+  host.store.setMap(null)
   host.store.setSelection([{ kind: 'concept', id: 'urn:b' }])
   const channel = new MessageChannel()
   const failures: PluginError[] = []
@@ -66,7 +66,7 @@ function fixture(
       ...(panel ? { mode: 'panel' } : {}),
       invocation: discovery
         ? undefined
-        : { actionId: 'example', viewId: target, descriptors: contributions },
+        : { actionId: 'example', mapId: target, descriptors: contributions },
     },
     base,
     {
@@ -132,11 +132,11 @@ function fixture(
   }
 }
 
-test('image rendering requires its own capability, is scoped to the invoked view and revokes pending renders', async (t) => {
+test('image rendering requires its own capability, is scoped to the invoked map and revokes pending renders', async (t) => {
   const started = Promise.withResolvers<AbortSignal>()
   const rendered = Promise.withResolvers<RenderedImage>()
   const render = t.mock.fn(
-    (_viewId: string | null, _options: ImageRenderOptions, signal: AbortSignal) => {
+    (_mapId: string | null, _options: ImageRenderOptions, signal: AbortSignal) => {
       started.resolve(signal)
       return rendered.promise
     },
@@ -144,56 +144,56 @@ test('image rendering requires its own capability, is scoped to the invoked view
   const denied = fixture(false, undefined, [], ['files'], undefined, undefined, false, render)
   t.after(denied.close)
   await denied.start()
-  await assert.rejects(denied.client.context.images.renderView({ format: 'png' }), {
+  await assert.rejects(denied.client.context.images.renderCanvas({ format: 'png' }), {
     code: 'denied',
   })
   assert.equal(render.mock.callCount(), 0)
   const allowed = fixture(false, undefined, [], ['images'], undefined, undefined, false, render)
   t.after(allowed.close)
   await allowed.start()
-  const pending = allowed.client.context.images.renderView({ format: 'png' })
+  const pending = allowed.client.context.images.renderCanvas({ format: 'png' })
   const rejected = assert.rejects(pending, { code: 'closed' })
   const signal = await started.promise
-  await assert.rejects(allowed.client.context.images.renderView({ format: 'png' }), {
+  await assert.rejects(allowed.client.context.images.renderCanvas({ format: 'png' }), {
     code: 'unavailable',
   })
   assert.deepEqual(render.mock.calls[0].arguments.slice(0, 2), [allowed.target, { format: 'png' }])
-  assert.equal(allowed.host.store.getState().workspace.activeViewId, null)
+  assert.equal(allowed.host.store.getState().workspace.activeMapId, null)
   allowed.close()
   assert.equal(signal.aborted, true)
   rendered.resolve({ mediaType: 'image/png', base64: 'AA==' })
   await rejected
 })
 
-test('action projections stay bound to the invoked view, filter off-view selection and synchronize atomic writes', async (t) => {
+test('action projections stay bound to the invoked map, filter off-map selection and synchronize atomic writes', async (t) => {
   const instance = fixture()
   t.after(instance.close)
   instance.host.store.setConceptLabel('urn:a', 'Before invocation')
   await instance.start()
   const { document } = instance.client.context
   const before = document.getState()
-  assert.equal(instance.client.context.viewId, instance.target)
-  assert.equal(before.viewGraph.concepts[0].label, 'Before invocation')
+  assert.equal(instance.client.context.mapId, instance.target)
+  assert.equal(before.mapGraph.concepts[0].label, 'Before invocation')
   assert.equal('graph' in before, false)
   assert.equal('conversation' in before, false)
   assert.equal('pluginStorage' in before, false)
   assert.deepEqual(
-    before.viewGraph.concepts.map(({ id }) => id),
+    before.mapGraph.concepts.map(({ id }) => id),
     ['urn:a'],
   )
   assert.deepEqual(before.selected, [])
-  assert.equal('conceptIds' in before.workspace.savedViews[0], false)
+  assert.equal('conceptIds' in before.workspace.maps[0], false)
   await assert.rejects(
     document.applyOperations([{ kind: 'concept.color', id: 'urn:a', value: '#123456' }]),
     { code: 'stale-context' },
   )
-  instance.host.store.setView(instance.target)
+  instance.host.store.setMap(instance.target)
   await document.refresh()
   await document.applyOperations([{ kind: 'concept.label', id: 'urn:a', value: 'Changed' }])
   const state = document.getState()
-  assert.equal(state.targetViewId, instance.target)
-  assert.equal(state.viewGraph.concepts[0].label, 'Changed')
-  assert.equal('getViewGraph' in document, false)
+  assert.equal(state.targetMapId, instance.target)
+  assert.equal(state.mapGraph.concepts[0].label, 'Changed')
+  assert.equal('getMapGraph' in document, false)
   await assert.rejects(
     document.applyOperations([
       { kind: 'concept.label', id: 'urn:a', value: 'No' },
@@ -202,7 +202,7 @@ test('action projections stay bound to the invoked view, filter off-view selecti
     { code: 'denied' },
   )
   await document.applyOperations([{ kind: 'concept.color', id: 'urn:a', value: '#123456' }])
-  assert.equal(instance.host.store.getState().viewGraph.concepts[0].color, '#123456')
+  assert.equal(instance.host.store.getState().mapGraph.concepts[0].color, '#123456')
 })
 
 test('action clients receive vocabulary translations without adding them to document types', async (t) => {
@@ -228,7 +228,7 @@ test('injected panel presentation updates never advance the graph write baseline
   t.after(instance.close)
   await instance.start()
   const { document } = instance.client.context
-  const original = document.getState().viewGraph.concepts[0].label
+  const original = document.getState().mapGraph.concepts[0].label
   document.subscribe(() => instance.client.getPresentation())
   instance.host.store.setConceptLabel('urn:a', 'Concurrent edit')
   instance.host.store.setLocale('it')
@@ -276,7 +276,7 @@ test('plugin batches and helpers automatically reject stale reads without change
   for (const delivered of [false, true]) {
     const instance = fixture()
     t.after(instance.close)
-    instance.host.store.setView(instance.target)
+    instance.host.store.setMap(instance.target)
     await instance.start()
     const { document, files } = instance.client.context
     const snapshot = document.getState()
@@ -289,7 +289,7 @@ test('plugin batches and helpers automatically reject stale reads without change
         {
           kind: 'concept.label',
           id: 'urn:a',
-          value: snapshot.viewGraph.concepts[0].label.toUpperCase(),
+          value: snapshot.mapGraph.concepts[0].label.toUpperCase(),
         },
       ]),
       { code: 'stale-state' },
@@ -302,7 +302,7 @@ test('plugin batches and helpers automatically reject stale reads without change
     await document.setConceptLabel('urn:a', 'Recomputed')
     await document.setConceptColor('urn:a', '#123456')
     assert.equal(instance.host.store.getState().graph.concepts[0].label, 'Recomputed')
-    assert.equal(instance.host.store.getState().viewGraph.concepts[0].color, '#123456')
+    assert.equal(instance.host.store.getState().mapGraph.concepts[0].color, '#123456')
   }
 })
 
@@ -459,7 +459,7 @@ test('discovery sends no state and denies requests; invocation rejects changed d
 test('typed plugin writes are asynchronous, synchronize snapshots and preserve validation, declarations and history groups', async (t) => {
   const instance = fixture(false, undefined, ['concept.label', 'concept.color', 'concept.notes'])
   t.after(instance.close)
-  instance.host.store.setView(instance.target)
+  instance.host.store.setMap(instance.target)
   await instance.start()
   const { document } = instance.client.context
   const before = instance.host.store.getState()
@@ -469,7 +469,7 @@ test('typed plugin writes are asynchronous, synchronize snapshots and preserve v
   assert.equal(await pending, undefined)
   await document.setConceptLabel('urn:a', 'Second', 'edit')
   const state = document.getState()
-  assert.equal(state.viewGraph.concepts[0].label, 'Second')
+  assert.equal(state.mapGraph.concepts[0].label, 'Second')
   await document.setConceptLabel('urn:a', 'Second', 'edit')
   assert.equal(document.getState(), state)
   await assert.rejects(document.setConceptLabel('urn:a', 'x'.repeat(300)), {
@@ -477,12 +477,12 @@ test('typed plugin writes are asynchronous, synchronize snapshots and preserve v
   })
   const committed = instance.host.store.getState()
   await assert.rejects(document.addConcept(), { code: 'denied' })
-  assert.equal('createView' in document, false)
-  assert.equal('setView' in document, false)
+  assert.equal('createMap' in document, false)
+  assert.equal('setMap' in document, false)
   assert.equal('undo' in document, false)
   assert.equal(instance.host.store.getState(), committed)
   await document.setConceptColor('urn:a', '#123456')
-  assert.equal(instance.host.store.getState().viewGraph.concepts[0].color, '#123456')
+  assert.equal(instance.host.store.getState().mapGraph.concepts[0].color, '#123456')
   await document.setConceptNotes('urn:a', 'Notes')
   assert.equal(instance.host.store.getState().graph.concepts[0].notes, 'Notes')
   instance.host.store.setConceptLabel('urn:a', 'Host edit', 'edit')
@@ -504,13 +504,13 @@ test('concept colors cross isolated snapshots and declared commands with atomic 
   })
   const instance = fixture(false, undefined, ['concept.color', 'concept.label'])
   t.after(instance.close)
-  instance.host.store.setView(instance.target)
+  instance.host.store.setMap(instance.target)
   instance.host.store.setConceptColor('urn:a', '#123456')
   await instance.start()
   const { document } = instance.client.context
   const color = () => {
     const state = document.getState()
-    return state.viewGraph.concepts[0].color
+    return state.mapGraph.concepts[0].color
   }
   assert.equal(color(), '#123456')
   await document.setConceptColor('urn:a', '#ABCDEF')
@@ -537,14 +537,14 @@ test('strikethrough requires its own declared plugin write', async (t) => {
   assert.equal(denied.host.store.getState(), unchanged)
   const instance = fixture(false, undefined, ['concept.strikethrough'])
   t.after(instance.close)
-  instance.host.store.setView(instance.target)
+  instance.host.store.setMap(instance.target)
   await instance.start()
   const { document } = instance.client.context
   await document.setConceptStrikethrough('urn:a', true)
-  assert.equal(document.getState().viewGraph.concepts[0].strikethrough, true)
+  assert.equal(document.getState().mapGraph.concepts[0].strikethrough, true)
 })
 
-test('relation bends cross isolated snapshots with declarations and active-view guards', async (t) => {
+test('relation bends cross isolated snapshots with declarations and active-map guards', async (t) => {
   for (const allowed of [false, true]) {
     const relation = { source: 'urn:a', predicate: 'urn:p', target: 'urn:b' }
     const host = createNessoStore({
@@ -554,8 +554,8 @@ test('relation bends cross isolated snapshots with declarations and active-view 
     })
     const instance = fixture(false, undefined, allowed ? ['relation.bend'] : [], [], host)
     t.after(instance.close)
-    host.store.setViewMembership(instance.target, 'urn:b', true)
-    host.store.setView(instance.target)
+    host.store.setMapMembership(instance.target, 'urn:b', true)
+    host.store.setMap(instance.target)
     await instance.start()
     const { document } = instance.client.context
     if (!allowed) {
@@ -566,9 +566,9 @@ test('relation bends cross isolated snapshots with declarations and active-view 
     }
     const semantic = host.store.getState().graph
     await document.setRelationBend(relationKey(relation), 0.25)
-    assert.equal(document.getState().viewGraph.relations[0].bend, 0.25)
+    assert.equal(document.getState().mapGraph.relations[0].bend, 0.25)
     assert.equal(host.store.getState().graph, semantic)
-    host.store.setView(null)
+    host.store.setMap(null)
     await document.refresh()
     await assert.rejects(document.setRelationBend(relationKey(relation), 0.5), {
       code: 'stale-context',
@@ -608,20 +608,20 @@ test('plugin creation helpers resolve stable IDs after commit and reject failed 
   const instance = fixture(false, undefined, ['concept.add', 'concept.label'])
   t.after(instance.close)
   await instance.start()
-  instance.host.store.setView(instance.target)
+  instance.host.store.setMap(instance.target)
   instance.host.store.setSelection([])
   const { document } = instance.client.context
   await document.refresh()
-  assert.equal('createView' in document, false)
+  assert.equal('createMap' in document, false)
   const concept = await document.addConcept({ x: 40, y: 50 })
   const state = document.getState()
-  assert.ok(state.viewGraph.concepts.some(({ id }) => id === concept))
+  assert.ok(state.mapGraph.concepts.some(({ id }) => id === concept))
   assert.ok(
-    instance.host.store.getState().workspace.savedViews[0].members.some(({ id }) => id === concept),
+    instance.host.store.getState().workspace.maps[0].members.some(({ id }) => id === concept),
   )
   await document.setConceptLabel(concept, 'Created', 'edit')
   const created = document.getState()
-  assert.equal(created.viewGraph.concepts.find(({ id }) => id === concept)?.label, 'Created')
+  assert.equal(created.mapGraph.concepts.find(({ id }) => id === concept)?.label, 'Created')
   const committed = instance.host.store.getState()
   assert.equal(committed.graph.concepts.find(({ id }) => id === concept)?.label, 'Created')
   await assert.rejects(document.addConcept({ x: NaN, y: 0 }), { code: 'invalid-input' })
@@ -651,13 +651,13 @@ test('pending file work survives navigation but target deletion revokes it and p
   await instance.start()
   const result = instance.client.context.files.open({ extensions: ['json'], mimeTypes: [] })
   await started
-  instance.host.store.setView(instance.target)
+  instance.host.store.setMap(instance.target)
   await instance.client.context.document.refresh()
   await assert.rejects(
     instance.client.context.files.open({ extensions: ['json'], mimeTypes: [] }),
     { code: 'unavailable' },
   )
-  instance.host.store.deleteView(instance.target)
+  instance.host.store.deleteMap(instance.target)
   await assert.rejects(result, { code: 'closed' })
   assert.equal(instance.failures[0].code, 'stale-context')
   resolve({ name: 'late.json', mediaType: 'application/json', text: '{}' })
@@ -738,7 +738,7 @@ test('storage capability authorizes listing and single writes independently of g
   )
   assert.equal(await writable.client.context.storage.delete('settings'), true)
   assert.deepEqual(await writable.client.context.storage.list(), [])
-  const scope = { kind: 'view', id: writable.host.store.createView('Project', ['urn:a']) } as const
+  const scope = { kind: 'map', id: writable.host.store.createMap('Project', ['urn:a']) } as const
   const { storage } = writable.client.context
   assert.equal(await storage.set('notes', 'Project', scope), true)
   assert.deepEqual(await storage.list(), [{ key: 'notes', value: 'Project', scope }])

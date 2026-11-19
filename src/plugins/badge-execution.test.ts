@@ -10,8 +10,8 @@ import { connectBadgeChannel } from './badge-execution.ts'
 
 const descriptors = [{ id: 'count', label: { en: 'Count' }, badge: true as const }]
 const input = {
-  viewId: null,
-  viewGraph: { concepts: [], relations: [], relationTypes: [] },
+  mapId: null,
+  mapGraph: { concepts: [], relations: [], relationTypes: [] },
   records: [],
   now: 0,
 }

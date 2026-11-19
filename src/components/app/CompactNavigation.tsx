@@ -1,4 +1,4 @@
-import type { SavedView } from '@nesso-how/core'
+import type { WorkspaceMap } from '@nesso-how/core'
 import { defaultLocale } from '@nesso-how/i18n'
 import { ActionIcon, Menu, MenuPopup, MenuRadioItem, PanelHeader, Tabs } from '@nesso-how/ui'
 import { ChevronDown } from 'lucide-react'
@@ -8,16 +8,16 @@ import { openCanvasTab, useCanvasTabs, usePluginPanel } from '@/plugins'
 import { host, useNessoStore } from '@/store'
 import { ActionBadge } from './ActionBadge'
 
-const overview = 'overview'
+const graphOption = 'graph'
 
-export function ViewSwitcher() {
+export function MapSwitcher() {
   const t = useTranslation()
   const workspace = useNessoStore((state) => state.workspace)
   const conceptCount = useNessoStore((state) => state.graph.concepts.length)
-  const view = workspace.savedViews.find(({ id }) => id === workspace.activeViewId)
-  const name = view?.name ?? t('completeGraph')
-  const pinned = workspace.savedViews.filter((view) => view.pinned)
-  const ordinary = workspace.savedViews.filter((view) => !view.pinned)
+  const map = workspace.maps.find(({ id }) => id === workspace.activeMapId)
+  const name = map?.name ?? t('completeGraph')
+  const pinned = workspace.maps.filter((map) => map.pinned)
+  const ordinary = workspace.maps.filter((map) => !map.pinned)
   const option = (value: string, label: string, count: number) => (
     <MenuRadioItem key={value} value={value} className="min-h-11">
       <span className="min-w-0 flex-1 truncate">{label}</span>
@@ -26,7 +26,7 @@ export function ViewSwitcher() {
       </span>
     </MenuRadioItem>
   )
-  const savedOption = (view: SavedView) => option(view.id, view.name, view.members.length)
+  const savedOption = (map: WorkspaceMap) => option(map.id, map.name, map.members.length)
   const group = (label: string, children: ReactNode) => (
     <Menu.Group>
       <Menu.GroupLabel className="px-2.5 pt-2 pb-1 font-mono text-[11px] leading-4 text-muted-foreground">
@@ -40,29 +40,31 @@ export function ViewSwitcher() {
     <PanelHeader size="lg" actions={null} className="pl-2">
       <Menu.Root>
         <Menu.Trigger
-          className="compact-view-switcher"
-          aria-label={t('switchView', { name })}
-          title={t('switchView', { name })}
+          className="compact-map-switcher"
+          aria-label={t('switchMap', { name })}
+          title={t('switchMap', { name })}
         >
           <span className="truncate">{name}</span>
           <ChevronDown aria-hidden="true" />
         </Menu.Trigger>
         <MenuPopup sideOffset={6} className="w-[calc(100vw-16px)]">
           <Menu.RadioGroup
-            value={workspace.activeViewId ?? overview}
-            onValueChange={(value: string) => host.store.setView(value === overview ? null : value)}
+            value={workspace.activeMapId ?? graphOption}
+            onValueChange={(value: string) =>
+              host.store.setMap(value === graphOption ? null : value)
+            }
           >
-            {option(overview, t('completeGraph'), conceptCount)}
+            {option(graphOption, t('completeGraph'), conceptCount)}
             {pinned.length > 0 && (
               <>
                 <Menu.Separator className="my-1 h-px bg-border" />
-                {group(t('pinnedViews'), pinned.map(savedOption))}
+                {group(t('pinnedMaps'), pinned.map(savedOption))}
               </>
             )}
             {ordinary.length > 0 && (
               <>
                 <Menu.Separator className="my-1 h-px bg-border" />
-                {group(t('views'), ordinary.map(savedOption))}
+                {group(t('maps'), ordinary.map(savedOption))}
               </>
             )}
           </Menu.RadioGroup>
@@ -75,12 +77,12 @@ export function ViewSwitcher() {
 export function CanvasTabBar() {
   const t = useTranslation()
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
-  const viewId = useNessoStore((state) => state.workspace.activeViewId)
+  const mapId = useNessoStore((state) => state.workspace.activeMapId)
   const tabs = useCanvasTabs()
   const panel = usePluginPanel()
   if (tabs.length === 0) return <div className="shrink-0 pb-[env(safe-area-inset-bottom,0px)]" />
   const value = tabs.find(({ id }) => id === panel?.actionId)?.id ?? 'graph'
-  const canvasLabel = viewId === null ? 'canvasGraph' : 'canvasMap'
+  const canvasLabel = mapId === null ? 'canvasGraph' : 'canvasMap'
 
   return (
     <Tabs.Root
@@ -99,7 +101,7 @@ export function CanvasTabBar() {
             <Tabs.Tab key={tab.key} value={tab.id} className="compact-tab">
               <ActionIcon name={tab.icon} />
               <span className="compact-tab-label">{label}</span>
-              {tab.badge && <ActionBadge actionId={tab.id} viewId={viewId} label={label} inline />}
+              {tab.badge && <ActionBadge actionId={tab.id} mapId={mapId} label={label} inline />}
             </Tabs.Tab>
           )
         })}

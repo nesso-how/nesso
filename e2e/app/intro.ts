@@ -105,12 +105,12 @@ export async function verifyIntro({ window, url, name }: CheckContext) {
   await title('See it from another angle')
   await ready(`document.querySelectorAll('.intro .react-flow__node').length===4`)
   let energy: Record<string, string> | undefined
-  for (const [view, hidden, shown] of [
+  for (const [map, hidden, shown] of [
     ['Energy', 'urn:nesso:example:sleep', 'urn:nesso:example:energy'],
     ['Rest', 'urn:nesso:example:energy', 'urn:nesso:example:sleep'],
   ]) {
     await evaluate(
-      `[...document.querySelectorAll('.intro-explorer button')].find(button=>button.textContent.startsWith('${view}')).click()`,
+      `[...document.querySelectorAll('.intro-explorer button')].find(button=>button.textContent.startsWith('${map}')).click()`,
     )
     await ready(
       `!document.querySelector('.intro [data-id="${hidden}"]')&&!!document.querySelector('.intro [data-id="${shown}"]')`,
@@ -157,7 +157,7 @@ export async function verifyIntro({ window, url, name }: CheckContext) {
     `!document.querySelector('.intro') && !!document.querySelector('#canvas .react-flow')`,
   )
   await evaluate(
-    `[...document.querySelectorAll('#saved-views button')].find(button=>button.textContent.trim().startsWith('Rest')).click()`,
+    `[...document.querySelectorAll('#maps button')].find(button=>button.textContent.trim().startsWith('Rest')).click()`,
   )
   await ready(
     `[...document.querySelectorAll('#canvas .react-flow__edge-text')].some(edge=>edge.textContent==='can disrupt')`,

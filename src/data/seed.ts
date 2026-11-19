@@ -2,7 +2,7 @@ import type { Locale } from '@nesso-how/i18n'
 import type { WorkspaceState } from '@nesso-how/core'
 import { parseGraph, type Graph } from '@nesso-how/schema'
 import seed from './seed-graph.json' with { type: 'json' }
-import seedViews from './seed-views.json' with { type: 'json' }
+import seedMaps from './seed-maps.json' with { type: 'json' }
 import it from './seed-translations/it.json' with { type: 'json' }
 import zhCN from './seed-translations/zh-CN.json' with { type: 'json' }
 
@@ -10,7 +10,7 @@ type SeedTranslation = Readonly<{
   conceptLabels: Readonly<Record<string, string>>
   conceptNotes: Readonly<Record<string, string>>
   relationTypeLabels: Readonly<Record<string, string>>
-  viewNames: Readonly<Record<string, string>>
+  mapNames: Readonly<Record<string, string>>
 }>
 
 const translations: Readonly<Partial<Record<Locale, SeedTranslation>>> = { it, 'zh-CN': zhCN }
@@ -32,11 +32,11 @@ export function createSeedDocument(locale: Locale): { graph: Graph; workspace: W
       })),
     },
     workspace: {
-      activeViewId: seedViews[0].id,
-      savedViews: seedViews.map((view) => ({
-        ...view,
-        name: translation?.viewNames[view.id] ?? view.name,
-        members: structuredClone(view.members),
+      activeMapId: seedMaps[0].id,
+      maps: seedMaps.map((map) => ({
+        ...map,
+        name: translation?.mapNames[map.id] ?? map.name,
+        members: structuredClone(map.members),
       })),
       viewports: {},
     },

@@ -3,20 +3,20 @@ import { readFileSync } from 'node:fs'
 import test from 'node:test'
 import { parseGraph } from '@nesso-how/schema'
 import seed from './seed-graph.json' with { type: 'json' }
-import seedViews from './seed-views.json' with { type: 'json' }
+import seedMaps from './seed-maps.json' with { type: 'json' }
 import { createSeedDocument } from './seed.ts'
 
-test('seed translations cover every label and view name without changing document structure', () => {
+test('seed translations cover every label and map name without changing document structure', () => {
   const english = createSeedDocument('en')
-  assert.deepEqual(parseGraph(seed), { graph: english.graph, views: [] })
+  assert.deepEqual(parseGraph(seed), { graph: english.graph, maps: [] })
   assert.deepEqual(english.workspace, {
-    activeViewId: seedViews[0].id,
-    savedViews: seedViews,
+    activeMapId: seedMaps[0].id,
+    maps: seedMaps,
     viewports: {},
   })
   for (const locale of ['it', 'zh-CN'] as const) {
     const translation: Record<
-      'conceptLabels' | 'conceptNotes' | 'relationTypeLabels' | 'viewNames',
+      'conceptLabels' | 'conceptNotes' | 'relationTypeLabels' | 'mapNames',
       Record<string, string>
     > = JSON.parse(
       readFileSync(new URL(`./seed-translations/${locale}.json`, import.meta.url), 'utf8'),
@@ -37,8 +37,8 @@ test('seed translations cover every label and view name without changing documen
       locale,
     )
     assert.deepEqual(
-      Object.keys(translation.viewNames).sort(),
-      seedViews.map(({ id }) => id).sort(),
+      Object.keys(translation.mapNames).sort(),
+      seedMaps.map(({ id }) => id).sort(),
       locale,
     )
     for (const labels of Object.values(translation)) {
@@ -60,7 +60,7 @@ test('seed translations cover every label and view name without changing documen
     })
     assert.deepEqual(translated.workspace, {
       ...english.workspace,
-      savedViews: seedViews.map((view) => ({ ...view, name: translation.viewNames[view.id] })),
+      maps: seedMaps.map((map) => ({ ...map, name: translation.mapNames[map.id] })),
     })
   }
 })

@@ -39,7 +39,7 @@ const isJsonValue = (value: unknown, depth = 0): value is JsonValue => {
 
 const pluginStorageScope = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('concept'), id: z.string().max(2048) }),
-  z.strictObject({ kind: z.literal('view'), id: z.string().max(2048) }),
+  z.strictObject({ kind: z.literal('map'), id: z.string().max(2048) }),
 ])
 
 const fields = {

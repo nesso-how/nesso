@@ -18,34 +18,34 @@ function NotesPage({
   title,
   children,
   banner,
-  viewId,
+  mapId,
 }: {
   title: string
   children?: ReactNode
   banner?: ReactNode
-  viewId?: string | null
+  mapId?: string | null
 }) {
   const content = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => {
-    if (viewId === undefined) return
+    if (mapId === undefined) return
     const element = content.current!
-    const target = scrollPositions.get(viewId) ?? 0
+    const target = scrollPositions.get(mapId) ?? 0
     const restore = () => {
       element.scrollTop = target
     }
     restore()
     const frame = requestAnimationFrame(restore)
     return () => cancelAnimationFrame(frame)
-  }, [viewId])
+  }, [mapId])
   return (
     <PluginPage className="notes-page">
       <div
         ref={content}
         className="notes-content nesso-scroll"
         onScroll={
-          viewId === undefined
+          mapId === undefined
             ? undefined
-            : ({ currentTarget }) => scrollPositions.set(viewId, currentTarget.scrollTop)
+            : ({ currentTarget }) => scrollPositions.set(mapId, currentTarget.scrollTop)
         }
       >
         <PluginContent className="notes-document">
@@ -64,14 +64,14 @@ function NotesPage({
 
 function useNotesInstance(
   storage: ActionContext['storage'],
-  viewId: string | null,
+  mapId: string | null,
   signal: AbortSignal,
 ) {
   const [notes, setNotes] = useState<Notes | 'failed' | null>(null)
   const [attempt, setAttempt] = useState(0)
   useEffect(() => {
     let active = true
-    void createNotes(storage, viewId).then(
+    void createNotes(storage, mapId).then(
       (notes) => {
         if (active && !signal.aborted) setNotes(notes)
       },
@@ -82,7 +82,7 @@ function useNotesInstance(
     return () => {
       active = false
     }
-  }, [storage, viewId, signal, attempt])
+  }, [storage, mapId, signal, attempt])
   return {
     notes,
     retry: () => {
@@ -117,19 +117,19 @@ function Editor({
   notes,
   title,
   locale,
-  viewId,
+  mapId,
 }: {
   notes: Notes
   title: string
   locale: keyof typeof messages
-  viewId: string | null
+  mapId: string | null
 }) {
   const state = useSyncExternalStore(notes.subscribe, notes.getSnapshot)
   const t = messages[locale]
   return (
     <NotesPage
       title={title}
-      viewId={viewId}
+      mapId={mapId}
       banner={state.failed ? <BannerRow message={t.saveError} /> : undefined}
     >
       <MarkdownInput
@@ -145,11 +145,11 @@ function Editor({
   )
 }
 
-export function NotesPanel({ document, storage, viewId, signal }: ActionContext) {
+export function NotesPanel({ document, storage, mapId, signal }: ActionContext) {
   const state = useSyncExternalStore(document.subscribe, document.getState)
   const t = messages[state.locale]
-  const title = state.workspace.savedViews.find(({ id }) => id === viewId)?.name ?? t.all
-  const { notes, retry } = useNotesInstance(storage, viewId, signal)
+  const title = state.workspace.maps.find(({ id }) => id === mapId)?.name ?? t.graph
+  const { notes, retry } = useNotesInstance(storage, mapId, signal)
   if (notes === 'failed')
     return (
       <NotesPage
@@ -165,5 +165,5 @@ export function NotesPanel({ document, storage, viewId, signal }: ActionContext)
         </p>
       </NotesPage>
     )
-  return <Editor notes={notes} title={title} locale={state.locale} viewId={viewId} />
+  return <Editor notes={notes} title={title} locale={state.locale} mapId={mapId} />
 }

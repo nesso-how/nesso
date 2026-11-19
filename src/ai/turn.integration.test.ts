@@ -27,7 +27,7 @@ const fixture = (count = 3) => {
 
 test('staged edits stay private and apply as one undoable document edit', async () => {
   const host = fixture()
-  const view = host.store.createView('Pair', ['urn:n0', 'urn:n1'])
+  const map = host.store.createMap('Pair', ['urn:n0', 'urn:n1'])
   host.store.setSelection([{ kind: 'concept', id: 'urn:n0' }])
   const before = host.store.getState()
   let publications = 0
@@ -38,7 +38,7 @@ test('staged edits stay private and apply as one undoable document edit', async 
     operations: [
       { kind: 'concept.label', id: 'urn:new', value: 'New concept' },
       { kind: 'concept.notes', id: 'urn:new', value: 'Definition\nExample' },
-      { kind: 'view.rename', id: view, name: 'Renamed' },
+      { kind: 'map.rename', id: map, name: 'Renamed' },
     ],
   })
   assert.equal(host.store.getState(), before)
@@ -49,7 +49,7 @@ test('staged edits stay private and apply as one undoable document edit', async 
   assert.equal(publications, 1)
   host.store.undo()
   assert.deepEqual(host.store.getState().graph, before.graph)
-  assert.deepEqual(host.store.getState().workspace.savedViews, before.workspace.savedViews)
+  assert.deepEqual(host.store.getState().workspace.maps, before.workspace.maps)
 })
 
 test('invalid operations and cancellation discard all staged writes', async () => {
@@ -81,10 +81,10 @@ test('invalid operations and cancellation discard all staged writes', async () =
   assert.equal(host.store.getState(), before)
 })
 
-test('AI presentation edits are staged, view-local, resettable and undoable', async () => {
+test('AI presentation edits are staged, map-local, resettable and undoable', async () => {
   const host = fixture()
-  host.store.createView('Other', ['urn:n0', 'urn:n1'])
-  host.store.createView('Active', ['urn:n0', 'urn:n1'])
+  host.store.createMap('Other', ['urn:n0', 'urn:n1'])
+  host.store.createMap('Active', ['urn:n0', 'urn:n1'])
   const before = host.store.getState()
   const turn = createAiTurn(host)
   const effects = turn.execute('edit', {
@@ -95,11 +95,11 @@ test('AI presentation edits are staged, view-local, resettable and undoable', as
       { kind: 'concept.strikethrough', id: 'urn:n0', value: true },
     ],
   }) as AiEffects
-  assert.equal(effects.views.updated, 1)
+  assert.equal(effects.maps.updated, 1)
   assert.equal(host.store.getState(), before)
   const staged = turn.execute('concepts', { ids: ['urn:n0'] }) as AiToolResults['concepts']
   assert.deepEqual(staged.items[0], {
-    ...before.viewGraph.concepts[0],
+    ...before.mapGraph.concepts[0],
     color: '#e1ecde',
     bold: true,
     italic: true,
@@ -108,8 +108,8 @@ test('AI presentation edits are staged, view-local, resettable and undoable', as
   assert.equal((await turn.commit()).status, 'applied')
   const styled = host.store.getState()
   assert.equal(styled.graph, before.graph)
-  assert.equal(styled.workspace.savedViews[0], before.workspace.savedViews[0])
-  assert.deepEqual(styled.viewGraph.concepts[0], staged.items[0])
+  assert.equal(styled.workspace.maps[0], before.workspace.maps[0])
+  assert.deepEqual(styled.mapGraph.concepts[0], staged.items[0])
   const reset = createAiTurn(host)
   reset.execute('edit', {
     operations: [
@@ -120,13 +120,13 @@ test('AI presentation edits are staged, view-local, resettable and undoable', as
     ],
   })
   await reset.commit()
-  const member = host.store.getState().viewGraph.concepts[0]
+  const member = host.store.getState().mapGraph.concepts[0]
   for (const key of ['color', 'bold', 'italic', 'strikethrough'])
     assert.equal(Object.hasOwn(member, key), false)
   host.store.undo()
-  assert.deepEqual(host.store.getState().workspace.savedViews, styled.workspace.savedViews)
+  assert.deepEqual(host.store.getState().workspace.maps, styled.workspace.maps)
   host.store.undo()
-  assert.deepEqual(host.store.getState().workspace.savedViews, before.workspace.savedViews)
+  assert.deepEqual(host.store.getState().workspace.maps, before.workspace.maps)
 })
 
 test('edits apply directly without approval, including bulk updates and additions', async () => {
@@ -149,7 +149,7 @@ test('edits apply directly without approval, including bulk updates and addition
   }) as AiEffects
   assert.deepEqual(effects.relations, { added: 0, updated: 1, removed: 0 })
   assert.equal((await retype.commit()).status, 'applied')
-  host.store.createView('Bulk', ['urn:n0'])
+  host.store.createMap('Bulk', ['urn:n0'])
   for (const [prefix, selection] of [
     ['urn:loose', []],
     ['urn:linked', [{ kind: 'concept', id: 'urn:n0' }]],
@@ -181,7 +181,7 @@ test('edits apply directly without approval, including bulk updates and addition
 
 test('deletion applies directly without host consent; reset, selection and navigation are rejected', async () => {
   const host = fixture()
-  host.store.createView('Pair', ['urn:n0', 'urn:n1'])
+  host.store.createMap('Pair', ['urn:n0', 'urn:n1'])
   const turn = createAiTurn(host)
   turn.execute('edit', { operations: [{ kind: 'concept.remove', id: 'urn:n0' }] })
   assert.equal((await turn.commit()).status, 'applied')
@@ -192,7 +192,7 @@ test('deletion applies directly without host consent; reset, selection and navig
   for (const operations of [
     [{ kind: 'document.reset', id: 'urn:fresh' }],
     [{ kind: 'selection.set', value: [] }],
-    [{ kind: 'view.activate', id: null }],
+    [{ kind: 'map.activate', id: null }],
   ]) {
     const rejected = createAiTurn(host)
     assert.throws(() => rejected.execute('edit', { operations }), NessoError)

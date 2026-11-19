@@ -5,9 +5,9 @@ export async function verifyWorker({ window, url, name, attempted }: CheckContex
   const code = `export const create=(...args)=>{
     if(args.length)throw new Error('Discovery must not receive context');return [{
     id:'probe',label:{en:'Probe'},
-    run:async({document,notifications,clipboard,viewId})=>{
+    run:async({document,notifications,clipboard,mapId})=>{
       if(clipboard!==undefined||navigator.clipboard!==undefined)throw new Error('Unexpected clipboard access');
-      if(viewId!==null||!document.getState().viewGraph)throw new Error('Missing execution state');
+      if(mapId!==null||!document.getState().mapGraph)throw new Error('Missing execution state');
       const id=await document.addConcept({x:12,y:34});
       const result={helper:/^urn:uuid:/.test(id),dom:typeof globalThis.document==='undefined'&&typeof parent==='undefined',bridges:typeof require==='undefined'&&typeof window==='undefined'&&typeof process==='undefined'&&typeof self.nessoPlugins==='undefined',origin:location.origin};
       try{indexedDB.open('worker-probe');result.storage=false}catch{result.storage=true}

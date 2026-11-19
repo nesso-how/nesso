@@ -36,7 +36,7 @@
   "shortcutStrikethrough": "切换删除线",
   "shortcutFitView": "适应视图",
   "rearrangeSelection": "重新排列所选内容",
-  "rearrangeView": "重新排列视图",
-  "shortcutRearrange": "重新排列所选内容或视图",
+  "rearrangeMap": "重新排列导图",
+  "shortcutRearrange": "重新排列所选内容或导图",
   "reuseConcept": "使用已有概念"
 }

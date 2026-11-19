@@ -1,21 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from '@/i18n'
-import { useViewActionBadge } from '@/plugins'
+import { useMapActionBadge } from '@/plugins'
 
 export function ActionBadge({
   actionId,
-  viewId,
+  mapId,
   label,
   inline = false,
 }: {
   actionId: string
-  viewId: string | null
+  mapId: string | null
   label: string
   inline?: boolean
 }) {
   const element = useRef<HTMLSpanElement>(null)
   const [visible, setVisible] = useState(false)
-  const value = useViewActionBadge(actionId, viewId, visible)
+  const value = useMapActionBadge(actionId, mapId, visible)
   const count = value !== null && value > 0 ? value : null
   const t = useTranslation()
   const announcement = count === null ? null : `${label}, ${t('actionBadgeCount', { count })}`

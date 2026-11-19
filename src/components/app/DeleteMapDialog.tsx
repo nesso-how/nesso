@@ -1,16 +1,16 @@
-import type { SavedView } from '@nesso-how/core'
+import type { WorkspaceMap } from '@nesso-how/core'
 import { ConfirmDialog } from '@nesso-how/ui'
 import { useRef, useState } from 'react'
 import { host, useNessoStore } from '@/store'
-import { buildDeleteViewOperations, exclusiveConceptIds } from '@/store/views'
+import { buildDeleteMapOperations, exclusiveConceptIds } from '@/store/maps'
 import { useTranslation } from '@/i18n'
 
-export function DeleteViewDialog({
+export function DeleteMapDialog({
   target,
   onClose,
   finalFocus,
 }: {
-  target: SavedView | 'complete-graph' | null
+  target: WorkspaceMap | 'complete-graph' | null
   onClose: () => void
   finalFocus?: () => HTMLElement | null
 }) {
@@ -31,16 +31,16 @@ export function DeleteViewDialog({
       onOpenChange={(open) => {
         if (!open) close()
       }}
-      title={t('deleteViewTitle', { name: complete ? t('completeGraph') : (target?.name ?? '') })}
-      description={t(complete ? 'resetConfirmation' : 'deleteViewDescription')}
+      title={t('deleteMapTitle', { name: complete ? t('completeGraph') : (target?.name ?? '') })}
+      description={t(complete ? 'resetConfirmation' : 'deleteMapDescription')}
       cancelLabel={t('cancel')}
-      confirmLabel={t('deleteView')}
+      confirmLabel={t('deleteMap')}
       initialFocus={cancel}
       finalFocus={finalFocus}
       onConfirm={() => {
         if (target)
           host.store.applyOperations(
-            buildDeleteViewOperations(
+            buildDeleteMapOperations(
               host.store.getState(),
               complete ? null : target.id,
               keepConcepts,
@@ -57,7 +57,7 @@ export function DeleteViewDialog({
             onChange={(event) => setKeepConcepts(event.target.checked)}
             className="size-4 shrink-0 accent-primary"
           />
-          {t('deleteViewKeepConcepts', { count: exclusive })}
+          {t('deleteMapKeepConcepts', { count: exclusive })}
         </label>
       )}
     </ConfirmDialog>

@@ -1,7 +1,7 @@
 {
   "name": "@nesso-how/review",
   "version": "1.0.0-beta.24",
-  "description": "Spaced repetition for concepts, with private progress shared across views",
+  "description": "Spaced repetition for concepts, with private progress shared across maps",
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -29,19 +29,19 @@
         "zh-CN": "复习"
       },
       "description": {
-        "en": "Practice recalling the concepts in a view with spaced repetition.",
-        "it": "Ripassa i concetti di una vista con la ripetizione dilazionata.",
-        "zh-CN": "通过间隔重复练习回忆视图中的概念。"
+        "en": "Practice recalling the concepts in a map with spaced repetition.",
+        "it": "Ripassa i concetti di una mappa con la ripetizione dilazionata.",
+        "zh-CN": "通过间隔重复练习回忆导图中的概念。"
       },
       "documentation": {
-        "en": "Review includes every concept in the invoked view. Explain each concept and recall its in-view connections from their relation types, then reveal notes and connections and rate your recall. FSRS-6 schedules the next review. Private progress follows each concept across views without changing your graph.",
-        "it": "Ripasso include tutti i concetti della vista. Spiega ogni concetto e ricorda i suoi collegamenti nella vista partendo dai tipi di relazione, poi mostra note e connessioni e valuta il ricordo. FSRS-6 programma il prossimo ripasso. I progressi privati seguono ogni concetto nelle diverse viste senza modificare il grafo.",
-        "zh-CN": "复习包含所选视图的所有概念。解释每个概念，并根据关系类型回忆其在视图内的连接，然后显示笔记和连接并评价回忆程度。FSRS-6 安排下次复习。私人进度随概念跨视图共享，不改变图谱。"
+        "en": "Review includes every concept in the invoked map. Explain each concept and recall its in-map connections from their relation types, then reveal notes and connections and rate your recall. FSRS-6 schedules the next review. Private progress follows each concept across maps without changing your graph.",
+        "it": "Ripasso include tutti i concetti della mappa. Spiega ogni concetto e ricorda i suoi collegamenti nella mappa partendo dai tipi di relazione, poi mostra note e connessioni e valuta il ricordo. FSRS-6 programma il prossimo ripasso. I progressi privati seguono ogni concetto nelle diverse mappe senza modificare il grafo.",
+        "zh-CN": "复习包含所选导图的所有概念。解释每个概念，并根据关系类型回忆其在导图内的连接，然后显示笔记和连接并评价回忆程度。FSRS-6 安排下次复习。私人进度随概念跨导图共享，不改变图谱。"
       }
     }
   },
   "nesso": {
-    "apiVersion": 6,
+    "apiVersion": 7,
     "kind": "actions",
     "entry": "dist/index.js",
     "writes": [],

@@ -28,7 +28,7 @@ type Grant = {
   readonly mode?: 'panel'
   readonly invocation?: {
     readonly actionId: string
-    readonly viewId: string | null
+    readonly mapId: string | null
     readonly descriptors: readonly ActionDescriptor[]
   }
 }
@@ -65,7 +65,7 @@ export function connectActionChannel(
     failed: (error: PluginError) => void
     presentation?: () => Pick<ActionState, 'theme' | 'colorScheme'>
     renderImage?: (
-      viewId: string | null,
+      mapId: string | null,
       options: ImageRenderOptions,
       signal: AbortSignal,
     ) => Promise<RenderedImage>
@@ -77,7 +77,7 @@ export function connectActionChannel(
   const pending = new Set<ReturnType<typeof setTimeout>>()
   const notifications: { id: string; tone: 'info' | 'warning' }[] = []
   const instanceId = crypto.randomUUID()
-  const target = grant.invocation?.viewId ?? null
+  const target = grant.invocation?.mapId ?? null
   const documentId = store.getState().documentId
   let previous = store.getState()
   let revision = 0
@@ -99,24 +99,24 @@ export function connectActionChannel(
   }
   const snapshot = (): ActionState => {
     const state = store.getState()
-    const viewGraph = materialize(state.graph, { ...state.workspace, activeViewId: target })
-    const concepts = new Set(viewGraph.concepts.map(({ id }) => id))
-    const relations = new Set(viewGraph.relations.map(relationKey))
+    const mapGraph = materialize(state.graph, { ...state.workspace, activeMapId: target })
+    const concepts = new Set(mapGraph.concepts.map(({ id }) => id))
+    const relations = new Set(mapGraph.relations.map(relationKey))
     return {
       ...base,
       ...effects.presentation?.(),
       revision,
       locale: state.preferences.locale ?? base.locale,
       workspace: {
-        activeViewId: state.workspace.activeViewId,
-        savedViews: state.workspace.savedViews.map(({ id, name, pinned }) => ({
+        activeMapId: state.workspace.activeMapId,
+        maps: state.workspace.maps.map(({ id, name, pinned }) => ({
           id,
           name,
           pinned,
         })),
       },
-      targetViewId: target,
-      viewGraph,
+      targetMapId: target,
+      mapGraph,
       selected: state.selected.filter(({ kind, id }) =>
         (kind === 'concept' ? concepts : relations).has(id),
       ),
@@ -138,11 +138,11 @@ export function connectActionChannel(
     if (
       state.documentEpoch !== previous.documentEpoch ||
       state.documentId !== documentId ||
-      (target !== null && !state.workspace.savedViews.some(({ id }) => id === target))
+      (target !== null && !state.workspace.maps.some(({ id }) => id === target))
     ) {
       failed(
         new PluginError('stale-context', [
-          { path: 'action', message: 'The action document or target view changed' },
+          { path: 'action', message: 'The action document or target map changed' },
         ]),
       )
       return
@@ -150,8 +150,8 @@ export function connectActionChannel(
     const fields = (value: typeof state) => [
       value.graph,
       value.selected,
-      value.workspace.activeViewId,
-      value.workspace.savedViews,
+      value.workspace.activeMapId,
+      value.workspace.maps,
       value.preferences.locale,
       value.preferences.activeVocabId,
       value.vocabs,
@@ -228,10 +228,10 @@ export function connectActionChannel(
         fail('denied', 'Operation not declared')
       if (expectedRevision !== revision) fail('stale-state', 'Snapshot changed before commit')
       if (
-        store.getState().workspace.activeViewId !== target &&
+        store.getState().workspace.activeMapId !== target &&
         operations.some(({ kind }) => presentationKinds.has(kind))
       )
-        fail('stale-context', 'The active view changed')
+        fail('stale-context', 'The active map changed')
       const before = revision
       store.applyOperations(operations, {
         historyGroup: options?.historyGroup ? `${instanceId}:${options.historyGroup}` : undefined,
@@ -282,7 +282,7 @@ export function connectActionChannel(
       notifications.push({ id, tone: message.params.tone })
       return id
     }
-    if (message.method === 'images.renderView') {
+    if (message.method === 'images.renderCanvas') {
       if (!capabilities.has('images')) fail('denied', 'Capability not declared')
       if (!effects.renderImage) fail('unavailable', 'Image rendering is unavailable')
       if (rendering) fail('unavailable', 'Another image render is pending')

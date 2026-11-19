@@ -1,9 +1,9 @@
 export type {
   GraphSnapshot,
   NessoOperation,
-  SavedView,
+  WorkspaceMap,
   Selection,
-  ViewGraphSnapshot,
+  MapGraphSnapshot,
   VocabDefinition,
 } from '@nesso-how/core'
 export { resolveRelationTypeLabel } from '@nesso-how/core'

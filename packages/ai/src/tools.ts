@@ -47,24 +47,24 @@ const operation = z.discriminatedUnion('kind', [
   }),
   z.strictObject({ kind: z.literal('relation.remove'), id }),
   z.strictObject({
-    kind: z.literal('view.create'),
+    kind: z.literal('map.create'),
     id,
-    name: z.string().max(aiTextLimits.viewName),
+    name: z.string().max(aiTextLimits.mapName),
     conceptIds: z.array(id).max(500),
   }),
   z.strictObject({
-    kind: z.literal('view.rename'),
+    kind: z.literal('map.rename'),
     id,
-    name: z.string().max(aiTextLimits.viewName),
+    name: z.string().max(aiTextLimits.mapName),
   }),
-  z.strictObject({ kind: z.literal('view.pin'), id, pinned: z.boolean() }),
+  z.strictObject({ kind: z.literal('map.pin'), id, pinned: z.boolean() }),
   z.strictObject({
-    kind: z.literal('view.membership'),
-    viewId: id,
+    kind: z.literal('map.membership'),
+    mapId: id,
     conceptId: id,
     included: z.boolean(),
   }),
-  z.strictObject({ kind: z.literal('view.remove'), id }),
+  z.strictObject({ kind: z.literal('map.remove'), id }),
 ])
 
 export const aiTools = {
@@ -75,12 +75,12 @@ export const aiTools = {
   },
   context: {
     description:
-      'Read counts, active view, selection IDs, vocabulary and shared history flags. No complete graph is sent. Read the full selection page by page with the selection tool.',
+      'Read counts, active map, selection IDs, vocabulary and shared history flags. No complete graph is sent. Read the full selection page by page with the selection tool.',
     inputSchema: z.strictObject({}),
   },
   concepts: {
     description:
-      "Read a page of concepts by IDs or label search. Defaults to the active view, where concepts include that view's position and style; use all for the complete graph without presentation.",
+      "Read a page of concepts by IDs or label search. Defaults to the active map, where concepts include that map's position and style; use all for the complete graph without presentation.",
     inputSchema: z.strictObject({
       ids: ids.optional(),
       query: z.string().max(256).optional(),
@@ -93,9 +93,9 @@ export const aiTools = {
       'Read a page of relations by IDs or incident concept ID. Relation IDs identify triples and change when retyped or reconnected.',
     inputSchema: z.strictObject({ ids: ids.optional(), conceptId: id.optional(), scope, ...page }),
   },
-  views: {
+  maps: {
     description:
-      'List paginated view summaries including Overview, or read a page of membership IDs with id. Overview is the complete graph, has id null and cannot be deleted. Creating a saved view makes it active. Deleting the active saved view falls back to Overview. Deleting a saved view keeps its concepts; to match the app, also remove concepts in no other saved view in the same batch.',
+      'List paginated map summaries including the graph, or read a page of membership IDs with id. The graph contains every concept, has id null and cannot be deleted. Creating a map makes it active. Deleting the active map falls back to the graph. Deleting a map keeps its concepts; to match the app, also remove concepts in no other map in the same batch.',
     inputSchema: z.strictObject({ id: id.nullable().optional(), ...page }),
   },
   relation_types: {
@@ -110,7 +110,7 @@ export const aiTools = {
   },
   edit: {
     description:
-      'Stage ordered undoable graph and saved-view operations, not live writes. Supply unique absolute IRIs for new concepts and types. Position updates, colors and bold/italic/strikethrough styles belong to the active saved view and are rejected in Overview or for concepts outside it. Reset color with an empty string and bold/italic/strikethrough with false. Creating a saved view makes it active for subsequent operations. New concepts join the active saved view, or no view in Overview where their initial position is ignored, and link to the concept selected when the turn began, if exactly one, using the default type; concepts added in the same turn do not link to each other. All edits in a turn apply together after validation and any required approval, as a single undoable batch. All edit calls in a turn merge into one batch that can only be undone together.',
+      'Stage ordered undoable graph and map operations, not live writes. Supply unique absolute IRIs for new concepts and types. Position updates, colors and bold/italic/strikethrough styles belong to the active map and are rejected in the graph or for concepts outside it. Reset color with an empty string and bold/italic/strikethrough with false. Creating a map makes it active for subsequent operations. New concepts join the active map, or no map in the graph, where their initial position is ignored, and link to the concept selected when the turn began, if exactly one, using the default type; concepts added in the same turn do not link to each other. All edits in a turn apply together after validation and any required approval, as a single undoable batch. All edit calls in a turn merge into one batch that can only be undone together.',
     inputSchema: z.strictObject({ operations: z.array(operation).min(1).max(500) }),
   },
   history: {

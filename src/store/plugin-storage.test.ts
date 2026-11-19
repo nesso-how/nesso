@@ -126,14 +126,14 @@ test('local and published packages with the same name keep separate namespaces',
   assert.equal(host.store.getState(), saved)
 })
 
-test('view edits and concept deletion retain progress for undo, while a reset starts a fresh document namespace', () => {
+test('map edits and concept deletion retain progress for undo, while a reset starts a fresh document namespace', () => {
   const host = createNessoStore(graph)
   host.store.applyOperations([set(host, 'progress', { count: 1 }, 'urn:a')])
   const saved = host.store.getState()
-  const view = host.store.createView('A', ['urn:a'])
-  host.store.setViewMembership(view, 'urn:a', false)
+  const map = host.store.createMap('A', ['urn:a'])
+  host.store.setMapMembership(map, 'urn:a', false)
   assert.equal(host.store.getState().pluginStorage, saved.pluginStorage)
-  host.store.deleteView(view)
+  host.store.deleteMap(map)
   assert.equal(host.store.getState().pluginStorage, saved.pluginStorage)
   host.store.removeConcept('urn:a')
   assert.equal(host.store.getState().pluginStorage, saved.pluginStorage)
@@ -154,7 +154,7 @@ test('view edits and concept deletion retain progress for undo, while a reset st
 test('storage restoration rejects duplicate namespaces/records and namespace and record quotas are atomic', () => {
   const record = { key: 'progress', value: null }
   const entry = { pluginId: 'nesso-plugin-example', local: false, revision: 1, records: [record] }
-  const saved = { version: 3, documentId: 'urn:document', plugins: [entry] }
+  const saved = { version: 4, documentId: 'urn:document', plugins: [entry] }
   assert.deepEqual(parsePluginStorage(saved), {
     documentId: saved.documentId,
     plugins: saved.plugins,
@@ -162,7 +162,7 @@ test('storage restoration rejects duplicate namespaces/records and namespace and
   const both = { ...saved, plugins: [entry, { ...entry, local: true }] }
   assert.deepEqual(parsePluginStorage(both).plugins, both.plugins)
   for (const value of [
-    { ...saved, version: 4 },
+    { ...saved, version: 5 },
     { ...saved, plugins: [{ ...entry, local: undefined }] },
     { ...saved, documentId: 'relative' },
     { ...saved, plugins: [entry, entry] },
@@ -208,12 +208,12 @@ test('storage restoration rejects duplicate namespaces/records and namespace and
   assert.equal(namespaces.store.getState(), namespaceBefore)
 })
 
-test('view scopes are distinct, validate live references and retain records through deletion and undo', () => {
+test('map scopes are distinct, validate live references and retain records through deletion and undo', () => {
   const host = createNessoStore(graph)
   host.store.applyOperations([
-    { kind: 'view.create', id: 'urn:a', name: 'Project', conceptIds: ['urn:a'] },
+    { kind: 'map.create', id: 'urn:a', name: 'Project', conceptIds: ['urn:a'] },
   ])
-  const scope = { kind: 'view', id: 'urn:a' } as const
+  const scope = { kind: 'map', id: 'urn:a' } as const
   const write = (revision: number, id: string = scope.id): PluginStorageWrite => ({
     kind: 'plugin-storage.set',
     documentId: host.store.getState().documentId,
@@ -229,14 +229,14 @@ test('view scopes are distinct, validate live references and retain records thro
   ])
   const saved = host.store.getState().pluginStorage
   assert.equal(saved[0].records.length, 3)
-  host.store.renameView('urn:a', 'Renamed')
-  host.store.setViewMembership('urn:a', 'urn:a', false)
+  host.store.renameMap('urn:a', 'Renamed')
+  host.store.setMapMembership('urn:a', 'urn:a', false)
   assert.equal(host.store.getState().pluginStorage, saved)
-  host.store.deleteView('urn:a')
+  host.store.deleteMap('urn:a')
   assert.equal(host.store.getState().pluginStorage, saved)
-  assert.throws(() => host.store.applyOperations([write(3)]), /Unknown view/)
+  assert.throws(() => host.store.applyOperations([write(3)]), /Unknown map/)
   host.store.undo()
-  assert.equal(host.store.getState().workspace.savedViews[0].id, 'urn:a')
+  assert.equal(host.store.getState().workspace.maps[0].id, 'urn:a')
   host.store.applyOperations([write(3)])
   assert.equal(host.store.getState().pluginStorage, saved)
   for (const id of ['urn:missing', 'relative']) {
@@ -244,7 +244,7 @@ test('view scopes are distinct, validate live references and retain records thro
     assert.throws(() => host.store.applyOperations([write(3, id)]))
     assert.equal(host.store.getState(), before)
   }
-  host.store.deleteView('urn:a')
+  host.store.deleteMap('urn:a')
   host.store.applyOperations([
     {
       kind: 'plugin-storage.delete',
@@ -257,11 +257,11 @@ test('view scopes are distinct, validate live references and retain records thro
   ])
   assert.equal(host.store.getState().pluginStorage[0].records.length, 2)
   host.store.applyOperations([
-    { kind: 'view.create', id: 'energy', name: 'Energy', conceptIds: ['urn:a'] },
+    { kind: 'map.create', id: 'energy', name: 'Energy', conceptIds: ['urn:a'] },
     write(4, 'energy'),
   ])
   assert.deepEqual(host.store.getState().pluginStorage[0].records[2].scope, {
-    kind: 'view',
+    kind: 'map',
     id: 'energy',
   })
 })

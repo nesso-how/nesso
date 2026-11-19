@@ -29,7 +29,7 @@ export function ConceptColor({
   readonly = false,
 }: {
   store?: HostStore
-  concepts: HostState['viewGraph']['concepts']
+  concepts: HostState['mapGraph']['concepts']
   readonly?: boolean
 }) {
   const t = useTranslation(store)
