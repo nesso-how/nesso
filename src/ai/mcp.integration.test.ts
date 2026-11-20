@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { setImmediate } from 'node:timers/promises'
-import { aiTools, type AiDocumentation, type AiResult } from '@nesso-how/ai'
+import { aiTools, type AiDocumentation, type AiEffects, type AiResult } from '@nesso-how/ai'
 import type { McpBridge, McpEvent } from '../../electron/mcp/bridge.ts'
 import { createNessoStore } from '../store/create.ts'
 import type { PluginPackageInput } from '@nesso-how/plugin/package'
@@ -148,6 +148,12 @@ test('MCP startup failures are reported without clearing the preference, and can
 
 test('MCP reads are immediate; edits and shared history require consent and reject concurrent requests', async () => {
   const f = fixture()
+  f.host.registerVocab({
+    id: 'test',
+    defaultTypeId: 'urn:links',
+    relationTypes: [{ id: 'urn:links', label: 'links' }],
+  })
+  f.host.store.setSelection([{ kind: 'concept', id: 'urn:one' }])
   const before = f.host.store.getState()
   await f.emit({ type: 'tool', id: 'read', name: 'concepts', input: {} })
   assert.deepEqual(f.replies.get('read'), {
@@ -182,7 +188,13 @@ test('MCP reads are immediate; edits and shared history require consent and reje
     type: 'tool',
     id: 'edit',
     name: 'edit',
-    input: { operations: [{ kind: 'concept.label', id: 'urn:one', value: 'Renamed' }] },
+    input: {
+      operations: [
+        { kind: 'concept.add', id: 'urn:standalone' },
+        { kind: 'concept.add', id: 'urn:linked' },
+        { kind: 'relation.connect', source: 'urn:one', target: 'urn:linked' },
+      ],
+    },
   })
   assert.equal(f.host.store.getState(), before)
   assert.equal(f.replies.has('edit'), false)
@@ -190,8 +202,15 @@ test('MCP reads are immediate; edits and shared history require consent and reje
   assert.ok('issues' in f.replies.get('concurrent')!)
   f.decide(true)
   await pending
-  assert.equal((f.replies.get('edit') as { value: { status: string } }).value.status, 'applied')
-  assert.equal(f.host.store.getState().graph.concepts[0].label, 'Renamed')
+  const { status, effects } = (
+    f.replies.get('edit') as { value: { status: string; effects: AiEffects } }
+  ).value
+  assert.equal(status, 'applied')
+  assert.equal(effects.concepts.added, 2)
+  assert.equal(effects.relations.added, 1)
+  assert.deepEqual(f.host.store.getState().graph.relations, [
+    { source: 'urn:one', predicate: 'urn:links', target: 'urn:linked' },
+  ])
   assert.equal(f.host.store.getState().conversation, before.conversation)
   const undo = f.emit({ type: 'tool', id: 'undo', name: 'history', input: { action: 'undo' } })
   f.decide(true)

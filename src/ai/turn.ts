@@ -7,6 +7,8 @@ import { summarizeEffects } from './effects.ts'
 import { readAiTool } from './read.ts'
 
 type Boundary = Pick<ReturnType<typeof createNessoStore>, 'store' | 'previewOperations'>
+const editOptions = { useSelectionForNewConcepts: false }
+
 const fail = (path: string, message: string): never => {
   throw new NessoError([{ path: `ai.${path}`, message }])
 }
@@ -37,12 +39,6 @@ export function createAiTurn(
   let history: 'undo' | 'redo' | undefined
   let candidate: NessoState = base
   let status: 'staging' | 'committing' | 'closed' = 'staging'
-  const staged = (batch: readonly NessoOperation[]): NessoOperation[] =>
-    batch.flatMap((operation): NessoOperation[] =>
-      operation.kind === 'concept.add'
-        ? [{ kind: 'selection.set', value: base.selected }, operation]
-        : [operation],
-    )
   const cancel = () => {
     status = 'closed'
     operations = []
@@ -76,7 +72,7 @@ export function createAiTurn(
           if (operations.length + batch.length > 1000)
             fail('operations', 'Turn exceeds 1000 operations')
           const next = [...operations, ...batch]
-          const preview = boundary.previewOperations(base, staged(next))
+          const preview = boundary.previewOperations(base, next, editOptions)
           operations = next
           candidate = preview.next
           return summarizeEffects(preview)
@@ -103,15 +99,15 @@ export function createAiTurn(
         if (status !== 'staging') fail('turn', 'Turn is closed or applying')
         status = 'committing'
         current()
-        const prepared = staged(operations)
-        const preview = boundary.previewOperations(base, prepared)
+        const preview = boundary.previewOperations(base, operations, editOptions)
         const effects = summarizeEffects(preview)
         if (!history && approve && !(await approve(effects)))
           return { status: 'cancelled' as const, effects }
         if (signal?.aborted) return { status: 'cancelled' as const, effects }
         current()
         boundary.store.applyOperations(
-          history ? [{ kind: history === 'undo' ? 'history.undo' : 'history.redo' }] : prepared,
+          history ? [{ kind: history === 'undo' ? 'history.undo' : 'history.redo' }] : operations,
+          editOptions,
         )
         return { status: 'applied' as const, effects }
       } catch (error) {

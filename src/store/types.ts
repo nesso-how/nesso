@@ -58,7 +58,9 @@ export type HostStore = Omit<NessoStore, 'getState' | 'applyOperations'> & {
   readonly getState: () => HostState
   readonly applyOperations: (
     operations: readonly HostOperation[],
-    options?: Parameters<NessoStore['applyOperations']>[1],
+    options?: NonNullable<Parameters<NessoStore['applyOperations']>[1]> & {
+      readonly useSelectionForNewConcepts?: boolean
+    },
   ) => void
   readonly setChatMessages: (messages: readonly AiChatMessage[]) => void
   readonly appendChatText: (id: string, text: string) => void

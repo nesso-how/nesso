@@ -21,6 +21,8 @@ Tool schemas validate input; the host supplies execution. Assistants cannot rese
 - **Documentation**: `read_docs` returns a bundled README for `nesso`, `ai`, `plugin`, `plugin-example`, `schema`, `concept-map`, `knowledge-graph`, or `ui`, without filesystem or network access.
 - **Plugins (MCP only)**: `aiMcpTools` adds `plugins`, which lists installed packages, their provenance, and the latest failure of local plugins as untrusted text, and `propose_plugin`, which submits the absolute path of a built package directory for in-app approval. Electron reads only `package.json`, the entry, and the fonts the theme references. A proposal can replace only an installed local plugin, never an npm or bundled one.
 
+`concept.add` through chat or MCP does not create relations from the selection. There is no need to clear the selection. To add a linked concept, include `relation.connect` after `concept.add` in the same batch.
+
 Chat applies a turn's writes together only after the response completes successfully. MCP reads are immediate; each `edit` or `history` call requires in-app approval and commits independently. A plugin proposal is independent of document edits, installs as soon as the user approves it, and returns `installed`, `cancelled`, or `failed` with validation or load issues. MCP requests time out after 120 seconds, approval included.
 
 ## API
