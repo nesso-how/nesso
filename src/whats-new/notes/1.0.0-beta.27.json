@@ -1,0 +1,14 @@
+{
+  "en": [
+    "Adding concepts with AI no longer links them automatically to the selected concept. Ask for a connection when you want one.",
+    "Grouped connections no longer disappear just because you switch maps."
+  ],
+  "it": [
+    "Quando aggiungi concetti con l’IA, non vengono più collegati automaticamente al concetto selezionato. Chiedi un collegamento solo quando ti serve.",
+    "I gruppi di collegamenti non scompaiono più quando passi da una mappa all’altra."
+  ],
+  "zh-CN": [
+    "使用 AI 添加概念时，新概念不会再自动连到选中的概念。需要连线时，直接告诉 AI 即可。",
+    "切换导图时，已分组的连线不会再消失。"
+  ]
+}

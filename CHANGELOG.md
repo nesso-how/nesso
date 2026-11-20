@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.0-beta.27 — 2026-11-20
+
+### Breaking Changes
+
+- **ai:** Require explicit links for new concepts (#386)
+  MCP concept creation no longer links to the current selection. Include an explicit relation.connect in the same edit batch to create a link.
+
+### Fixes
+
+- **concept-map:** Make relation grouping deterministic (#385)
+
 ## 1.0.0-beta.26 — 2026-11-19
 
 ### Features
