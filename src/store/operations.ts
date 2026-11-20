@@ -252,6 +252,7 @@ export const applyStateOperations = (
     readonly renderers: ReadonlyMap<string, RendererDefinition>
     readonly themes: ReadonlyMap<string, ThemeDefinition>
   },
+  useSelectionForNewConcepts = true,
 ) => {
   let concepts = new ListEdit(state.graph.concepts, (item) => item.id, sameConcept)
   let relations = new ListEdit(
@@ -282,6 +283,14 @@ export const applyStateOperations = (
   let selected = state.selected
   let explicitSelection = state.selected
   let reset = false
+
+  const creationSource = () => {
+    if (!useSelectionForNewConcepts) return undefined
+    const current = reconcileSelection(graph(), selected)
+    return current.length === 1 && current[0].kind === 'concept'
+      ? concepts.get(current[0].id)
+      : undefined
+  }
 
   const activeVocab = () => {
     const vocab = state.vocabs.find((item) => item.id === preferences.activeVocabId)
@@ -526,11 +535,7 @@ export const applyStateOperations = (
         setPositions(operation.updates)
         break
       case 'concept.add': {
-        const current = reconcileSelection(graph(), selected)
-        const source =
-          current.length === 1 && current[0].kind === 'concept'
-            ? concepts.get(current[0].id)
-            : undefined
+        const source = creationSource()
         const vocab = source ? activeVocab() : null
         const type = vocab?.relationTypes.find((item) => item.id === vocab.defaultTypeId)
         if (type) withType(type)

@@ -79,6 +79,18 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
   )
   let writesPaused = false
 
+  const previewOperations = (
+    state: Parameters<typeof applyStateOperations>[0],
+    operations: Parameters<typeof applyStateOperations>[1],
+    options?: Parameters<HostStore['applyOperations']>[1],
+  ) =>
+    applyStateOperations(
+      state,
+      operations,
+      { renderers, themes },
+      options?.useSelectionForNewConcepts,
+    )
+
   const applyOperations: HostStore['applyOperations'] = (operations, options) => {
     if (writesPaused && operations.length)
       fail('storage', 'Local data is being moved; try again when the transfer completes')
@@ -92,7 +104,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
       return
     }
     const state = store.getState()
-    const { next, delta, reset } = applyStateOperations(state, operations, { renderers, themes })
+    const { next, delta, reset } = previewOperations(state, operations, options)
     history.record(delta, options?.historyGroup, reset)
     const flags = history.flags()
     const historyState =
@@ -246,11 +258,6 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
       store.setState({ persistenceIssues: issues.map((issue) => ({ ...issue })) })
     }
   }
-
-  const previewOperations = (
-    state: Parameters<typeof applyStateOperations>[0],
-    operations: Parameters<typeof applyStateOperations>[1],
-  ) => applyStateOperations(state, operations, { renderers, themes })
 
   const setWritesPaused = (value: boolean) => {
     writesPaused = value
