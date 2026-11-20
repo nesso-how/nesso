@@ -5,7 +5,6 @@ type Concept = PresentedGraph['concepts'][number]
 type Bounds = { x: number; y: number; width: number; height: number }
 export type RelationGroup = {
   key: string
-  candidate: string
   direction: 'in' | 'out'
   anchor: string
   predicate: string
@@ -13,15 +12,7 @@ export type RelationGroup = {
   relations: string[]
   bounds: Bounds
 }
-export type KeptGroups = ReadonlyMap<string, readonly ReadonlySet<string>[]>
-const groupThresholds = { form: 28, break: 48 }
-
-export function keepGroups(groups: readonly RelationGroup[]): KeptGroups {
-  const kept = new Map<string, ReadonlySet<string>[]>()
-  for (const group of groups)
-    kept.set(group.candidate, [...(kept.get(group.candidate) ?? []), new Set(group.members)])
-  return kept
-}
+const maxGroupGap = 28
 
 const overlaps = (a: Bounds, b: Bounds) =>
   a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height
@@ -30,12 +21,10 @@ export function groupRelations({
   concepts,
   relations,
   sizes = {},
-  kept = new Map(),
 }: {
   concepts: readonly Concept[]
   relations: PresentedGraph['relations']
   sizes?: Readonly<Record<string, { width: number; height: number }>>
-  kept?: KeptGroups
 }): RelationGroup[] {
   const boxes = new Map(
     concepts.map(({ id, position }) => [
@@ -52,7 +41,6 @@ export function groupRelations({
       if (!boxes.has(anchor) || !boxes.has(member) || anchor === member) continue
       const candidate = JSON.stringify([direction, anchor, relation.predicate])
       const entry = candidates.get(candidate) ?? {
-        candidate,
         direction,
         anchor,
         predicate: relation.predicate,
@@ -64,9 +52,8 @@ export function groupRelations({
       candidates.set(candidate, entry)
     }
   }
-  const valid: (RelationGroup & { kept: boolean })[] = []
-  for (const base of candidates.values()) {
-    const previous = kept.get(base.candidate) ?? []
+  const valid: RelationGroup[] = []
+  for (const [candidate, base] of candidates) {
     const pending = new Set(base.members.slice().sort())
     while (pending.size) {
       const first = pending.values().next().value!
@@ -80,10 +67,7 @@ export function groupRelations({
             Math.max(0, Math.max(a.x, b.x) - Math.min(a.x + a.width, b.x + b.width)),
             Math.max(0, Math.max(a.y, b.y) - Math.min(a.y + a.height, b.y + b.height)),
           )
-          const together = previous.some(
-            (cluster) => cluster.has(members[i]) && cluster.has(member),
-          )
-          if (distance > (together ? groupThresholds.break : groupThresholds.form)) continue
+          if (distance > maxGroupGap) continue
           pending.delete(member)
           members.push(member)
         }
@@ -105,17 +89,13 @@ export function groupRelations({
         ...base,
         members,
         bounds,
-        key: JSON.stringify([base.candidate, members]),
+        key: JSON.stringify([candidate, members]),
         relations: base.relations.filter((_, i) => members.includes(base.members[i])).sort(),
-        kept: previous.some((cluster) => members.filter((id) => cluster.has(id)).length >= 2),
       })
     }
   }
   valid.sort(
-    (a, b) =>
-      b.members.length - a.members.length ||
-      Number(b.kept) - Number(a.kept) ||
-      a.key.localeCompare(b.key),
+    (a, b) => b.members.length - a.members.length || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0),
   )
   const groups: RelationGroup[] = []
   for (const candidate of valid) {

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import type { Concept, Graph as Snapshot, Presentation } from '@nesso-how/schema'
-import { groupRelations, keepGroups } from './groups.ts'
+import { groupRelations } from './groups.ts'
 
 type Graph = Omit<Snapshot, 'concepts'> & { concepts: (Concept & Presentation)[] }
 
@@ -59,23 +59,14 @@ test('partial clusters and distinct clusters retain unique identities', () => {
   const groups = groupRelations(graph)
   assert.equal(groups.length, 2)
   assert.notEqual(groups[0].key, groups[1].key)
-  assert.equal(keepGroups(groups).values().next().value!.length, 2)
 })
 
-test('hysteresis retains members to 48 px but returning members need 28 px', () => {
+test('members join at a gap of 28 and split at 29', () => {
   const graph = fixture()
-  let kept = keepGroups(groupRelations(graph))
-  graph.concepts[3].position.x = 268
-  assert.equal(groupRelations({ ...graph, kept })[0].members.length, 3)
-  assert.equal(groupRelations(graph)[0].members.length, 2)
-  graph.concepts[3].position.x = 269
-  const split = groupRelations({ ...graph, kept })
-  assert.equal(split[0].members.length, 2)
-  kept = keepGroups(split)
-  graph.concepts[3].position.x = 260
-  assert.equal(groupRelations({ ...graph, kept })[0].members.length, 2)
   graph.concepts[3].position.x = 248
-  assert.equal(groupRelations({ ...graph, kept })[0].members.length, 3)
+  assert.deepEqual(groupRelations(graph)[0].members, ['urn:b', 'urn:c', 'urn:d'])
+  graph.concepts[3].position.x = 249
+  assert.deepEqual(groupRelations(graph)[0].members, ['urn:b', 'urn:c'])
 })
 
 test('anchors and padded bounds are obstacles', () => {
@@ -84,21 +75,20 @@ test('anchors and padded bounds are obstacles', () => {
   assert.equal(groupRelations(graph).length, 0)
 })
 
-test('largest candidate wins, then a kept candidate, independently of relation order', () => {
+test('largest candidate wins, then the first by key, independently of input order', () => {
   const graph = fixture()
-  graph.concepts.push(concept('k', 500, -200))
-  graph.relations.push(relation('k', 'b', 'urn:q'), relation('k', 'c', 'urn:q'))
+  graph.concepts.push(concept('0', 500, -200))
+  graph.relations.push(relation('0', 'b', 'urn:q'), relation('0', 'c', 'urn:q'))
   assert.equal(groupRelations(graph)[0].anchor, 'urn:a')
   graph.relations = graph.relations.filter(({ target }) => target !== 'urn:d')
-  const onlyK = groupRelations({
-    ...graph,
-    relations: graph.relations.filter(({ source }) => source === 'urn:k'),
-  })
-  const kept = keepGroups(onlyK)
-  assert.equal(groupRelations({ ...graph, kept })[0].anchor, 'urn:k')
+  assert.equal(groupRelations(graph)[0].anchor, 'urn:0')
   assert.deepEqual(
-    groupRelations({ ...graph, relations: [...graph.relations].reverse(), kept }),
-    groupRelations({ ...graph, kept }),
+    groupRelations({
+      ...graph,
+      concepts: [...graph.concepts].reverse(),
+      relations: [...graph.relations].reverse(),
+    }),
+    groupRelations(graph),
   )
 })
 

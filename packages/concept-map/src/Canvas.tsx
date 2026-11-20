@@ -56,8 +56,7 @@ import { ConceptNodeView } from './ConceptNodeView'
 import { GroupNodeView } from './GroupNodeView'
 import { RelationEdgeView } from './RelationEdgeView'
 import { arrange, type LayoutBounds } from './layout'
-import { groupRelations, keepGroups } from './groups'
-import type { RelationGroup } from './groups'
+import { groupRelations } from './groups'
 import { ConnectionPreview } from './ConnectionPreview'
 import { GraphContextMenu } from './GraphContextMenu'
 import {
@@ -206,10 +205,9 @@ export function Canvas({
     target: ContextMenuTarget
   } | null>(null)
   const grouping = useNesso((state) => state.preferences.relationGroups ?? true)
-  const [retained, setRetained] = useState({ map, grouping, groups: [] as RelationGroup[] })
-  const kept = useMemo(
-    () => keepGroups(retained.map === map && retained.grouping === grouping ? retained.groups : []),
-    [retained, map, grouping],
+  const measured = useMemo(
+    () => graph.concepts.every(({ id }) => sizes[id] !== undefined),
+    [graph.concepts, sizes],
   )
   const [adapt] = useState(createGraphElements)
   const selection = useCallback(
@@ -231,26 +229,11 @@ export function Canvas({
 
   const singleSelection = selected.length === 1
   const groups = useMemo(
-    () =>
-      grouping
-        ? groupRelations({
-            concepts: displayed.concepts,
-            relations: displayed.relations,
-            sizes,
-            kept,
-          })
-        : [],
-    [grouping, displayed, sizes, kept],
+    () => (grouping && measured ? groupRelations({ ...displayed, sizes }) : []),
+    [grouping, measured, displayed, sizes],
   )
-  if (
-    retained.map !== map ||
-    retained.grouping !== grouping ||
-    retained.groups.length !== groups.length ||
-    retained.groups.some((group, index) => group.key !== groups[index].key)
-  )
-    setRetained({ map, grouping, groups })
   useLayoutEffect(() => {
-    if (dragged) return
+    if (dragged || (grouping && !measured)) return
     onPresentation?.({
       graph,
       mapId: map,
@@ -261,7 +244,7 @@ export function Canvas({
         return count === 0 || count === group.relations.length
       }),
     })
-  }, [groups, dragged, onPresentation, graph, map, sizes, selected])
+  }, [groups, dragged, onPresentation, graph, map, grouping, measured, selected])
   const groupDrag = useRef<{
     pointerId: number
     members: readonly string[]
