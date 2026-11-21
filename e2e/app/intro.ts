@@ -157,7 +157,7 @@ export async function verifyIntro({ window, url, name }: CheckContext) {
     `!document.querySelector('.intro') && !!document.querySelector('#canvas .react-flow')`,
   )
   await evaluate(
-    `[...document.querySelectorAll('#maps button')].find(button=>button.textContent.trim().startsWith('Rest')).click()`,
+    `[...document.querySelectorAll('.sidebar-maps button')].find(button=>button.textContent.trim().startsWith('Rest')).click()`,
   )
   await ready(
     `[...document.querySelectorAll('#canvas .react-flow__edge-text')].some(edge=>edge.textContent==='can disrupt')`,

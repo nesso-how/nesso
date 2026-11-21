@@ -32,6 +32,7 @@ const positions = new Map([
 ])
 const workspace = (): WorkspaceState => ({
   activeMapId: 'urn:map',
+  mapGroups: [],
   viewports: {},
   maps: [
     {
@@ -114,7 +115,7 @@ const savedStorage = () => {
   host.store.setChatMessages([{ id: 'user', role: 'user', content: 'Hello' }])
   const state = host.store.getState()
   storage.records.set('document', {
-    version: 7,
+    version: 8,
     documentId: state.documentId,
     graph: serializeGraph(state.graph as Graph),
     workspace: state.workspace,
@@ -225,7 +226,7 @@ test('legacy documents migrate map presentation and viewports and collect unsort
     version: number
     graph: { schemaVersion: number }
   }
-  assert.equal(saved.version, 7)
+  assert.equal(saved.version, 8)
   assert.equal(saved.graph.schemaVersion, 4)
   assert.deepEqual(parseGraph(saved.graph).maps, [])
   await persistence.dispose()
@@ -290,6 +291,16 @@ test('earlier records rename views to maps in documents, sections and plugin sco
   assert.deepEqual(loaded.pluginStorage, [
     { ...plugin, records: [{ ...record, scope: { kind: 'map', id: activeMapId } }] },
   ])
+})
+
+test('version 7 workspaces start ungrouped', async () => {
+  const storage = savedStorage()
+  const saved = storage.records.get('document') as { workspace: WorkspaceState }
+  const { mapGroups: _groups, ...legacyWorkspace } = saved.workspace
+  storage.records.set('document', { ...saved, version: 7, workspace: legacyWorkspace })
+  const loaded = await loadPersistence(storage)
+  assert.deepEqual(loaded.workspace, saved.workspace)
+  assert.deepEqual(loaded.upgrades?.document, saved)
 })
 
 test('each map and the graph retain their viewport across navigation and reopening', async () => {
@@ -509,6 +520,11 @@ test('durable state round-trips without rewriting restored records or persisting
   const host = registeredHost(fixture())
   const mapId = host.store.createMap('Pair', ['urn:one', 'urn:two'])
   host.store.setMapPinned(mapId, true)
+  host.store.applyOperations([
+    { kind: 'map-group.create', id: 'urn:group', name: 'Work' },
+    { kind: 'map.group', id: mapId, groupId: 'urn:group' },
+    { kind: 'map-group.setOpen', id: 'urn:group', open: false },
+  ])
   host.store.setPanelSizes({ explorerWidth: 310, inspectorWidth: 330 })
   host.store.setLocale('zh-CN')
   host.store.applyOperations([{ kind: 'preferences.relationGroups', value: false }])
@@ -568,6 +584,7 @@ test('durable state round-trips without rewriting restored records or persisting
   assert.equal(reset.graph?.concepts.length, 1)
   assert.deepEqual(reset.workspace, {
     activeMapId: reset.workspace?.maps[0].id,
+    mapGroups: [],
     maps: [
       {
         id: reset.workspace?.maps[0].id,
@@ -679,6 +696,7 @@ test('autosave debounces durable sections and drains edits on shutdown', async (
 
 test('malformed records stay protected while the other sections save', async () => {
   const state = registeredHost(fixture()).store.getState()
+  const validWorkspace = workspace()
   const longConcept = fixture()
   longConcept.concepts[0].label = 'x'.repeat(maxConceptLabelLength + 1)
   const longType = fixture()
@@ -701,7 +719,7 @@ test('malformed records stay protected while the other sections save', async () 
     [
       'document',
       {
-        version: 7,
+        version: 8,
         documentId: state.documentId,
         graph: { ...serializeGraph(fixture()), schemaVersion: 5 },
         workspace: state.workspace,
@@ -711,7 +729,7 @@ test('malformed records stay protected while the other sections save', async () 
     [
       'document',
       {
-        version: 7,
+        version: 8,
         documentId: state.documentId,
         graph: serializeGraph(longConcept),
         workspace: state.workspace,
@@ -720,7 +738,7 @@ test('malformed records stay protected while the other sections save', async () 
     [
       'document',
       {
-        version: 7,
+        version: 8,
         documentId: state.documentId,
         graph: serializeGraph(longType),
         workspace: state.workspace,
@@ -729,7 +747,7 @@ test('malformed records stay protected while the other sections save', async () 
     [
       'document',
       {
-        version: 7,
+        version: 8,
         documentId: state.documentId,
         graph: serializeGraph({ concepts: [], relations: [], relationTypes: [] }),
         workspace: state.workspace,
@@ -738,7 +756,7 @@ test('malformed records stay protected while the other sections save', async () 
     [
       'document',
       {
-        version: 7,
+        version: 8,
         documentId: state.documentId,
         graph: serializeGraph(fixture()),
         workspace: { ...state.workspace, activeMapId: 'unknown' },
@@ -747,7 +765,20 @@ test('malformed records stay protected while the other sections save', async () 
     [
       'document',
       {
-        version: 7,
+        version: 8,
+        documentId: state.documentId,
+        graph: serializeGraph(fixture()),
+        workspace: {
+          ...validWorkspace,
+          maps: [{ ...validWorkspace.maps[0], groupId: 'urn:missing' }],
+        },
+      },
+      'document.workspace.maps[0].groupId',
+    ],
+    [
+      'document',
+      {
+        version: 8,
         documentId: state.documentId,
         graph: serializeGraph(fixture()),
         workspace: {
@@ -766,7 +797,7 @@ test('malformed records stay protected while the other sections save', async () 
     [
       'document',
       {
-        version: 7,
+        version: 8,
         documentId: state.documentId,
         graph: legacyDocument().graph,
         workspace: state.workspace,

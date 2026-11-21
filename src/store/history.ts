@@ -8,11 +8,18 @@ import {
   sameMember,
   sameBend,
   sameType,
+  sameMapMetadata,
   type Change,
   type DocumentDelta,
   type MapChange,
 } from './delta.ts'
-import { checkGraph, checkWorkspace, materialize, reconcileSelection } from './operations.ts'
+import {
+  checkGraph,
+  checkWorkspace,
+  materialize,
+  pruneCollapsedMapGroups,
+  reconcileSelection,
+} from './operations.ts'
 import { parseWorkspace } from './settings.ts'
 
 export const historyLimit = 100
@@ -21,9 +28,7 @@ const stable = ({ before, after }: Change<unknown>): boolean =>
   !!before && !!after && before.index === after.index
 
 const sameMetadata = (map: MapChange): boolean =>
-  stable(map) &&
-  map.before!.value.name === map.after!.value.name &&
-  map.before!.value.pinned === map.after!.value.pinned
+  stable(map) && sameMapMetadata(map.before!.value, map.after!.value)
 
 const mergeDelta = (left: DocumentDelta, right: DocumentDelta): DocumentDelta => {
   const maps = new Map(left.maps.map((map) => [map.id, map]))
@@ -51,11 +56,15 @@ const mergeDelta = (left: DocumentDelta, right: DocumentDelta): DocumentDelta =>
     maps: [...maps.values()].filter(
       (map) => map.members.length > 0 || map.relationBends.length > 0 || !sameMetadata(map),
     ),
+    mapGroups: left.mapGroups,
   }
 }
 
 const canMerge = (left: DocumentDelta, right: DocumentDelta): boolean =>
-  left.maps.every(stable) && right.maps.every(sameMetadata)
+  left.mapGroups.length === 0 &&
+  right.mapGroups.length === 0 &&
+  left.maps.every(stable) &&
+  right.maps.every(sameMetadata)
 
 const restoreViews = (
   maps: readonly WorkspaceMap[],
@@ -94,7 +103,31 @@ const restoreViews = (
   return applyChanges(maps, patches, (map) => map.id, forward)
 }
 
-const restore = (state: NessoState, delta: DocumentDelta, forward: boolean): NessoState => {
+type HistoryEntry = {
+  delta: DocumentDelta
+  group?: string
+  collapsedMapGroupIds?: readonly string[]
+}
+
+const removedCollapsedGroups = (
+  { workspace }: NessoState,
+  delta: DocumentDelta,
+  forward: boolean,
+): readonly string[] | undefined => {
+  const collapsed = workspace.collapsedMapGroupIds
+  if (!collapsed?.length || !delta.mapGroups.length) return undefined
+  const removed = delta.mapGroups
+    .filter(({ before, after }) => (forward ? !after : !before))
+    .map(({ id }) => id)
+  const kept = collapsed.filter((id) => removed.includes(id))
+  return kept.length ? kept : undefined
+}
+
+const restore = (
+  state: NessoState,
+  { delta, collapsedMapGroupIds }: HistoryEntry,
+  forward: boolean,
+): NessoState => {
   const concepts = applyChanges(
     state.graph.concepts,
     delta.concepts,
@@ -116,13 +149,30 @@ const restore = (state: NessoState, delta: DocumentDelta, forward: boolean): Nes
       : { concepts, relations, relationTypes }
   if (graph !== state.graph) checkGraph(graph)
   const maps = restoreViews(state.workspace.maps, delta.maps, forward)
+  const mapGroups = applyChanges(
+    state.workspace.mapGroups,
+    delta.mapGroups,
+    (group) => group.id,
+    forward,
+  )
   const activeMapId = maps.some((map) => map.id === state.workspace.activeMapId)
     ? state.workspace.activeMapId
     : null
+  const collapsed = collapsedMapGroupIds
+    ? [...(state.workspace.collapsedMapGroupIds ?? []), ...collapsedMapGroupIds]
+    : state.workspace.collapsedMapGroupIds
   const workspace =
-    maps === state.workspace.maps && activeMapId === state.workspace.activeMapId
+    maps === state.workspace.maps &&
+    mapGroups === state.workspace.mapGroups &&
+    activeMapId === state.workspace.activeMapId
       ? state.workspace
-      : { ...state.workspace, maps, activeMapId }
+      : pruneCollapsedMapGroups({
+          ...state.workspace,
+          maps,
+          mapGroups,
+          activeMapId,
+          ...(collapsed && { collapsedMapGroupIds: collapsed }),
+        })
   if (workspace !== state.workspace) {
     parseWorkspace(workspace)
     checkWorkspace(graph, workspace)
@@ -138,8 +188,8 @@ const restore = (state: NessoState, delta: DocumentDelta, forward: boolean): Nes
 }
 
 export const createHistory = (getState: () => NessoState, publish: (next: NessoState) => void) => {
-  const past: { delta: DocumentDelta; group?: string }[] = []
-  const future: DocumentDelta[] = []
+  const past: HistoryEntry[] = []
+  const future: HistoryEntry[] = []
   const flags = () => ({ canUndo: past.length > 0, canRedo: future.length > 0 })
   return {
     flags,
@@ -160,7 +210,11 @@ export const createHistory = (getState: () => NessoState, publish: (next: NessoS
         previous.delta = mergeDelta(previous.delta, delta)
         if (!hasDelta(previous.delta)) past.pop()
       } else {
-        past.push({ delta, group })
+        past.push({
+          delta,
+          group,
+          collapsedMapGroupIds: removedCollapsedGroups(getState(), delta, true),
+        })
         if (past.length > historyLimit) past.shift()
       }
       future.length = 0
@@ -168,18 +222,26 @@ export const createHistory = (getState: () => NessoState, publish: (next: NessoS
     undo: (): void => {
       const entry = past.at(-1)
       if (!entry) return
-      const next = restore(getState(), entry.delta, false)
+      const current = getState()
+      const next = restore(current, entry, false)
       past.pop()
-      future.push(entry.delta)
+      future.push({
+        delta: entry.delta,
+        collapsedMapGroupIds: removedCollapsedGroups(current, entry.delta, false),
+      })
       if (past.at(-1)) past.at(-1)!.group = undefined
       publish(next)
     },
     redo: (): void => {
-      const delta = future.at(-1)
-      if (!delta) return
-      const next = restore(getState(), delta, true)
+      const entry = future.at(-1)
+      if (!entry) return
+      const current = getState()
+      const next = restore(current, entry, true)
       future.pop()
-      past.push({ delta })
+      past.push({
+        delta: entry.delta,
+        collapsedMapGroupIds: removedCollapsedGroups(current, entry.delta, true),
+      })
       publish(next)
     },
   }

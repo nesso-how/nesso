@@ -11,6 +11,7 @@ test('seed translations cover every label and map name without changing document
   assert.deepEqual(parseGraph(seed), { graph: english.graph, maps: [] })
   assert.deepEqual(english.workspace, {
     activeMapId: seedMaps[0].id,
+    mapGroups: [],
     maps: seedMaps,
     viewports: {},
   })

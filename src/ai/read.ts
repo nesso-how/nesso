@@ -32,11 +32,16 @@ export function readAiTool(
       const map = state.workspace.maps.find(({ id }) => id === state.workspace.activeMapId)
       const vocab = state.vocabs.find(({ id }) => id === state.preferences.activeVocabId)
       return {
-        activeMap: { id: map?.id ?? null, name: map?.name ?? 'Graph' },
+        activeMap: {
+          id: map?.id ?? null,
+          name: map?.name ?? 'Graph',
+          groupId: map?.groupId ?? null,
+        },
         counts: {
           concepts: state.graph.concepts.length,
           relations: state.graph.relations.length,
           maps: state.workspace.maps.length,
+          mapGroups: state.workspace.mapGroups.length,
         },
         visible: {
           concepts: state.mapGraph.concepts.length,
@@ -81,13 +86,28 @@ export function readAiTool(
       if (query.id === undefined)
         return page(
           [
-            { id: null, name: 'Graph', concepts: state.graph.concepts.length, pinned: true },
-            ...state.workspace.maps.map((map) => ({
-              id: map.id,
-              name: map.name,
-              concepts: map.members.length,
-              pinned: map.pinned,
-            })),
+            ...(query.groupId === undefined
+              ? [
+                  {
+                    id: null,
+                    name: 'Graph',
+                    groupId: null,
+                    concepts: state.graph.concepts.length,
+                    pinned: true,
+                  },
+                ]
+              : []),
+            ...state.workspace.maps
+              .filter(
+                (map) => query.groupId === undefined || (map.groupId ?? null) === query.groupId,
+              )
+              .map((map) => ({
+                id: map.id,
+                name: map.name,
+                groupId: map.groupId ?? null,
+                concepts: map.members.length,
+                pinned: map.pinned,
+              })),
           ],
           query,
         )
@@ -96,11 +116,21 @@ export function readAiTool(
       return {
         id: map?.id ?? null,
         name: map?.name ?? 'Graph',
+        groupId: map?.groupId ?? null,
         members: page(
           (map?.members ?? state.graph.concepts).map(({ id }) => id),
           query,
         ),
       }
+    }
+    case 'map_groups': {
+      const counts = new Map<string, number>()
+      for (const { groupId } of state.workspace.maps)
+        if (groupId !== undefined) counts.set(groupId, (counts.get(groupId) ?? 0) + 1)
+      return page(
+        state.workspace.mapGroups.map((group) => ({ ...group, maps: counts.get(group.id) ?? 0 })),
+        aiTools.map_groups.inputSchema.parse(input),
+      )
     }
     case 'relation_types':
       return page(relationTypes(state), aiTools.relation_types.inputSchema.parse(input))

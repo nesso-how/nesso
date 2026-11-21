@@ -6,13 +6,18 @@ type Page<T> = {
   readonly total: number
   readonly nextOffset: number | null
 }
-type MapSummary = { readonly id: string | null; readonly name: string }
+type MapSummary = {
+  readonly id: string | null
+  readonly name: string
+  readonly groupId: string | null
+}
 
 export type AiEffects = {
   readonly concepts: Counts
   readonly relations: Counts
   readonly relationTypes: Counts
   readonly maps: Counts
+  readonly mapGroups: Counts
   readonly memberships: number
 }
 
@@ -24,6 +29,7 @@ export type AiToolResults = {
       readonly concepts: number
       readonly relations: number
       readonly maps: number
+      readonly mapGroups: number
     }
     readonly visible: { readonly concepts: number; readonly relations: number }
     readonly selection: readonly { readonly kind: 'concept' | 'relation'; readonly id: string }[]
@@ -50,6 +56,7 @@ export type AiToolResults = {
   readonly maps:
     | Page<MapSummary & { readonly concepts: number; readonly pinned: boolean }>
     | (MapSummary & { readonly members: Page<string> })
+  readonly map_groups: Page<{ readonly id: string; readonly name: string; readonly maps: number }>
   readonly relation_types: Page<{ readonly id: string; readonly label: string }>
   readonly selection: Page<{ readonly kind: 'concept' | 'relation'; readonly id: string }>
   readonly edit: AiEffects

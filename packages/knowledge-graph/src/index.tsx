@@ -53,7 +53,7 @@ const ControlButton = ({
     title={shortcut ? `${label} (${shortcut.toUpperCase()})` : label}
     aria-label={label}
     aria-keyshortcuts={shortcut}
-    className="flex size-7 items-center justify-center rounded-(--radius-control) bg-background text-[color-mix(in_srgb,var(--foreground)_20%,var(--muted-foreground))] outline-none hover:bg-hover hover:text-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring active:bg-pressed disabled:bg-background disabled:text-muted-foreground pointer-coarse:size-11 [&_svg]:size-3.5 disabled:[&_svg]:[stroke-opacity:0.4]"
+    className="flex size-7 items-center justify-center rounded-(--radius-control) bg-background text-[color-mix(in_srgb,var(--foreground)_20%,var(--muted-foreground))] hover:bg-hover hover:text-foreground active:bg-pressed disabled:bg-background disabled:text-muted-foreground pointer-coarse:size-11 [&_svg]:size-3.5 disabled:[&_svg]:[stroke-opacity:0.4]"
     {...props}
   />
 )

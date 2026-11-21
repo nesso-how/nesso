@@ -58,6 +58,18 @@ const operation = z.discriminatedUnion('kind', [
     name: z.string().max(aiTextLimits.mapName),
   }),
   z.strictObject({ kind: z.literal('map.pin'), id, pinned: z.boolean() }),
+  z.strictObject({ kind: z.literal('map.group'), id, groupId: id.nullable() }),
+  z.strictObject({
+    kind: z.literal('map-group.create'),
+    id,
+    name: z.string().max(aiTextLimits.mapName),
+  }),
+  z.strictObject({
+    kind: z.literal('map-group.rename'),
+    id,
+    name: z.string().max(aiTextLimits.mapName),
+  }),
+  z.strictObject({ kind: z.literal('map-group.remove'), id }),
   z.strictObject({
     kind: z.literal('map.membership'),
     mapId: id,
@@ -95,8 +107,17 @@ export const aiTools = {
   },
   maps: {
     description:
-      'List paginated map summaries including the graph, or read a page of membership IDs with id. The graph contains every concept, has id null and cannot be deleted. Creating a map makes it active. Deleting the active map falls back to the graph. Deleting a map keeps its concepts; to match the app, also remove concepts in no other map in the same batch.',
-    inputSchema: z.strictObject({ id: id.nullable().optional(), ...page }),
+      'List paginated map summaries with group assignments, including the graph. Filter by groupId (null for ungrouped saved maps), or read a page of membership IDs with id. The graph contains every concept, has id null and cannot be deleted. Creating a map makes it active. Deleting the active map falls back to the graph. Deleting a map keeps its concepts; to match the app, also remove concepts in no other map in the same batch.',
+    inputSchema: z.strictObject({
+      id: id.nullable().optional(),
+      groupId: id.nullable().optional(),
+      ...page,
+    }),
+  },
+  map_groups: {
+    description:
+      'List paginated map groups, including empty groups, with counts that include pinned maps. Use maps with groupId to read the maps in a group.',
+    inputSchema: z.strictObject({ ...page }),
   },
   relation_types: {
     description:
@@ -110,7 +131,7 @@ export const aiTools = {
   },
   edit: {
     description:
-      'Stage ordered undoable graph and map operations, not live writes. Supply unique absolute IRIs for new concepts and types. Position updates, colors and bold/italic/strikethrough styles belong to the active map and are rejected in the graph or for concepts outside it. Reset color with an empty string and bold/italic/strikethrough with false. Creating a map makes it active for subsequent operations. New concepts join the active map, or no map in the graph, where their initial position is ignored. Selection does not create links and does not need to be cleared. To link a new concept, include an explicit relation.connect after concept.add. All edits in a turn apply together after validation and any required approval, as a single undoable batch. All edit calls in a turn merge into one batch that can only be undone together.',
+      'Stage ordered undoable graph, map and map group operations, not live writes. Supply unique absolute IRIs for new concepts and types and unique IDs for new map groups. Use map.group with groupId null to ungroup a saved map. Removing a map group ungroups its maps without deleting or unpinning them. Position updates, colors and bold/italic/strikethrough styles belong to the active map and are rejected in the graph or for concepts outside it. Reset color with an empty string and bold/italic/strikethrough with false. Creating a map makes it active for subsequent operations. New concepts join the active map, or no map in the graph, where their initial position is ignored. Selection does not create links and does not need to be cleared. To link a new concept, include an explicit relation.connect after concept.add. All edits in a turn apply together after validation and any required approval, as a single undoable batch. All edit calls in a turn merge into one batch that can only be undone together.',
     inputSchema: z.strictObject({ operations: z.array(operation).min(1).max(500) }),
   },
   history: {

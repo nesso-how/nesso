@@ -22,6 +22,7 @@ export function summarizeEffects({
     relations: { ...relations, updated: relations.updated + relationRewrites.length },
     relationTypes: count(delta.relationTypes),
     maps: count(delta.maps),
+    mapGroups: count(delta.mapGroups),
   }
   const updatedMaps = delta.maps.filter((map) => map.before && map.after)
   const memberships = updatedMaps.reduce((total, map) => total + map.members.length, 0)

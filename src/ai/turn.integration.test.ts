@@ -81,6 +81,39 @@ test('invalid operations and cancellation discard all staged writes', async () =
   assert.equal(host.store.getState(), before)
 })
 
+test('AI group reads include staged assignments, pinned maps and empty groups', async () => {
+  const host = fixture()
+  host.store.createMap('Loose', [])
+  const mapId = host.store.createMap('Pair', ['urn:n0', 'urn:n1'])
+  host.store.setMapPinned(mapId, true)
+  const groupId = 'urn:group'
+  const turn = createAiTurn(host)
+  const effects = turn.execute('edit', {
+    operations: [
+      { kind: 'map-group.create', id: groupId, name: 'Work' },
+      { kind: 'map-group.create', id: 'urn:empty', name: 'Empty' },
+      { kind: 'map-group.rename', id: groupId, name: 'Study' },
+      { kind: 'map.group', id: mapId, groupId },
+    ],
+  }) as AiEffects
+  assert.equal(effects.mapGroups.added, 2)
+  assert.deepEqual(host.store.getState().workspace.mapGroups, [])
+  assert.deepEqual(turn.execute('map_groups', {}), {
+    items: [
+      { id: groupId, name: 'Study', maps: 1 },
+      { id: 'urn:empty', name: 'Empty', maps: 0 },
+    ],
+    nextOffset: null,
+    total: 2,
+  })
+  assert.deepEqual(turn.execute('maps', { groupId }), {
+    items: [{ id: mapId, name: 'Pair', groupId, concepts: 2, pinned: true }],
+    nextOffset: null,
+    total: 1,
+  })
+  assert.equal((await turn.commit()).status, 'applied')
+})
+
 test('AI presentation edits are staged, map-local, resettable and undoable', async () => {
   const host = fixture()
   host.store.createMap('Other', ['urn:n0', 'urn:n1'])
@@ -245,4 +278,10 @@ test('changes during generation reject stale plans without overwriting user edit
   await assert.rejects(editing.commit(), /start a new turn/)
   assert.equal(host.store.getState().graph.concepts.length, 3)
   assert.equal(host.store.getState().graph.concepts[2].label, 'User edit')
+
+  host.store.applyOperations([{ kind: 'map-group.create', id: 'urn:group', name: 'Study' }])
+  const grouping = createAiTurn(host)
+  grouping.execute('edit', { operations: [{ kind: 'map-group.remove', id: 'urn:group' }] })
+  host.store.applyOperations([{ kind: 'map-group.rename', id: 'urn:group', name: 'Work' }])
+  await assert.rejects(grouping.commit(), /start a new turn/)
 })

@@ -34,6 +34,7 @@ const documentV4 = documentV2.extend({ version: z.literal(4) })
 const documentV5 = documentV2.extend({ version: z.literal(5) })
 const documentV6 = documentV2.extend({ version: z.literal(6) })
 const documentV7 = documentV2.extend({ version: z.literal(7) })
+const documentV8 = documentV2.extend({ version: z.literal(8) })
 const workspaceV2 = z.looseObject({
   savedViews: z.array(z.looseObject({ conceptIds: z.array(z.string()) })),
 })
@@ -45,6 +46,11 @@ const workspaceV4 = z.looseObject({
   savedViews: z.array(z.looseObject({ members: z.array(z.unknown()) })),
 })
 const workspaceV6 = z.looseObject({ activeViewId: z.unknown(), savedViews: z.unknown() })
+const workspaceV7 = z.strictObject({
+  activeMapId: z.unknown(),
+  maps: z.unknown(),
+  viewports: z.unknown(),
+})
 const legacySections = new Map([
   ['sidebar.pinned-views', 'sidebar.pinned-maps'],
   ['sidebar.views', 'sidebar.maps'],
@@ -199,7 +205,7 @@ export function migratePluginStorage(value: unknown): unknown {
   }
 }
 
-export function migrateDocument(value: unknown): z.infer<typeof documentV7> {
+export function migrateDocument(value: unknown): z.infer<typeof documentV8> {
   const { version } = parseSettings(versionSchema, value)
   switch (version) {
     case 1: {
@@ -272,20 +278,30 @@ export function migrateDocument(value: unknown): z.infer<typeof documentV7> {
       return migrateDocument({ ...parseSettings(documentV5, value), version: 6 })
     case 6: {
       const saved = parseSettings(documentV6, value)
-      if (saved.workspace === null) return { ...saved, version: 7 }
+      if (saved.workspace === null) return migrateDocument({ ...saved, version: 7 })
       const { activeViewId, savedViews, ...workspace } = parseSettings(
         workspaceV6,
         saved.workspace,
         'workspace',
       )
-      return {
+      return migrateDocument({
         ...saved,
         version: 7,
         workspace: { activeMapId: activeViewId, maps: savedViews, ...workspace },
-      }
+      })
     }
-    case 7:
-      return parseSettings(documentV7, value)
+    case 7: {
+      const saved = parseSettings(documentV7, value)
+      const workspace =
+        saved.workspace === null ? null : parseSettings(workspaceV7, saved.workspace, 'workspace')
+      return migrateDocument({
+        ...saved,
+        version: 8,
+        workspace: workspace && { ...workspace, mapGroups: [] },
+      })
+    }
+    case 8:
+      return parseSettings(documentV8, value)
     default:
       return fail('version', 'Unsupported storage version')
   }

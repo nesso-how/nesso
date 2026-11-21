@@ -18,6 +18,7 @@ import type { HostStore } from '@/store/types'
 import { maxMapNameLength } from '@/store/settings'
 import { InspectorSection } from './InspectorSection'
 import { useTranslation } from '@/i18n'
+import { mapSections } from './map-sections'
 
 type Option = { readonly id: string; readonly name: string; readonly create?: true }
 
@@ -40,10 +41,19 @@ export function ConceptMaps({
   const listed = workspace.maps.filter((map) => coverage(map) > 0)
   const others = workspace.maps.filter((map) => coverage(map) === 0)
   const name = query.trim()
-  const options: readonly Option[] =
-    name && !workspace.maps.some((map) => map.name === name)
-      ? [...others, { id: '', name, create: true }]
-      : others
+  const { pinned, groups, ungrouped } = mapSections(workspace, others)
+  const options: { id: string; label?: string; items: readonly Option[] }[] = [
+    { id: 'pinned', label: t('pinnedMaps'), items: pinned.map(({ id, name }) => ({ id, name })) },
+    ...groups.map((group) => ({ id: `group:${group.id}`, label: group.name, items: group.maps })),
+    { id: 'ungrouped', label: t(groups.length ? 'ungroupedMaps' : 'maps'), items: ungrouped },
+    {
+      id: 'create',
+      items:
+        name && !workspace.maps.some((map) => map.name === name)
+          ? [{ id: '', name, create: true as const }]
+          : [],
+    },
+  ].filter((group) => group.items.length > 0)
   const addTo = (mapId: string) =>
     store.applyOperations([
       ...conceptIds.map((conceptId) => ({
@@ -141,21 +151,32 @@ export function ConceptMaps({
             />
           </div>
           <Combobox.List className="nesso-scroll max-h-60 overflow-y-auto">
-            {(option: Option) => (
-              <ComboboxItem
-                key={option.id || 'create'}
-                value={option}
-                className={`break-words ${option.create ? 'flex items-center gap-2 [&_svg]:size-3.5' : ''}`}
-              >
-                {option.create ? (
-                  <>
-                    <Plus />
-                    {t('newMapNamed', { name: option.name })}
-                  </>
-                ) : (
-                  option.name
+            {(group: (typeof options)[number]) => (
+              <Combobox.Group key={group.id} items={group.items}>
+                {group.label && (
+                  <Combobox.GroupLabel className="px-2.5 pt-2 pb-1 font-mono text-[11px] leading-4 break-words text-muted-foreground">
+                    {group.label}
+                  </Combobox.GroupLabel>
                 )}
-              </ComboboxItem>
+                <Combobox.Collection>
+                  {(option: Option) => (
+                    <ComboboxItem
+                      key={option.id || 'create'}
+                      value={option}
+                      className={`break-words ${option.create ? 'flex items-center gap-2 [&_svg]:size-3.5' : ''}`}
+                    >
+                      {option.create ? (
+                        <>
+                          <Plus />
+                          {t('newMapNamed', { name: option.name })}
+                        </>
+                      ) : (
+                        option.name
+                      )}
+                    </ComboboxItem>
+                  )}
+                </Combobox.Collection>
+              </Combobox.Group>
             )}
           </Combobox.List>
           <Combobox.Empty>

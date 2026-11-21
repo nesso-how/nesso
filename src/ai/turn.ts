@@ -1,7 +1,8 @@
-import type { NessoOperation, NessoState } from '@nesso-how/core'
+import type { NessoState } from '@nesso-how/core'
 import { ZodError } from 'zod'
 import { aiTools, type AiDocumentation, type AiEffects, type AiToolResults } from '@nesso-how/ai'
 import type { createNessoStore } from '../store/create.ts'
+import type { HostOperation } from '../store/types.ts'
 import { NessoError } from '@nesso-how/errors'
 import { summarizeEffects } from './effects.ts'
 import { readAiTool } from './read.ts'
@@ -23,6 +24,7 @@ const errorOf = (error: unknown): NessoError => {
 const sameContext = (before: NessoState, after: NessoState): boolean =>
   before.graph === after.graph &&
   before.workspace.maps === after.workspace.maps &&
+  before.workspace.mapGroups === after.workspace.mapGroups &&
   before.workspace.activeMapId === after.workspace.activeMapId &&
   before.selected === after.selected &&
   before.vocabs === after.vocabs &&
@@ -35,7 +37,7 @@ export function createAiTurn(
   documentation?: AiDocumentation,
 ) {
   const base = boundary.store.getState()
-  let operations: readonly NessoOperation[] = []
+  let operations: readonly HostOperation[] = []
   let history: 'undo' | 'redo' | undefined
   let candidate: NessoState = base
   let status: 'staging' | 'committing' | 'closed' = 'staging'

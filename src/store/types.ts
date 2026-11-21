@@ -32,6 +32,11 @@ export type HostState = NessoState & {
 export type HostOperation =
   | NessoOperation
   | PluginStorageWrite
+  | { readonly kind: 'map.group'; readonly id: string; readonly groupId: string | null }
+  | { readonly kind: 'map-group.create'; readonly id: string; readonly name: string }
+  | { readonly kind: 'map-group.rename'; readonly id: string; readonly name: string }
+  | { readonly kind: 'map-group.remove'; readonly id: string }
+  | { readonly kind: 'map-group.setOpen'; readonly id: string; readonly open: boolean }
   | { readonly kind: 'preferences.intro-seen' }
   | { readonly kind: 'preferences.mcpEnabled'; readonly value: boolean }
   | {

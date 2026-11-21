@@ -24,6 +24,7 @@ const fixture = (): Graph => ({
 })
 const viewed = (graph: Graph = fixture()): WorkspaceState => ({
   activeMapId: 'urn:map',
+  mapGroups: [],
   maps: [
     {
       id: 'urn:map',
@@ -990,6 +991,8 @@ test('state batches share ordered graph, map and preference changes, including r
 test('invalid state batches reject every preceding change without notification', () => {
   const { store } = createNessoStore(fixture())
   const mapId = store.createMap('Pair', ['urn:n1', 'urn:n2'])
+  const group = { kind: 'map-group.create', id: 'urn:group', name: 'Study' } as const
+  store.applyOperations([group])
   const before = store.getState()
   const snapshot = structuredClone(before)
   let notifications = 0
@@ -998,6 +1001,9 @@ test('invalid state batches reject every preceding change without notification',
     { kind: 'map.rename', id: mapId, name: '' },
     { kind: 'map.create', id: mapId, name: 'Duplicate', conceptIds: [] },
     { kind: 'map.membership', mapId, conceptId: 'missing', included: true },
+    { kind: 'map.group', id: mapId, groupId: 'urn:missing' },
+    group,
+    { ...group, id: 'urn:empty', name: ' ' },
     { kind: 'preferences.panels', value: { explorerWidth: NaN, inspectorWidth: 300 } },
     { kind: 'preferences.renderer', id: 'missing' },
     { kind: 'preferences.locale', value: 'fr' as never },
@@ -1049,6 +1055,10 @@ test('empty and cancelling batches preserve state identity and do not notify', (
     { kind: 'map.membership', mapId, conceptId: 'urn:n2', included: true },
     { kind: 'map.create', id: 'urn:temporary-map', name: 'Temporary', conceptIds: [] },
     { kind: 'map.remove', id: 'urn:temporary-map' },
+    { kind: 'map-group.create', id: 'urn:temporary-group', name: 'Temporary' },
+    { kind: 'map.group', id: mapId, groupId: 'urn:temporary-group' },
+    { kind: 'map.group', id: mapId, groupId: null },
+    { kind: 'map-group.remove', id: 'urn:temporary-group' },
     { kind: 'map.activate', id: mapId },
     { kind: 'viewport.set', rendererId: 'graph', value: { x: NaN, y: 10, zoom: 1 } },
     { kind: 'viewport.set', rendererId: 'graph', value: { x: 0, y: 0, zoom: 1 } },
@@ -1370,7 +1380,7 @@ test('edits and removals of unknown or duplicate items reject the whole batch', 
 test('restoration resolves saved plugin preferences, falling back when unavailable', () => {
   for (const missing of [false, true]) {
     const host = createNessoStore(fixture(), {
-      workspace: { activeMapId: null, maps: [], viewports: {} },
+      workspace: { activeMapId: null, maps: [], mapGroups: [], viewports: {} },
       preferences: {
         activeVocabId: missing ? 'removed' : 'b',
         activeRendererId: missing ? 'removed' : 'other',

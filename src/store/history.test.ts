@@ -20,6 +20,7 @@ const members = (...ids: number[]) =>
   ids.map((i) => ({ id: `urn:n${i}`, position: { x: i, y: 0 } }))
 const viewed = (): WorkspaceState => ({
   activeMapId: 'urn:v',
+  mapGroups: [],
   viewports: {},
   maps: [{ id: 'urn:v', name: 'Map', pinned: false, members: members(0, 1, 2, 3) }],
 })
@@ -28,6 +29,7 @@ test('undo and redo restore deletion, incident relations, custom types, membersh
   const host = createNessoStore(fixture(), {
     workspace: {
       activeMapId: 'urn:v1',
+      mapGroups: [],
       viewports: {},
       maps: [
         { id: 'urn:v1', name: 'First', pinned: true, members: members(0, 1, 2) },
@@ -157,6 +159,7 @@ test('membership deltas contain changed IDs rather than copies of all map member
   const host = createNessoStore(fixture(), {
     workspace: {
       activeMapId: 'urn:v',
+      mapGroups: [],
       viewports: {},
       maps: [
         {
@@ -180,10 +183,69 @@ test('membership deltas contain changed IDs rather than copies of all map member
   assert.equal('conceptIds' in delta.maps[0].before!.value, false)
 })
 
+test('undo restores a deleted group, its maps and its last collapse state', () => {
+  const { store } = createNessoStore(fixture(), { workspace: viewed() })
+  const mapId = 'urn:v'
+  const groupId = 'urn:work'
+  const other = 'urn:empty'
+  const before = store.getState()
+  store.applyOperations([
+    { kind: 'map-group.create', id: groupId, name: 'Work' },
+    { kind: 'map-group.create', id: other, name: 'Empty' },
+    { kind: 'map.group', id: mapId, groupId },
+    { kind: 'map.pin', id: mapId, pinned: true },
+  ])
+  store.applyOperations([{ kind: 'map-group.rename', id: groupId, name: 'Study' }])
+  store.applyOperations([{ kind: 'map-group.setOpen', id: other, open: false }])
+  store.undo()
+  assert.equal(store.getState().workspace.mapGroups[0].name, 'Work')
+  assert.deepEqual(store.getState().workspace.collapsedMapGroupIds, [other])
+  store.redo()
+  store.applyOperations([{ kind: 'map-group.setOpen', id: groupId, open: false }])
+  const grouped = store.getState()
+  store.applyOperations([{ kind: 'map-group.remove', id: groupId }])
+  const removed = store.getState()
+  assert.deepEqual(removed.workspace, {
+    ...before.workspace,
+    maps: [{ ...before.workspace.maps[0], pinned: true }],
+    mapGroups: [{ id: other, name: 'Empty' }],
+    collapsedMapGroupIds: [other],
+  })
+  assert.equal(removed.graph, before.graph)
+  assert.equal(removed.mapGraph, before.mapGraph)
+  store.undo()
+  assert.deepEqual(store.getState().workspace, grouped.workspace)
+  store.redo()
+  assert.deepEqual(store.getState().workspace, removed.workspace)
+  store.undo()
+  store.applyOperations([{ kind: 'map-group.setOpen', id: groupId, open: true }])
+  store.redo()
+  store.undo()
+  assert.deepEqual(store.getState().workspace.collapsedMapGroupIds, [other])
+})
+
+test('redo restores a newly created group with its last collapse state', () => {
+  const { store } = createNessoStore(fixture(), { workspace: viewed() })
+  const id = 'urn:group'
+  const mapId = 'urn:v'
+  const before = store.getState().workspace
+  store.applyOperations([
+    { kind: 'map-group.create', id, name: 'Group' },
+    { kind: 'map.group', id: mapId, groupId: id },
+  ])
+  store.applyOperations([{ kind: 'map-group.setOpen', id, open: false }])
+  const collapsed = store.getState().workspace
+  store.undo()
+  assert.deepEqual(store.getState().workspace, { ...before, collapsedMapGroupIds: [] })
+  store.redo()
+  assert.deepEqual(store.getState().workspace, collapsed)
+})
+
 test('map metadata, membership reordering and removal round-trip without changing the graph', () => {
   const host = createNessoStore(fixture(), {
     workspace: {
       activeMapId: 'urn:v',
+      mapGroups: [],
       viewports: {},
       maps: [
         {
