@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.0-beta.28 — 2026-11-21
+
+### Breaking Changes
+
+- **maps:** Group saved maps (#387)
+  document record 8 stores map groups and collapse state.
+  Version 7 records migrate with no groups; older hosts cannot read
+  version 8.
+
 ## 1.0.0-beta.27 — 2026-11-20
 
 ### Breaking Changes
