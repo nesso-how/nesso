@@ -10,6 +10,7 @@ export type {
   PanelSizes,
   Preferences,
   WorkspaceMap,
+  WorkspaceMapGroup,
   SectionId,
   Selection,
   MapGraphSnapshot,

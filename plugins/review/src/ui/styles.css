@@ -65,10 +65,6 @@
   overscroll-behavior-y: contain;
   scrollbar-gutter: stable;
 }
-.review-list:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 3px;
-}
 .review-list li {
   display: flex;
   align-items: center;

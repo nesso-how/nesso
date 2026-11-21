@@ -38,6 +38,15 @@
       --nesso-reading-line-height: 23px;
     }
   }
+
+  button:not(:disabled):focus-visible,
+  summary:focus-visible,
+  .nesso-option:focus-visible,
+  .nesso-focus-inset:focus-visible,
+  .side-panel-resize:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--ring) 85%, var(--background));
+    outline-offset: var(--nesso-focus-offset, -2px);
+  }
 }
 
 @layer components {
@@ -48,12 +57,6 @@
     transition:
       background-color var(--duration-state),
       border-color var(--duration-state);
-  }
-
-  .nesso-button:focus-visible,
-  .nesso-option:focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
   }
 
   .nesso-input:focus-visible {
@@ -323,16 +326,13 @@
     translate: 0 -50%;
   }
   .side-panel-resize {
+    --nesso-focus-offset: -4px;
     position: absolute;
     z-index: 20;
     inset-block: 0;
     width: 9px;
     cursor: col-resize;
     touch-action: none;
-  }
-  .side-panel-resize:focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: -4px;
   }
   .side-panel[data-side='left'] > .side-panel-resize {
     right: -4px;
@@ -361,6 +361,7 @@
     flex-shrink: 0;
     padding: 0;
     border: 0;
+    border-radius: var(--radius-control);
     color: color-mix(in srgb, var(--foreground) 70%, var(--muted-foreground));
     background: transparent;
     cursor: pointer;
@@ -387,11 +388,6 @@
   }
   .panel-toggle:hover::before {
     background: linear-gradient(var(--hover), var(--hover)), var(--background);
-  }
-  .panel-toggle:focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: -2px;
-    border-radius: var(--radius-control);
   }
   .panel-toggle[data-side='left'][aria-expanded='false'] {
     padding-right: 6px;

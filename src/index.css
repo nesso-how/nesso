@@ -21,12 +21,6 @@
     background: var(--background);
     color: var(--foreground);
   }
-
-  button:not(:disabled):focus-visible,
-  summary:focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
-  }
 }
 
 .update-position {
@@ -713,11 +707,6 @@
 .compact-map-switcher[data-popup-open] {
   background: var(--hover);
 }
-.compact-map-switcher:focus-visible,
-.compact-tab:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: -2px;
-}
 .compact-tab-bar {
   flex-shrink: 0;
   border-top: 1px solid var(--border);
@@ -764,11 +753,6 @@
 .concept-sheet-notes.nesso-markdown-input {
   font-size: var(--nesso-reading-font-size);
   line-height: var(--nesso-reading-line-height);
-}
-.canvas-tab:focus-visible,
-.canvas-tabs-more:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 1px;
 }
 .chat-panel {
   display: flex;

@@ -4,6 +4,7 @@ import type {
   NessoState,
   Preferences,
   WorkspaceMap,
+  WorkspaceMapGroup,
   Selection,
   MapGraphSnapshot,
   WorkspaceState,
@@ -38,6 +39,8 @@ import {
   sameMembers,
   sameType,
   sameMap,
+  sameMapGroup,
+  sameIds,
   mapChanges,
 } from './delta.ts'
 import { applyPluginStorage } from './plugin-storage.ts'
@@ -192,6 +195,7 @@ export const newDocument = (
         pinned: false,
       },
     ],
+    mapGroups: [],
     viewports: {},
   },
 })
@@ -199,6 +203,7 @@ export const newDocument = (
 export const newWorkspace = (): WorkspaceState => ({
   activeMapId: null,
   maps: [],
+  mapGroups: [],
   viewports: {},
 })
 
@@ -219,11 +224,21 @@ export const sameGraph = (left: GraphSnapshot, right: GraphSnapshot): boolean =>
 export const sameWorkspace = (left: WorkspaceState, right: WorkspaceState): boolean =>
   left.activeMapId === right.activeMapId &&
   sameItems(left.maps, right.maps, sameMap) &&
+  sameItems(left.mapGroups, right.mapGroups, sameMapGroup) &&
+  sameIds(left.collapsedMapGroupIds ?? [], right.collapsedMapGroupIds ?? []) &&
   Object.keys(left.viewports).length === Object.keys(right.viewports).length &&
   Object.entries(left.viewports).every(([id, a]) => {
     const b = right.viewports[id]
     return a === b || (!!a && !!b && a.x === b.x && a.y === b.y && a.zoom === b.zoom)
   })
+
+export const pruneCollapsedMapGroups = (workspace: WorkspaceState): WorkspaceState => {
+  const collapsed = workspace.collapsedMapGroupIds
+  if (!collapsed?.length) return workspace
+  const groups = new Set(workspace.mapGroups.map(({ id }) => id))
+  const kept = collapsed.filter((id) => groups.has(id))
+  return kept.length === collapsed.length ? workspace : { ...workspace, collapsedMapGroupIds: kept }
+}
 
 export const samePreferences = (left: Preferences, right: Preferences): boolean =>
   left.locale === right.locale &&
@@ -262,6 +277,7 @@ export const applyStateOperations = (
   )
   let types = new ListEdit(state.graph.relationTypes, (item) => item.id, sameType)
   let maps = new ListEdit(state.workspace.maps, (item) => item.id, sameMap)
+  let mapGroups = new ListEdit(state.workspace.mapGroups, (item) => item.id, sameMapGroup)
   let relationOrigins: Map<string, string> | undefined
   const origins = () =>
     (relationOrigins ??= new Map(
@@ -413,8 +429,8 @@ export const applyStateOperations = (
     if (maps.items !== workspace.maps) workspace = { ...workspace, maps: maps.items }
   }
 
-  const mapName = (name: string): string => {
-    if (typeof name !== 'string') fail('map.name', 'Expected a string')
+  const trimName = (name: string, path: string): string => {
+    if (typeof name !== 'string') fail(path, 'Expected a string')
     return name.trim()
   }
 
@@ -660,6 +676,11 @@ export const applyStateOperations = (
         relations = new ListEdit([], relationKey, (a, b) => relationKey(a) === relationKey(b))
         types = new ListEdit([], (item: Readonly<RelationType>) => item.id, sameType)
         maps = new ListEdit(document.workspace.maps, (item: WorkspaceMap) => item.id, sameMap)
+        mapGroups = new ListEdit(
+          document.workspace.mapGroups,
+          (item: WorkspaceMapGroup) => item.id,
+          sameMapGroup,
+        )
         workspace = document.workspace
         conversation = { messages: [] }
         conversationReplaced = true
@@ -689,13 +710,18 @@ export const applyStateOperations = (
         const members: Member[] = []
         for (const id of new Set(operation.conceptIds))
           members.push(placeMember(id, members, sources))
-        maps.add({ id: operation.id, name: mapName(operation.name), members, pinned: false })
+        maps.add({
+          id: operation.id,
+          name: trimName(operation.name, 'map.name'),
+          members,
+          pinned: false,
+        })
         workspace = { ...workspace, activeMapId: operation.id, maps: maps.items }
         break
       }
       case 'map.rename':
         updateMap(operation.id, (map) => {
-          const name = mapName(operation.name)
+          const name = trimName(operation.name, 'map.name')
           return map.name === name ? map : { ...map, name }
         })
         break
@@ -704,6 +730,46 @@ export const applyStateOperations = (
           map.pinned === operation.pinned ? map : { ...map, pinned: operation.pinned },
         )
         break
+      case 'map.group':
+        if (operation.groupId !== null && !mapGroups.get(operation.groupId))
+          fail('map.groupId', 'Unknown group')
+        updateMap(operation.id, (map) => {
+          if (operation.groupId !== null) return { ...map, groupId: operation.groupId }
+          const { groupId: _group, ...ungrouped } = map
+          return ungrouped
+        })
+        break
+      case 'map-group.create':
+        if (mapGroups.get(operation.id)) fail('map-group.id', 'Duplicate group id')
+        mapGroups.add({ id: operation.id, name: trimName(operation.name, 'map-group.name') })
+        break
+      case 'map-group.rename': {
+        const group = mapGroups.get(operation.id) ?? fail('map-group.id', 'Unknown group')
+        mapGroups.set(group.id, { ...group, name: trimName(operation.name, 'map-group.name') })
+        break
+      }
+      case 'map-group.remove':
+        if (!mapGroups.get(operation.id)) fail('map-group.id', 'Unknown group')
+        mapGroups.removeWhere(({ id }) => id === operation.id)
+        for (const map of maps.items) {
+          if (map.groupId !== operation.id) continue
+          const { groupId: _group, ...ungrouped } = map
+          updateMap(map.id, () => ungrouped)
+        }
+        break
+      case 'map-group.setOpen': {
+        if (!mapGroups.get(operation.id)) fail('map-group.id', 'Unknown group')
+        if (typeof operation.open !== 'boolean') fail('map-group.open', 'Expected a boolean')
+        const collapsed = workspace.collapsedMapGroupIds ?? []
+        if (!collapsed.includes(operation.id) === operation.open) break
+        workspace = {
+          ...workspace,
+          collapsedMapGroupIds: operation.open
+            ? collapsed.filter((id) => id !== operation.id)
+            : [...collapsed, operation.id],
+        }
+        break
+      }
       case 'map.membership':
         if (!concepts.get(operation.conceptId)) fail('map.conceptId', 'Unknown concept')
         if (typeof operation.included !== 'boolean') fail('map.included', 'Expected a boolean')
@@ -841,6 +907,7 @@ export const applyStateOperations = (
       updateMap(map.id, (map) => ({ ...map, relationBends: kept }))
   }
   const mapEdit = maps.finish()
+  const mapGroupEdit = mapGroups.finish()
   let candidate: GraphSnapshot = {
     concepts: conceptEdit.items,
     relations: relationEdit.items,
@@ -857,6 +924,8 @@ export const applyStateOperations = (
   }
   if (candidate !== state.graph) checkGraph(candidate)
   if (mapEdit.items !== workspace.maps) workspace = { ...workspace, maps: mapEdit.items }
+  if (mapGroupEdit.items !== workspace.mapGroups)
+    workspace = pruneCollapsedMapGroups({ ...workspace, mapGroups: mapGroupEdit.items })
   if (workspace !== state.workspace) {
     parseWorkspace(workspace)
     checkWorkspace(candidate, workspace)
@@ -922,6 +991,7 @@ export const applyStateOperations = (
       relations: relationEdit.changes,
       relationTypes: typeEdit.changes,
       maps: mapChanges(mapEdit.changes),
+      mapGroups: mapGroupEdit.changes,
     },
   }
 }

@@ -130,7 +130,7 @@ test('delete removes shared concepts from the map and the rest from the graph', 
   ]
   const state = (activeMapId: string | null, ids = selected) => ({
     selected: ids,
-    workspace: { activeMapId, maps, viewports: {} },
+    workspace: { activeMapId, maps, mapGroups: [], viewports: {} },
   })
   assert.deepEqual(deleteOperations(state('urn:v1')), [
     { kind: 'map.membership', mapId: 'urn:v1', conceptId: 'urn:a', included: false },

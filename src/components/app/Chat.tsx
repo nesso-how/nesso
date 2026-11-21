@@ -40,6 +40,7 @@ const activities = {
   concepts: 'aiChatReadingConcepts',
   relations: 'aiChatReadingRelations',
   maps: 'aiChatReadingMaps',
+  map_groups: 'aiChatReadingMapGroups',
   relation_types: 'aiChatReadingRelationTypes',
   selection: 'aiChatReadingSelection',
   edit: 'aiChatPreparingEdits',

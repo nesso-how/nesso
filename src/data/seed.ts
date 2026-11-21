@@ -33,6 +33,7 @@ export function createSeedDocument(locale: Locale): { graph: Graph; workspace: W
     },
     workspace: {
       activeMapId: seedMaps[0].id,
+      mapGroups: [],
       maps: seedMaps.map((map) => ({
         ...map,
         name: translation?.mapNames[map.id] ?? map.name,

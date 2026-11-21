@@ -155,7 +155,7 @@ export function ColorPicker({
               role="group"
               aria-label={labels.saturationBrightness}
               aria-describedby={hint}
-              className="relative h-32 touch-none rounded-xs cursor-crosshair focus-visible:outline-2 focus-visible:outline-ring focus-visible:-outline-offset-2"
+              className="nesso-focus-inset relative h-32 touch-none rounded-xs cursor-crosshair"
               style={{
                 backgroundColor: hsvToHex({ h: hsv.h, s: 1, v: 1 }),
                 backgroundImage:
@@ -184,7 +184,7 @@ export function ColorPicker({
               step={1}
               value={Math.round(hsv.h) % 360}
               aria-label={labels.hue}
-              className="nesso-color-hue h-5 w-full cursor-pointer focus-visible:rounded-xs focus-visible:outline-2 focus-visible:outline-ring focus-visible:-outline-offset-2"
+              className="nesso-color-hue nesso-focus-inset h-5 w-full cursor-pointer focus-visible:rounded-xs"
               onBlur={() => {
                 colorGroup.current = undefined
               }}

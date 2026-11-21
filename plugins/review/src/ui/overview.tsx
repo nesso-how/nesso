@@ -105,7 +105,11 @@ export function Overview({
         </div>
       )}
       {ordered.length > 0 && (
-        <ul className="review-list nesso-scroll" tabIndex={0} aria-label={t.concepts}>
+        <ul
+          className="review-list nesso-scroll nesso-focus-inset"
+          tabIndex={0}
+          aria-label={t.concepts}
+        >
           {ordered.map((concept) => {
             const record = progress.get(concept.id)
             return (

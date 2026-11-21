@@ -54,15 +54,39 @@ const mapSchema = z.strictObject({
       'Duplicate concept id',
     ),
   pinned: z.boolean(),
+  groupId: z.string().min(1).optional(),
   relationBends: z.array(relationBendSchema).optional(),
 })
 const workspaceSchema = z
   .strictObject({
     activeMapId: z.string().nullable(),
     maps: z.array(mapSchema),
+    mapGroups: z.array(z.strictObject({ id: mapSchema.shape.id, name: mapSchema.shape.name })),
+    collapsedMapGroupIds: z
+      .array(mapSchema.shape.id)
+      .refine((ids) => new Set(ids).size === ids.length, 'Duplicate group id')
+      .optional(),
     viewports: z.record(z.string().min(1), viewportSchema),
   })
   .superRefine((workspace, context) => {
+    const groupIds = new Set<string>()
+    for (const [index, group] of workspace.mapGroups.entries()) {
+      if (groupIds.has(group.id))
+        context.addIssue({
+          code: 'custom',
+          path: ['mapGroups', index, 'id'],
+          message: 'Duplicate group id',
+        })
+      groupIds.add(group.id)
+    }
+    for (const [index, id] of (workspace.collapsedMapGroupIds ?? []).entries()) {
+      if (!groupIds.has(id))
+        context.addIssue({
+          code: 'custom',
+          path: ['collapsedMapGroupIds', index],
+          message: 'Unknown group',
+        })
+    }
     const ids = new Set<string>()
     for (const [index, map] of workspace.maps.entries()) {
       if (ids.has(map.id))
@@ -72,6 +96,12 @@ const workspaceSchema = z
           message: 'Duplicate map id',
         })
       ids.add(map.id)
+      if (map.groupId !== undefined && !groupIds.has(map.groupId))
+        context.addIssue({
+          code: 'custom',
+          path: ['maps', index, 'groupId'],
+          message: 'Unknown group',
+        })
     }
     if (workspace.activeMapId !== null && !ids.has(workspace.activeMapId))
       context.addIssue({ code: 'custom', path: ['activeMapId'], message: 'Unknown map' })

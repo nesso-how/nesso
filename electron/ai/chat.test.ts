@@ -99,6 +99,7 @@ test('provider streaming shares tool schemas, waits for host replies and keeps l
           relationTypes: counts,
           maps: counts,
           memberships: 0,
+          mapGroups: { added: 0, updated: 0, removed: 0 },
         }
         run.reply({ id: 'unrelated', callId: event.callId, result: { value: effects } })
         run.reply({ id: input.id, callId: 'unrelated', result: { value: effects } })

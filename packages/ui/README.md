@@ -41,7 +41,7 @@ Your build must compile this CSS; it is not a precompiled stylesheet. Supply the
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | Buttons and inputs     | `Button`, `IconButton`, `Input`, `DirectoryField`, `MarkdownInput`, `Label`, `PreferenceSelect`, `ColorPicker`            |
 | Forms and rows         | `Field`, `FieldHint`, `ListRow`, `ListRowButton`, `ListRowDetail`, `ListRowTitle`, `RevealActions`, `PromptForm`          |
-| Menus and popovers     | `Menu`, `MenuItem`, `MenuPopup`, `MenuRadioItem`, `Popover`, `PopoverPopup`                                               |
+| Menus and popovers     | `Menu`, `MenuItem`, `MenuPopup`, `MenuRadioItem`, `MenuSubmenuTrigger`, `Popover`, `PopoverPopup`                         |
 | Search and suggestions | `Combobox`, `ComboboxItem`, `ComboboxPopup`, `Autocomplete`, `AutocompleteClear`, `AutocompleteItem`, `AutocompletePopup` |
 | Dialogs                | `Dialog`, `DialogActions`, `DialogPopup`, `ConfirmDialog`, `TextPromptDialog`, `BottomSheet`                              |
 | Panels and disclosure  | `SidePanel`, `PanelHeader`, `PluginPage`, `PluginContent`, `SectionHeading`, `Collapsible`, `Tabs`                        |
@@ -49,6 +49,8 @@ Your build must compile this CSS; it is not a precompiled stylesheet. Supply the
 | Labels and icons       | `Kbd`, `ContextLabel`, `ActionIcon`                                                                                       |
 
 `Button` supports `default`, `outline`, and `ghost` variants. `SidePanel` supports controlled resizing and collapse. `Spinner` accepts an accessible `label` and respects reduced motion. State, content, and event handling remain yours to provide.
+
+Use `MenuSubmenuTrigger` inside `Menu.SubmenuRoot`. `MenuPopup` accepts a preferred `side`.
 
 `BottomSheet` is a controlled, non-modal drawer with a title, close label, optional footer, and popup ref for measuring covered content. It supports swipe-down dismissal, safe-area padding, and reduced motion. Reading text can use `--nesso-reading-font-size` and `--nesso-reading-line-height`, which increase from 13/20px to 15/23px on narrow screens or coarse pointers.
 

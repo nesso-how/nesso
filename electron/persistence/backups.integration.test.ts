@@ -24,6 +24,9 @@ test('manual backups round-trip every record, exclude device secrets and bind co
   host.store.setChatMessages([{ id: 'question', role: 'user', content: 'Remember this' }])
   const initial = host.store.getState()
   host.store.applyOperations([
+    { kind: 'map-group.create', id: 'urn:group', name: 'Work' },
+    { kind: 'map.group', id: initial.workspace.activeMapId!, groupId: 'urn:group' },
+    { kind: 'map-group.setOpen', id: 'urn:group', open: false },
     { kind: 'preferences.disabledBundledActionPlugins', value: ['@nesso-how/review'] },
     {
       kind: 'plugin-storage.set',

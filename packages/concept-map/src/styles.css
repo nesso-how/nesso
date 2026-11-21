@@ -194,7 +194,6 @@
   background: var(--pressed);
 }
 
-.react-flow__controls-button:focus-visible,
 .react-flow .node-source:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: -2px;

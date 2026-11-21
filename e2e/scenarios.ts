@@ -33,6 +33,10 @@ export const scenarios: Record<string, Scenario> = {
     load: () =>
       import('./app/panel-workspace.ts').then(({ verifyPanelWorkspace }) => verifyPanelWorkspace),
   },
+  'map-groups': {
+    platforms: desktop,
+    load: () => import('./app/map-groups.ts').then(({ verifyMapGroups }) => verifyMapGroups),
+  },
   'busy-panel': {
     platforms: desktop,
     load: () => import('./plugins/busy-panel.ts').then(({ verifyBusyPanel }) => verifyBusyPanel),

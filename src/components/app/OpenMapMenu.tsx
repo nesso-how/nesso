@@ -1,23 +1,32 @@
 import type { RefObject } from 'react'
 import { Layers, LayersPlus, Pin } from 'lucide-react'
 import { Menu, MenuItem, MenuPopup } from '@nesso-how/ui'
-import type { WorkspaceMap } from '@nesso-how/core'
 import { useTranslation } from '@/i18n'
+import { useNessoStore } from '@/store'
+import type { HostStore } from '@/store/types'
+import { MapMenuSections } from './MapMenuSections'
 
 export function OpenMapMenu({
   target,
+  store,
   onClose,
   onOpen,
   onCreate,
   finalFocus,
 }: {
-  target: { x: number; y: number; maps: readonly WorkspaceMap[] } | null
+  target: { x: number; y: number; id: string } | null
+  store: HostStore
   onClose: () => void
   onOpen: (mapId: string) => void
   onCreate: () => void
   finalFocus: RefObject<HTMLDivElement | null>
 }) {
-  const t = useTranslation()
+  const t = useTranslation(store)
+  const workspace = useNessoStore((state) => (target ? state.workspace : null), store)
+  const maps =
+    target && workspace
+      ? workspace.maps.filter((map) => map.members.some(({ id }) => id === target.id))
+      : []
   return (
     <Menu.Root
       open={target !== null}
@@ -26,7 +35,7 @@ export function OpenMapMenu({
         if (!open) onClose()
       }}
     >
-      {target && (
+      {target && workspace && (
         <MenuPopup
           anchor={{
             getBoundingClientRect: () => DOMRect.fromRect({ ...target, width: 0, height: 0 }),
@@ -36,20 +45,22 @@ export function OpenMapMenu({
           finalFocus={finalFocus}
           onKeyDown={(event) => event.stopPropagation()}
         >
-          {target.maps.length === 0 ? (
+          {maps.length === 0 ? (
             <MenuItem onClick={onCreate}>
               <LayersPlus aria-hidden="true" />
               {t('createMapWithConcept')}
             </MenuItem>
           ) : (
-            target.maps
-              .toSorted((a, b) => Number(b.pinned) - Number(a.pinned))
-              .map((map) => (
+            <MapMenuSections
+              workspace={workspace}
+              maps={maps}
+              renderMap={(map) => (
                 <MenuItem key={map.id} onClick={() => onOpen(map.id)}>
                   {map.pinned ? <Pin aria-hidden="true" /> : <Layers aria-hidden="true" />}
                   {map.name}
                 </MenuItem>
-              ))
+              )}
+            />
           )}
         </MenuPopup>
       )}

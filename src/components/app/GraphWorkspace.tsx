@@ -11,7 +11,6 @@ import {
   type RefObject,
 } from 'react'
 import { ConceptMap, type ConceptMapHandle } from '@nesso-how/concept-map'
-import type { WorkspaceMap } from '@nesso-how/core'
 import { KnowledgeGraph, type KnowledgeGraphHandle } from '@nesso-how/knowledge-graph'
 import { newIri, type Position } from '@nesso-how/schema'
 import { useGraphInteractions } from '../../graph/interactions.ts'
@@ -95,7 +94,6 @@ export function GraphWorkspace({
     id: string
     x: number
     y: number
-    maps: WorkspaceMap[]
   } | null>(null)
   const show = (id: string, activation: HostOperation) => {
     setOpening(null)
@@ -107,7 +105,7 @@ export function GraphWorkspace({
       .getState()
       .workspace.maps.filter(({ members }) => members.some((member) => member.id === id))
     if (maps.length === 1) show(id, { kind: 'map.activate', id: maps[0].id })
-    else setOpening({ id, ...point, maps })
+    else setOpening({ id, ...point })
   }
   const create = (id: string) => {
     const label = store.getState().graph.concepts.find((concept) => concept.id === id)?.label
@@ -145,6 +143,7 @@ export function GraphWorkspace({
         />
       )}
       <OpenMapMenu
+        store={store}
         target={opening}
         onClose={() => setOpening(null)}
         onOpen={(mapId) => opening && show(opening.id, { kind: 'map.activate', id: mapId })}

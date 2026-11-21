@@ -1,4 +1,4 @@
-import type { GraphSnapshot, WorkspaceMap } from '@nesso-how/core'
+import type { GraphSnapshot, WorkspaceMap, WorkspaceMapGroup } from '@nesso-how/core'
 import { relationKey, type RelationBend } from '@nesso-how/schema'
 
 type Entry<T> = { readonly index: number; readonly value: T }
@@ -226,14 +226,16 @@ export const sameBends = (
   b: readonly RelationBend[] = [],
 ): boolean =>
   a === b || (a.length === b.length && a.every((bend, index) => sameBend(bend, b[index])))
+type MapMetadata = Omit<WorkspaceMap, 'members' | 'relationBends'>
+export const sameMapGroup = (a: WorkspaceMapGroup, b: WorkspaceMapGroup): boolean =>
+  a.id === b.id && a.name === b.name
+export const sameMapMetadata = (a: MapMetadata, b: MapMetadata): boolean =>
+  sameMapGroup(a, b) && a.pinned === b.pinned && a.groupId === b.groupId
 export const sameMap = (a: WorkspaceMap, b: WorkspaceMap): boolean =>
-  a.id === b.id &&
-  a.name === b.name &&
-  a.pinned === b.pinned &&
+  sameMapMetadata(a, b) &&
   sameMembers(a.members, b.members) &&
   sameBends(a.relationBends, b.relationBends)
 
-type MapMetadata = Omit<WorkspaceMap, 'members' | 'relationBends'>
 export type MapChange = Change<MapMetadata> & {
   readonly members: readonly Change<Member>[]
   readonly relationBends: readonly Change<RelationBend>[]
@@ -243,6 +245,7 @@ export type DocumentDelta = {
   readonly relations: readonly Change<GraphSnapshot['relations'][number]>[]
   readonly relationTypes: readonly Change<GraphSnapshot['relationTypes'][number]>[]
   readonly maps: readonly MapChange[]
+  readonly mapGroups: readonly Change<WorkspaceMapGroup>[]
 }
 
 const listChanges = <T>(
@@ -277,11 +280,11 @@ const listChanges = <T>(
 
 export const mapChanges = (changes: readonly Change<WorkspaceMap>[]): MapChange[] =>
   changes.map(({ id, before, after }) => {
-    const metadata = (entry: Entry<WorkspaceMap> | undefined): Entry<MapMetadata> | undefined =>
-      entry && {
-        index: entry.index,
-        value: { id: entry.value.id, name: entry.value.name, pinned: entry.value.pinned },
-      }
+    const metadata = (entry: Entry<WorkspaceMap> | undefined): Entry<MapMetadata> | undefined => {
+      if (!entry) return undefined
+      const { members: _members, relationBends: _bends, ...value } = entry.value
+      return { index: entry.index, value }
+    }
     return {
       id,
       before: metadata(before),
@@ -302,5 +305,9 @@ export const mapChanges = (changes: readonly Change<WorkspaceMap>[]): MapChange[
   })
 
 export const hasDelta = (delta: DocumentDelta): boolean =>
-  delta.concepts.length + delta.relations.length + delta.relationTypes.length + delta.maps.length >
+  delta.concepts.length +
+    delta.relations.length +
+    delta.relationTypes.length +
+    delta.maps.length +
+    delta.mapGroups.length >
   0
