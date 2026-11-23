@@ -422,17 +422,11 @@ async function verifyBrowse(driver: Driver, state: InstallState) {
     ),
     true,
   )
-  assert.equal(
-    await driver.evaluate<number>(
-      `[...document.querySelectorAll('.plugin-row .settings-badge')].filter(badge => badge.getClientRects().length).length`,
-    ),
-    0,
-  )
   assert.deepEqual(
-    await driver.evaluate<string[]>(
-      `[...document.querySelectorAll('.plugin-row .plugin-kind-icon')].filter(icon => icon.getClientRects().length).map(icon => icon.getAttribute('aria-label'))`,
+    await driver.evaluate<string[][]>(
+      `[...document.querySelectorAll('.plugin-search .plugin-row')].map(row => [...row.querySelectorAll('.settings-badge')].filter(badge => badge.getClientRects().length).map(badge => badge.textContent))`,
     ),
-    ['Actions', 'Theme', 'Vocabulary'],
+    [['Actions'], ['Themes'], ['Vocabularies']],
   )
   await driver.search('no-matches')
   await waitFor(driver.searchRows, (rows) => rows.length === 0)
@@ -567,15 +561,9 @@ async function installKind(
   await driver.click('Find on npm', '.plugin-scroll:not([hidden])')
   assert.equal(
     await driver.evaluate<number>(
-      `[...document.querySelectorAll('.plugin-row .settings-badge')].filter(badge => badge.getClientRects().length).length`,
+      `[...document.querySelectorAll('.plugin-search .plugin-row .settings-badge')].filter(badge => badge.getClientRects().length && badge.textContent === 'Installed').length`,
     ),
     index + 1,
-  )
-  assert.equal(
-    await driver.evaluate<boolean>(
-      `[...document.querySelectorAll('.plugin-row .settings-badge')].filter(badge => badge.getClientRects().length).every(badge => badge.textContent === 'Installed')`,
-    ),
-    true,
   )
 }
 
@@ -720,6 +708,46 @@ async function verifyToastGeometry(driver: Driver, window: BrowserWindow) {
 async function verifyFirstInstall(driver: Driver, state: InstallState, window: BrowserWindow) {
   console.log('installation/desktop: first-install approval for all kinds')
   for (const [index, kind] of kinds.entries()) await installKind(driver, state, kind, index, window)
+  await driver.click('Plugins', '.settings-sidebar')
+  assert.deepEqual(
+    await driver.evaluate<[string, Record<string, string>][]>(
+      `[...document.querySelectorAll('.plugin-installed > section')].map(section => [
+        section.querySelector('h3').textContent,
+        Object.fromEntries([...section.querySelectorAll('.plugin-row')].map(row => {
+          const identity = row.querySelector('.font-mono').textContent;
+          return [identity.slice(0, identity.lastIndexOf('@')), row.querySelector('.settings-badge').textContent];
+        }))
+      ])`,
+    ),
+    [
+      [
+        'Actions',
+        {
+          '@nesso-how/export': 'Built-in',
+          '@nesso-how/import': 'Built-in',
+          '@nesso-how/notes': 'Built-in',
+          '@nesso-how/review': 'Built-in',
+          'test-actions': 'External',
+        },
+      ],
+      [
+        'Themes',
+        {
+          '@nesso-how/kernel-theme': 'Built-in',
+          '@nesso-how/mist-theme': 'Built-in',
+          '@nesso-how/paper-theme': 'Built-in',
+          'test-theme': 'External',
+        },
+      ],
+      ['Vocabularies', { '@nesso-how/base-vocab': 'Built-in', 'test-vocab': 'External' }],
+    ],
+  )
+  assert.equal(
+    await driver.evaluate<boolean>(
+      `[...document.querySelectorAll('.plugin-installed .plugin-row')].every(row => getComputedStyle(row).borderBottomWidth === (row.nextElementSibling?.classList.contains('plugin-row') ? '1px' : '0px'))`,
+    ),
+    true,
+  )
   return (await driver.approval()).count
 }
 
@@ -851,12 +879,6 @@ async function verifyStopDisable(driver: Driver, window: BrowserWindow) {
     'installation/desktop: Stop actions terminates busy workers without disabling future invocations',
   )
   await driver.click('Plugins', '.settings-sidebar')
-  assert.equal(
-    await driver.evaluate<boolean>(
-      `[...document.querySelectorAll('.plugin-installed .plugin-row')].every(row => getComputedStyle(row).borderBottomWidth === (row.nextElementSibling?.classList.contains('plugin-row') ? '1px' : '0px'))`,
-    ),
-    true,
-  )
   await driver.open('test-actions')
   assert.equal(await driver.stopVisible(), false)
   window.webContents.debugger.attach()

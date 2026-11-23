@@ -18,6 +18,7 @@ import { notifications } from '@/notifications'
 import { host, useNessoStore } from '@/store'
 import { PluginAccess } from './PluginAccess'
 import { PluginKindIcon } from './PluginRow'
+import { pluginStatusLabel } from './plugin-labels'
 import { isAllowedPluginLink } from '../../../shared/link-policy.ts'
 
 type Installation = ReturnType<ReturnType<typeof createPluginInstaller>['getSnapshot']>
@@ -490,17 +491,7 @@ export function PluginDetails(props: Props) {
           kind={info.kind}
           title={metadata.name}
           version={`${info.name}@${info.version}`}
-          status={t(
-            installed
-              ? installed.incompatible
-                ? 'pluginIncompatible'
-                : installed.disabled
-                  ? 'pluginDisabled'
-                  : installed.error
-                    ? 'pluginUnavailable'
-                    : 'pluginEnabled'
-              : 'pluginNotInstalled',
-          )}
+          status={t(installed ? pluginStatusLabel(installed) : 'pluginNotInstalled')}
           local={!!installed && isLocalPlugin(installed)}
           inUse={inUse}
         />

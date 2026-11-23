@@ -25,6 +25,24 @@ export async function verifyCompact({ window, url, name }: CheckContext) {
   await window.loadURL(url)
   await ready(`!!document.querySelector('.compact-intro-footer button')`)
   await ready(`!document.querySelector('.splash')`)
+  for (const [scheme, shade] of [
+    ['light', 0x39],
+    ['dark', 0xc6],
+  ] as const) {
+    const point = await evaluate<{ x: number; y: number }>(`(async () => {
+      const logo = document.querySelector('.compact-intro-header img');
+      logo.style.colorScheme = ${JSON.stringify(scheme)};
+      await logo.decode();
+      await Promise.all(logo.closest('.intro').getAnimations().map(animation => animation.finished));
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const {left, top} = logo.getBoundingClientRect();
+      return { x: Math.round(left + 6), y: Math.round(top + 6) };
+    })()`)
+    const pixel = (
+      await window.webContents.capturePage({ ...point, width: 1, height: 1 })
+    ).toBitmap()
+    assert.ok(Math.abs(pixel[0] - shade) <= 2, `Logo color in ${scheme} appearance: ${pixel[0]}`)
+  }
   assert.equal(
     await evaluate(`!!document.querySelector('.compact-intro-footer p')`),
     name === 'static-web',

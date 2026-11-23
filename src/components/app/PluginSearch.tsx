@@ -7,6 +7,7 @@ import { usePlugins } from '@/plugins'
 import { translate } from '@/i18n'
 import { useNessoStore } from '@/store'
 import { PluginRow } from './PluginRow'
+import { pluginKindLabels } from './plugin-labels'
 
 export function PluginSearch({
   bridge,
@@ -118,9 +119,10 @@ export function PluginSearch({
                   key={entry.name}
                   entry={{ ...entry, kind: entry.nesso.kind }}
                   locale={locale}
-                  status={
-                    plugins.some(({ id }) => id === entry.name) ? t('pluginInstalled') : undefined
-                  }
+                  badges={[
+                    t(pluginKindLabels[entry.nesso.kind]),
+                    plugins.some(({ id }) => id === entry.name) ? t('pluginInstalled') : undefined,
+                  ]}
                   onClick={() => onOpen(entry)}
                 />
               ))}
