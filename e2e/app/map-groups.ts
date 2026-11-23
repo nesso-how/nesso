@@ -40,6 +40,50 @@ export async function verifyMapGroups(context: CheckContext) {
   const groupActions = `document.querySelector('[aria-label="Actions for group ${group}"]')`
   const move = menuItem('Move to group')
   const remove = menuItem('Remove from group')
+  const createGroup = async (name: string) => {
+    await click(element('button', 'New group'))
+    await ready(`!!document.querySelector('[role="dialog"] input')`)
+    await evaluate(`document.querySelector('[role="dialog"] input').focus()`)
+    await window.webContents.insertText(name)
+    await click(`document.querySelector('[role="dialog"] button[type="submit"]:enabled')`)
+    await ready(`!!(${section(name)}) && !document.querySelector('[role="dialog"]')`)
+  }
+  const deleteGroup = async (name: string) => {
+    await click(`document.querySelector('[aria-label="Actions for group ${name}"]')`)
+    await click(menuItem('Delete group'))
+    await click(element('[role="dialog"] button', 'Delete group'))
+    await ready(`!(${section(name)}) && !document.querySelector('[role="dialog"]')`)
+  }
+  const titles = (sectionName: string) =>
+    `[...((${rows(sectionName)})?.querySelectorAll('[data-map-row] > button > span:first-child') ?? [])].map(title => title.textContent).join()`
+  const mapButton = (sectionName: string, name: string) =>
+    `[...(${rows(sectionName)}).querySelectorAll('[data-map-row] > button')].find(button => button.firstChild.textContent === ${JSON.stringify(name)})`
+  const block = (sectionName: string) => `(${section(sectionName)}).closest('[data-map-section]')`
+  const groupOrder = `[...document.querySelectorAll('[data-map-section="group"] button[aria-controls]')].map(button => button.textContent.trim()).join()`
+  type Point = { x: number; y: number }
+  const point = (expression: string, fraction = 0.5) =>
+    evaluate<Point>(
+      `(() => { const box = (${expression}).getBoundingClientRect(); return { x: Math.round(box.x + box.width / 2), y: Math.round(box.y + box.height * ${fraction}) } })()`,
+    )
+  const pointer = (type: 'mouseDown' | 'mouseMove' | 'mouseUp', { x, y }: Point) =>
+    window.webContents.sendInputEvent({
+      type,
+      button: 'left',
+      modifiers: type === 'mouseMove' ? ['leftbuttondown'] : [],
+      clickCount: 1,
+      x,
+      y,
+    })
+  const drag = async (handle: string, target: string, fraction: number, indicator: string) => {
+    const from = await point(handle)
+    const to = await point(target, fraction)
+    window.webContents.sendInputEvent({ type: 'mouseMove', ...from })
+    pointer('mouseDown', from)
+    pointer('mouseMove', { x: from.x, y: from.y + Math.sign(to.y - from.y) * 6 })
+    pointer('mouseMove', to)
+    await ready(`${indicator} && !!document.querySelector('[data-map-dragging]')`)
+    return to
+  }
   const assignGroup = async () => {
     await ready(`!!(${move})`)
     assert.equal(await evaluate(`!!(${remove})`), false)
@@ -57,12 +101,7 @@ export async function verifyMapGroups(context: CheckContext) {
     )
   }
 
-  await click(element('button', 'New group'))
-  await ready(`!!document.querySelector('[role="dialog"] input')`)
-  await evaluate(`document.querySelector('[role="dialog"] input').focus()`)
-  await window.webContents.insertText(group)
-  await click(`document.querySelector('[role="dialog"] button[type="submit"]:enabled')`)
-  await ready(`!!(${section(group)}) && !document.querySelector('[role="dialog"]')`)
+  await createGroup(group)
   assert.equal(
     await evaluate(`(() => {
       const button = ${groupActions}
@@ -128,8 +167,97 @@ export async function verifyMapGroups(context: CheckContext) {
   await ready(`(${switcher})?.textContent.trim()==='Energy' && (${energyOptions}).length===0`)
 
   window.setContentSize(1280, 900)
-  await click(groupActions)
-  await click(menuItem('Delete group'))
-  await click(element('[role="dialog"] button', 'Delete group'))
-  await ready(`!(${section(group)}) && !!(${actions('Maps')}) && !!(${actions(pinned)})`)
+  await ready(`(${titles(ungrouped)})==='Coffee,Rest'`)
+  let release = await drag(
+    mapButton(ungrouped, 'Rest'),
+    mapButton(ungrouped, 'Coffee'),
+    0.25,
+    `(${mapButton(ungrouped, 'Coffee')}).parentElement.dataset.drop==='before'`,
+  )
+  pointer('mouseUp', release)
+  await ready(`(${titles(ungrouped)})==='Rest,Coffee' && !document.querySelector('[data-drop]')`)
+
+  const origin = await point(mapButton(ungrouped, 'Coffee'))
+  await drag(
+    mapButton(ungrouped, 'Coffee'),
+    mapButton(ungrouped, 'Rest'),
+    0.25,
+    `(${mapButton(ungrouped, 'Rest')}).parentElement.dataset.drop==='before'`,
+  )
+  key('Escape')
+  await ready(`!document.querySelector('[data-drop],[data-map-dragging]')`)
+  await evaluate(
+    `window.__clicked=false;addEventListener('click',()=>{window.__clicked=true},{capture:true,once:true})`,
+  )
+  pointer('mouseMove', origin)
+  pointer('mouseUp', origin)
+  await ready('window.__clicked')
+  assert.equal(await evaluate(titles(ungrouped)), 'Rest,Coffee')
+  assert.equal(await evaluate(`(${mapButton(ungrouped, 'Coffee')}).ariaCurrent`), null)
+
+  const target = await drag(
+    mapButton(ungrouped, 'Coffee'),
+    mapButton(ungrouped, 'Rest'),
+    0.25,
+    `(${mapButton(ungrouped, 'Rest')}).parentElement.dataset.drop==='before'`,
+  )
+  const canvas = { x: target.x + 600, y: target.y }
+  pointer('mouseMove', canvas)
+  await ready(`!document.querySelector('[data-drop]')`)
+  pointer('mouseUp', canvas)
+  await ready(`!document.querySelector('[data-map-dragging]')`)
+  assert.equal(await evaluate(titles(ungrouped)), 'Rest,Coffee')
+
+  release = await drag(
+    mapButton(ungrouped, 'Coffee'),
+    section(group),
+    0.5,
+    `(${block(group)}).dataset.drop==='into'`,
+  )
+  pointer('mouseUp', release)
+  await ready(`(${titles(group)})==='Energy,Coffee' && (${titles(ungrouped)})==='Rest'`)
+  assert.equal(await evaluate(`(${section(group)}).getAttribute('aria-expanded')`), 'false')
+
+  release = await drag(
+    mapButton(ungrouped, 'Rest'),
+    section(group),
+    0.5,
+    `(${block(group)}).dataset.drop==='into'`,
+  )
+  pointer('mouseUp', release)
+  await ready(`!(${section(ungrouped)}) && !document.querySelector('[data-map-dragging]')`)
+  await click(section(group))
+  await ready(`(${titles(group)})==='Energy,Coffee,Rest'`)
+  const rest = await point(mapButton(group, 'Rest'))
+  window.webContents.sendInputEvent({ type: 'mouseMove', ...rest })
+  pointer('mouseDown', rest)
+  pointer('mouseMove', { x: rest.x, y: rest.y + 6 })
+  await ready(`!!(${section(ungrouped)})`)
+  const out = await point(section(ungrouped))
+  pointer('mouseMove', out)
+  await ready(`(${block(ungrouped)}).dataset.drop==='into'`)
+  pointer('mouseUp', out)
+  await ready(`(${titles(ungrouped)})==='Rest' && (${titles(group)})==='Energy,Coffee'`)
+
+  await createGroup('Work')
+  release = await drag(
+    section('Work'),
+    block(group),
+    0.25,
+    `(${block(group)}).dataset.drop==='before'`,
+  )
+  pointer('mouseUp', release)
+  await ready(`(${groupOrder})==='Work,${group}'`)
+
+  const coffeeActions = `(${rows(group)}).querySelector('[aria-label="Actions for Coffee"]')`
+  await click(coffeeActions)
+  await click(menuItem('Move up'))
+  await ready(
+    `(${titles(group)})==='Coffee,Energy' && document.activeElement===(${coffeeActions}) && !document.querySelector('[role="menu"]')`,
+  )
+
+  await deleteGroup('Work')
+  await deleteGroup(group)
+  await ready(`!!(${actions('Maps')}) && !!(${actions(pinned)})`)
+  assert.equal(await evaluate(titles('Maps')), 'Rest,Coffee,Energy')
 }

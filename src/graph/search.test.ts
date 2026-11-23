@@ -23,7 +23,6 @@ const maps: readonly WorkspaceMap[] = [
   {
     id: 'memory',
     name: 'Memory',
-    pinned: false,
     members: [{ id: 'urn:test:memory', position: { x: 0, y: 0 }, color: '#ffeeee' }],
   },
 ]

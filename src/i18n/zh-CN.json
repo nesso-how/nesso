@@ -446,6 +446,8 @@
   "mapGroupActionsFor": "分组 {{name}} 的操作",
   "moveMapToGroup": "移至分组",
   "removeMapFromGroup": "移出分组",
+  "moveUp": "上移",
+  "moveDown": "下移",
   "noMapsInGroup": "没有导图",
   "completeGraph": "图谱",
   "default": "默认",

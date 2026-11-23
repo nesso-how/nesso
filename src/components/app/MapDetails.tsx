@@ -57,6 +57,7 @@ export function MapDetails({
   const workspace = useNessoStore((state) => state.workspace, store)
   const mapGraph = useNessoStore((state) => state.mapGraph, store)
   const map = workspace.maps.find((map) => map.id === workspace.activeMapId)
+  const pinned = !!map && workspace.pinnedMapIds.includes(map.id)
   const stats = [
     { label: t('concepts'), count: mapGraph.concepts.length },
     { label: t('relations'), count: mapGraph.relations.length },
@@ -93,12 +94,12 @@ export function MapDetails({
           <Label id="map-pin-label">{t('pinned')}</Label>
           <Button
             role="switch"
-            aria-checked={map.pinned}
+            aria-checked={pinned}
             aria-labelledby="map-pin-label"
             disabled={readonly}
             variant="ghost"
             className="h-5 min-h-0 w-8 rounded-sm border-border bg-background p-0.5 aria-checked:border-muted-foreground/60"
-            onClick={() => store.setMapPinned(map.id, !map.pinned)}
+            onClick={() => store.setMapPinned(map.id, !pinned)}
           >
             <span className="size-3 rounded-[2px] bg-muted-foreground transition-transform [[aria-checked=true]_&]:translate-x-1.5 [[aria-checked=true]_&]:bg-foreground [[aria-checked=false]_&]:-translate-x-1.5" />
           </Button>

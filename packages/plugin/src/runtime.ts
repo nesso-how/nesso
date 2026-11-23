@@ -396,7 +396,7 @@ export type ActionState = {
   readonly selected: Selection
   readonly workspace: {
     readonly activeMapId: string | null
-    readonly maps: readonly Pick<WorkspaceMap, 'id' | 'name' | 'pinned'>[]
+    readonly maps: readonly (Pick<WorkspaceMap, 'id' | 'name'> & { readonly pinned: boolean })[]
   }
   readonly targetMapId: string | null
   readonly activeVocab: VocabDefinition | null

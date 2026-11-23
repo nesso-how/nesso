@@ -2,7 +2,6 @@
   {
     "id": "coffee",
     "name": "Coffee",
-    "pinned": false,
     "members": [
       {
         "id": "urn:nesso:example:coffee",
@@ -41,7 +40,6 @@
   {
     "id": "energy",
     "name": "Energy",
-    "pinned": false,
     "members": [
       {
         "id": "urn:nesso:example:coffee",
@@ -72,7 +70,6 @@
   {
     "id": "rest",
     "name": "Rest",
-    "pinned": false,
     "members": [
       {
         "id": "urn:nesso:example:coffee",

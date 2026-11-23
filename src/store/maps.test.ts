@@ -72,7 +72,6 @@ test('deleting all concepts leaves a fresh disconnected concept and preserves un
     if (!complete) assert.equal(id, shared)
     assert.deepEqual(remaining, {
       name: complete ? 'Map 1' : 'Shared',
-      pinned: false,
       members: [{ id: after.graph.concepts[0].id, position: { x: 0, y: 0 } }],
     })
     store.undo()

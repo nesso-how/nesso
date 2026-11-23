@@ -121,6 +121,7 @@ test('migration backups preserve all original records and restore through the ma
       viewports: document.workspace.viewports,
       savedViews: document.workspace.maps.map(({ members, ...map }) => ({
         ...map,
+        pinned: false,
         conceptIds: members.map(({ id }) => id),
       })),
     },

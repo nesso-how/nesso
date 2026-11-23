@@ -106,7 +106,7 @@ export function readAiTool(
                 name: map.name,
                 groupId: map.groupId ?? null,
                 concepts: map.members.length,
-                pinned: map.pinned,
+                pinned: state.workspace.pinnedMapIds.includes(map.id),
               })),
           ],
           query,

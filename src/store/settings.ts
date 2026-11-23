@@ -53,7 +53,6 @@ const mapSchema = z.strictObject({
       (members) => new Set(members.map(({ id }) => id)).size === members.length,
       'Duplicate concept id',
     ),
-  pinned: z.boolean(),
   groupId: z.string().min(1).optional(),
   relationBends: z.array(relationBendSchema).optional(),
 })
@@ -61,6 +60,9 @@ const workspaceSchema = z
   .strictObject({
     activeMapId: z.string().nullable(),
     maps: z.array(mapSchema),
+    pinnedMapIds: z
+      .array(mapSchema.shape.id)
+      .refine((ids) => new Set(ids).size === ids.length, 'Duplicate map id'),
     mapGroups: z.array(z.strictObject({ id: mapSchema.shape.id, name: mapSchema.shape.name })),
     collapsedMapGroupIds: z
       .array(mapSchema.shape.id)
@@ -105,6 +107,10 @@ const workspaceSchema = z
     }
     if (workspace.activeMapId !== null && !ids.has(workspace.activeMapId))
       context.addIssue({ code: 'custom', path: ['activeMapId'], message: 'Unknown map' })
+    for (const [index, id] of workspace.pinnedMapIds.entries()) {
+      if (!ids.has(id))
+        context.addIssue({ code: 'custom', path: ['pinnedMapIds', index], message: 'Unknown map' })
+    }
   }) satisfies z.ZodType<WorkspaceState>
 
 export const preferencesSchema = z.strictObject({

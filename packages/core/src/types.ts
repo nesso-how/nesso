@@ -109,7 +109,6 @@ export type WorkspaceMap = {
   readonly name: string
   readonly members: readonly DeepReadonly<ConceptMapMember>[]
   readonly relationBends?: readonly DeepReadonly<RelationBend>[]
-  readonly pinned: boolean
   readonly groupId?: string
 }
 
@@ -127,6 +126,7 @@ export type Viewport = {
 export type WorkspaceState = {
   readonly activeMapId: string | null
   readonly maps: readonly WorkspaceMap[]
+  readonly pinnedMapIds: readonly string[]
   readonly mapGroups: readonly WorkspaceMapGroup[]
   readonly collapsedMapGroupIds?: readonly string[]
   readonly viewports: Readonly<Partial<Record<string, Viewport>>>

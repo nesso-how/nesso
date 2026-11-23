@@ -17,6 +17,8 @@ import {
   TextPromptDialog,
 } from '@nesso-how/ui'
 import {
+  ArrowDown,
+  ArrowUp,
   ChevronRight,
   FolderInput,
   FolderMinus,
@@ -29,7 +31,7 @@ import {
   Settings2,
   Trash2,
 } from 'lucide-react'
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type PointerEvent, type ReactNode } from 'react'
 import { Sidebar } from './SidebarLayout'
 import { NewMapButton } from './NewMapButton'
 import { DeleteMapDialog } from './DeleteMapDialog'
@@ -39,6 +41,7 @@ import type { HostStore } from '@/store/types'
 import { useTranslation } from '@/i18n'
 import { mapSections } from './map-sections'
 import { MapGroupDialog, type MapGroupEdit } from './MapGroupDialog'
+import { useMapDrag, type MapDrag, type MapDrop } from './map-drag'
 
 const mapKey = (id: string, shortcut: boolean) => `${shortcut ? 'pinned-map' : 'map'}:${id}`
 const groupKey = (id: string) => `group:${id}`
@@ -75,7 +78,24 @@ export function AppSidebar({
   const deletingId = useRef<string | null>(null)
   const renamingId = useRef<string | null>(null)
   const groupDialogOrigin = useRef<string | null>(null)
+  const scroller = useRef<HTMLDivElement>(null)
   const { pinned, groups, ungrouped } = mapSections(workspace, workspace.maps)
+  const place = (item: MapDrag, { groupId, beforeId }: Pick<MapDrop, 'groupId' | 'beforeId'>) => {
+    setMenu(null)
+    store.applyOperations([
+      item.kind === 'pin'
+        ? { kind: 'map.pin.move', id: item.id, beforeId }
+        : item.kind === 'group'
+          ? { kind: 'map-group.move', id: item.id, beforeId }
+          : { kind: 'map.move', id: item.id, groupId, beforeId },
+    ])
+  }
+  const { drag, drop, start } = useMapDrag(scroller, place)
+  const dropTarget = (key: string, item?: MapDrag) => ({
+    'data-drop-key': key,
+    'data-drop': drop?.key === key ? drop.position : undefined,
+    'data-dragging': item && drag?.kind === item.kind && drag.id === item.id ? '' : undefined,
+  })
 
   useEffect(() => {
     const close = () => setMenu(null)
@@ -108,6 +128,34 @@ export function AppSidebar({
     store.applyOperations([{ kind: 'map.group', id: map.id, groupId }])
     restoreMapFocus(map.id, shortcut, groupId)
   }
+  const reorderItems = (
+    siblings: readonly { id: string }[],
+    item: MapDrag,
+    key: string,
+    groupId: string | null = null,
+  ) => {
+    const index = siblings.findIndex(({ id }) => id === item.id)
+    const reorder = (beforeId: string | null) => {
+      place(item, { groupId, beforeId })
+      requestAnimationFrame(() => visibleTrigger(key)?.focus())
+    }
+    return (
+      <>
+        {index > 0 && (
+          <MenuItem onClick={() => reorder(siblings[index - 1].id)}>
+            <ArrowUp />
+            {t('moveUp')}
+          </MenuItem>
+        )}
+        {index < siblings.length - 1 && (
+          <MenuItem onClick={() => reorder(siblings[index + 2]?.id ?? null)}>
+            <ArrowDown />
+            {t('moveDown')}
+          </MenuItem>
+        )}
+      </>
+    )
+  }
   const editGroup = (edit: MapGroupEdit, origin: string | null = null) => {
     groupDialogOrigin.current = origin
     setGroupEdit(edit)
@@ -135,12 +183,20 @@ export function AppSidebar({
       </RevealActions>
     )
 
-  const row = (map: WorkspaceMap, shortcut: boolean) => {
+  const row = (map: WorkspaceMap, siblings: readonly WorkspaceMap[], shortcut = false) => {
     const key = mapKey(map.id, shortcut)
+    const isPinned = workspace.pinnedMapIds.includes(map.id)
+    const item: MapDrag = { kind: shortcut ? 'pin' : 'map', id: map.id }
     return (
-      <ListRow key={map.id} className="has-[[aria-current]]:bg-pressed">
+      <ListRow
+        key={map.id}
+        className="map-drop has-[[aria-current]]:bg-pressed"
+        data-map-row={map.id}
+        {...dropTarget(key, item)}
+      >
         <ListRowButton
           onClick={() => navigate(map.id)}
+          onPointerDown={(event) => !readonly && start(event, item)}
           aria-current={workspace.activeMapId === map.id ? 'page' : undefined}
         >
           <ListRowTitle>{map.name}</ListRowTitle>
@@ -162,13 +218,14 @@ export function AppSidebar({
             <MenuItem
               onClick={() => {
                 setMenu(null)
-                store.setMapPinned(map.id, !map.pinned)
+                store.setMapPinned(map.id, !isPinned)
                 restoreMapFocus(map.id, shortcut, map.groupId)
               }}
             >
-              {map.pinned ? <PinOff /> : <Pin />}
-              {t(map.pinned ? 'unpinMap' : 'pinMap')}
+              {isPinned ? <PinOff /> : <Pin />}
+              {t(isPinned ? 'unpinMap' : 'pinMap')}
             </MenuItem>
+            {reorderItems(siblings, item, key, map.groupId)}
             <Menu.SubmenuRoot>
               <MenuSubmenuTrigger>
                 <FolderInput />
@@ -215,8 +272,20 @@ export function AppSidebar({
     )
   }
 
-  const heading = (label: string, id: string, open: boolean, toggle: () => void) => (
-    <SectionHeading open={open} className="min-h-8 min-w-0" aria-controls={id} onClick={toggle}>
+  const heading = (
+    label: string,
+    id: string,
+    open: boolean,
+    toggle: () => void,
+    onPointerDown?: (event: PointerEvent<HTMLElement>) => void,
+  ) => (
+    <SectionHeading
+      open={open}
+      className="min-h-8 min-w-0"
+      aria-controls={id}
+      onClick={toggle}
+      onPointerDown={onPointerDown}
+    >
       <span className="truncate" title={label}>
         {label}
       </span>
@@ -263,29 +332,43 @@ export function AppSidebar({
           </ListRowButton>
         </ListRow>
         <div
+          ref={scroller}
           className="nesso-scroll min-h-0 flex-1 overflow-y-auto p-1.5 -mx-1.5"
+          data-map-dragging={drag ? '' : undefined}
           onScroll={() => setMenu(null)}
         >
           {pinned.length > 0 && (
-            <div className="mb-4">
+            <div className="mb-4" data-map-section="pinned">
               {heading(t('pinnedMaps'), `${sectionId}-pinned`, pinnedOpen, () =>
                 store.setSectionOpen('sidebar.pinned-maps', !pinnedOpen),
               )}
               <div id={`${sectionId}-pinned`} hidden={!pinnedOpen} className="mt-1 space-y-0.5">
-                {pinned.map((map) => row(map, true))}
+                {pinned.map((map) => row(map, pinned, true))}
               </div>
             </div>
           )}
           {groups.map((group, index) => {
             const open = !workspace.collapsedMapGroupIds?.includes(group.id)
             const id = `${sectionId}-group-${index}`
+            const item: MapDrag = { kind: 'group', id: group.id }
             return (
-              <div key={group.id} className="mb-4">
+              <div
+                key={group.id}
+                className="map-drop mb-4"
+                data-map-section="group"
+                data-id={group.id}
+                {...dropTarget(groupKey(group.id), item)}
+              >
                 <div className="group grid grid-cols-[minmax(0,1fr)_auto] items-center">
-                  {heading(group.name, id, open, () =>
-                    store.applyOperations([
-                      { kind: 'map-group.setOpen', id: group.id, open: !open },
-                    ]),
+                  {heading(
+                    group.name,
+                    id,
+                    open,
+                    () =>
+                      store.applyOperations([
+                        { kind: 'map-group.setOpen', id: group.id, open: !open },
+                      ]),
+                    (event) => !readonly && start(event, item),
                   )}
                   {actions(
                     groupKey(group.id),
@@ -297,6 +380,7 @@ export function AppSidebar({
                         <Pencil />
                         {t('renameMapGroup')}
                       </MenuItem>
+                      {reorderItems(groups, item, groupKey(group.id))}
                       <MenuItem
                         onClick={() => editGroup({ kind: 'delete', group }, groupKey(group.id))}
                       >
@@ -308,7 +392,7 @@ export function AppSidebar({
                 </div>
                 <div id={id} hidden={!open} className="mt-1 space-y-0.5">
                   {group.maps.length > 0 ? (
-                    group.maps.map((map) => row(map, false))
+                    group.maps.map((map) => row(map, group.maps))
                   ) : (
                     <p className="px-2.5 py-1 text-xs text-muted-foreground">
                       {t('noMapsInGroup')}
@@ -318,21 +402,23 @@ export function AppSidebar({
               </div>
             )
           })}
-          <div>
-            {heading(
-              t(groups.length ? 'ungroupedMaps' : 'maps'),
-              `${sectionId}-maps`,
-              mapsOpen,
-              () => store.setSectionOpen('sidebar.maps', !mapsOpen),
-            )}
-            <div
-              id={`${sectionId}-maps`}
-              hidden={!mapsOpen}
-              className="sidebar-maps mt-1 space-y-0.5"
-            >
-              {ungrouped.map((map) => row(map, false))}
+          {(!groups.length || ungrouped.length > 0 || drag?.kind === 'map') && (
+            <div className="map-drop" data-map-section="ungrouped" {...dropTarget('ungrouped')}>
+              {heading(
+                t(groups.length ? 'ungroupedMaps' : 'maps'),
+                `${sectionId}-maps`,
+                mapsOpen,
+                () => store.setSectionOpen('sidebar.maps', !mapsOpen),
+              )}
+              <div
+                id={`${sectionId}-maps`}
+                hidden={!mapsOpen}
+                className="sidebar-maps mt-1 space-y-0.5"
+              >
+                {ungrouped.map((map) => row(map, ungrouped))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
       {(onOpenSettings || readonly) && (

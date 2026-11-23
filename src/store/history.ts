@@ -56,13 +56,14 @@ const mergeDelta = (left: DocumentDelta, right: DocumentDelta): DocumentDelta =>
     maps: [...maps.values()].filter(
       (map) => map.members.length > 0 || map.relationBends.length > 0 || !sameMetadata(map),
     ),
+    pinnedMapIds: left.pinnedMapIds,
     mapGroups: left.mapGroups,
   }
 }
 
 const canMerge = (left: DocumentDelta, right: DocumentDelta): boolean =>
-  left.mapGroups.length === 0 &&
-  right.mapGroups.length === 0 &&
+  left.pinnedMapIds.length + left.mapGroups.length === 0 &&
+  right.pinnedMapIds.length + right.mapGroups.length === 0 &&
   left.maps.every(stable) &&
   right.maps.every(sameMetadata)
 
@@ -149,6 +150,12 @@ const restore = (
       : { concepts, relations, relationTypes }
   if (graph !== state.graph) checkGraph(graph)
   const maps = restoreViews(state.workspace.maps, delta.maps, forward)
+  const pinnedMapIds = applyChanges(
+    state.workspace.pinnedMapIds,
+    delta.pinnedMapIds,
+    (id) => id,
+    forward,
+  )
   const mapGroups = applyChanges(
     state.workspace.mapGroups,
     delta.mapGroups,
@@ -163,12 +170,14 @@ const restore = (
     : state.workspace.collapsedMapGroupIds
   const workspace =
     maps === state.workspace.maps &&
+    pinnedMapIds === state.workspace.pinnedMapIds &&
     mapGroups === state.workspace.mapGroups &&
     activeMapId === state.workspace.activeMapId
       ? state.workspace
       : pruneCollapsedMapGroups({
           ...state.workspace,
           maps,
+          pinnedMapIds,
           mapGroups,
           activeMapId,
           ...(collapsed && { collapsedMapGroupIds: collapsed }),

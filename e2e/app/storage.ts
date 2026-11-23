@@ -125,6 +125,7 @@ export async function verifyStorage({ window, url, name }: CheckContext) {
       viewports: document.workspace.viewports,
       savedViews: document.workspace.maps.map(({ members, ...map }) => ({
         ...map,
+        pinned: false,
         conceptIds: members.map(({ id }) => id),
       })),
     },
@@ -145,7 +146,7 @@ export async function verifyStorage({ window, url, name }: CheckContext) {
         graph: unknown
         workspace: object
       },
-    (value) => value.version === 8,
+    (value) => value.version === 9,
   )
   assert.deepEqual(upgraded.graph, document.graph)
   assert.deepEqual(

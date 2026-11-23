@@ -23,6 +23,48 @@
   }
 }
 
+.map-drop {
+  position: relative;
+}
+.map-drop[data-dragging] {
+  opacity: 0.5;
+}
+.map-drop[data-drop='before']::before,
+.map-drop[data-drop='after']::after {
+  content: '';
+  position: absolute;
+  inset-inline: 4px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--ring);
+  pointer-events: none;
+}
+.map-drop[data-drop='before']::before {
+  top: -2px;
+}
+.map-drop[data-drop='after']::after {
+  bottom: -2px;
+}
+[data-map-section='group'][data-drop='before']::before {
+  top: -9px;
+}
+[data-map-section='group']:first-child[data-drop='before']::before {
+  top: -4px;
+}
+[data-map-section='group'][data-drop='after']::after {
+  bottom: -9px;
+}
+.map-drop[data-drop='into'] {
+  border-radius: var(--radius-control);
+  outline: 2px solid color-mix(in srgb, var(--ring) 85%, var(--background));
+  outline-offset: -2px;
+}
+[data-map-dragging],
+[data-map-dragging] * {
+  cursor: grabbing;
+  user-select: none;
+}
+
 .update-position {
   position: fixed;
   bottom: 24px;

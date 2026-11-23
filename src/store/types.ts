@@ -33,8 +33,16 @@ export type HostOperation =
   | NessoOperation
   | PluginStorageWrite
   | { readonly kind: 'map.group'; readonly id: string; readonly groupId: string | null }
+  | {
+      readonly kind: 'map.move'
+      readonly id: string
+      readonly groupId: string | null
+      readonly beforeId: string | null
+    }
+  | { readonly kind: 'map.pin.move'; readonly id: string; readonly beforeId: string | null }
   | { readonly kind: 'map-group.create'; readonly id: string; readonly name: string }
   | { readonly kind: 'map-group.rename'; readonly id: string; readonly name: string }
+  | { readonly kind: 'map-group.move'; readonly id: string; readonly beforeId: string | null }
   | { readonly kind: 'map-group.remove'; readonly id: string }
   | { readonly kind: 'map-group.setOpen'; readonly id: string; readonly open: boolean }
   | { readonly kind: 'preferences.intro-seen' }
