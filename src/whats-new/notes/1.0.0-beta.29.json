@@ -1,0 +1,14 @@
+{
+  "en": [
+    "**Drag maps** in the sidebar to reorder them or move them to another group. Pinned maps and groups can be reordered too, or use **Move up** and **Move down** in their menus.",
+    "Installed plugins are now grouped by type in Settings."
+  ],
+  "it": [
+    "**Trascina le mappe** nella barra laterale per riordinarle o spostarle in un altro gruppo. Puoi riordinare anche le mappe fissate e i gruppi, oppure usare **Sposta su** e **Sposta giù** dai loro menu.",
+    "Nelle Impostazioni, i plugin installati sono ora raggruppati per tipo."
+  ],
+  "zh-CN": [
+    "在侧边栏中**拖动导图**，即可调整顺序或移到其他分组。置顶导图和分组也能调整顺序，或在菜单中选择**上移**和**下移**。",
+    "设置中已安装的插件现在按类型分组。"
+  ]
+}

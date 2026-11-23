@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.0-beta.29 — 2026-11-23
+
+### Breaking Changes
+
+- **maps:** Reorder and move maps with drag and drop (#389)
+  document record 9 stores pin order in `pinnedMapIds`
+  and drops `WorkspaceMap.pinned`. Version 8 records migrate with pins in
+  their existing map order; older hosts cannot read version 9.
+
+### Features
+
+- **plugins:** Group installed packages by type
+
 ## 1.0.0-beta.28 — 2026-11-21
 
 ### Breaking Changes
