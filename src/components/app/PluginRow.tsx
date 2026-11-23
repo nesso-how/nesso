@@ -3,12 +3,17 @@ import type { PluginI18n, PluginManifest } from '@nesso-how/plugin/runtime'
 import { ListRow, ListRowButton, ListRowDetail, ListRowTitle } from '@nesso-how/ui'
 import { ChevronRight, Palette, Shapes, Zap } from 'lucide-react'
 import { pluginMetadata } from '@/plugins'
-import { translate } from '@/i18n'
 
-export function PluginKindIcon({ kind, label }: { kind: PluginManifest['kind']; label: string }) {
+export function PluginKindIcon({ kind, label }: { kind: PluginManifest['kind']; label?: string }) {
   const Icon = { actions: Zap, theme: Palette, vocab: Shapes }[kind]
   return (
-    <span className="plugin-kind-icon" role="img" aria-label={label} title={label}>
+    <span
+      className="plugin-kind-icon"
+      role={label ? 'img' : undefined}
+      aria-label={label}
+      aria-hidden={label ? undefined : true}
+      title={label}
+    >
       <Icon aria-hidden="true" />
     </span>
   )
@@ -17,8 +22,7 @@ export function PluginKindIcon({ kind, label }: { kind: PluginManifest['kind']; 
 export function PluginRow({
   entry,
   locale,
-  status,
-  update,
+  badges,
   onClick,
 }: {
   entry: {
@@ -28,26 +32,31 @@ export function PluginRow({
     readonly i18n: PluginI18n
   }
   locale: Locale
-  status?: string
-  update?: string
+  badges: readonly (string | undefined)[]
   onClick: () => void
 }) {
   return (
     <ListRow className="plugin-row">
       <ListRowButton className="flex items-center gap-3" onClick={onClick}>
-        <PluginKindIcon kind={entry.kind} label={translate(locale)(entry.kind)} />
-        <span className="min-w-0 flex-1">
-          <ListRowTitle>{pluginMetadata(entry, locale).name}</ListRowTitle>
-          <ListRowDetail className="break-all">
-            {entry.name}@{entry.version}
-          </ListRowDetail>
-        </span>
-        {(status || update) && (
-          <span className="flex shrink-0 flex-wrap justify-end gap-1">
-            {status && <span className="settings-badge">{status}</span>}
-            {update && <span className="settings-badge">{update}</span>}
+        <PluginKindIcon kind={entry.kind} />
+        <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
+          <span className="min-w-0 grow basis-40">
+            <ListRowTitle>{pluginMetadata(entry, locale).name}</ListRowTitle>
+            <ListRowDetail className="break-all">
+              {entry.name}@{entry.version}
+            </ListRowDetail>
           </span>
-        )}
+          <span className="flex flex-wrap gap-1">
+            {badges.map(
+              (badge) =>
+                badge && (
+                  <span className="settings-badge" key={badge}>
+                    {badge}
+                  </span>
+                ),
+            )}
+          </span>
+        </span>
         <ChevronRight className="size-3 shrink-0 text-muted-foreground" aria-hidden="true" />
       </ListRowButton>
     </ListRow>

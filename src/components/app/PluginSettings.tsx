@@ -27,6 +27,7 @@ import { host, useNessoStore } from '@/store'
 import { PluginRow } from './PluginRow'
 import { PluginSearch } from './PluginSearch'
 import { PluginDetails } from './PluginDetails'
+import { pluginKindLabels, pluginStatusLabel } from './plugin-labels'
 
 const idle: ReturnType<ReturnType<typeof createPluginInstaller>['getSnapshot']> = { running: false }
 const idleSnapshot = () => idle
@@ -163,65 +164,47 @@ function usePluginUpdateCheck(
 }
 
 function InstalledGroups({
-  external,
   plugins,
   updates,
-  showExternal,
   locale,
   onOpen,
 }: {
-  external: readonly PluginEntry[]
   plugins: readonly PluginEntry[]
   updates: readonly NpmPlugin[]
-  showExternal: boolean
   locale: Locale
-  onOpen: (name: string, from: string, target?: NpmPlugin) => void
+  onOpen: (name: string, target?: NpmPlugin) => void
 }) {
   const t = translate(locale)
   return (
-    <section className="plugin-installed">
-      {showExternal && (
-        <>
-          <h3 className="settings-section-title mt-6 mb-2">{t('pluginExternalPackages')}</h3>
-          {!external.length && <p className="plugin-empty">{t('pluginEmpty')}</p>}
-          {external.map((entry) => {
-            const update = updates.find(({ name }) => name === entry.id)
-            return (
-              <PluginRow
-                key={entry.id}
-                entry={{ ...entry, name: entry.id }}
-                locale={locale}
-                status={t(
-                  entry.incompatible
-                    ? 'pluginIncompatible'
-                    : entry.disabled
-                      ? 'pluginDisabled'
-                      : entry.error
-                        ? 'pluginUnavailable'
-                        : 'pluginEnabled',
-                )}
-                update={
-                  isLocalPlugin(entry) ? t('pluginLocal') : update && t('pluginUpdateAvailable')
-                }
-                onClick={() => onOpen(entry.id, 'plugins', update)}
-              />
-            )
-          })}
-        </>
-      )}
-      <h3 className="settings-section-title mt-6 mb-2">{t('pluginBuiltInPackages')}</h3>
-      {plugins
-        .filter((entry) => !entry.contentId)
-        .map((entry) => (
-          <PluginRow
-            key={entry.id}
-            entry={{ ...entry, name: entry.id }}
-            locale={locale}
-            status={t(entry.disabled ? 'pluginDisabled' : 'pluginEnabled')}
-            onClick={() => onOpen(entry.id, 'plugins')}
-          />
-        ))}
-    </section>
+    <div className="plugin-installed">
+      {Object.entries(pluginKindLabels).map(([kind, label]) => {
+        const entries = plugins.filter((entry) => entry.kind === kind)
+        if (!entries.length) return null
+        return (
+          <section key={kind} className="mt-6" aria-labelledby={`plugin-installed-${kind}`}>
+            <h3 id={`plugin-installed-${kind}`} className="settings-section-title mb-2">
+              {t(label)}
+            </h3>
+            {entries.map((entry) => {
+              const update = updates.find(({ name }) => name === entry.id)
+              return (
+                <PluginRow
+                  key={entry.id}
+                  entry={{ ...entry, name: entry.id }}
+                  locale={locale}
+                  badges={[
+                    t(entry.contentId ? 'pluginOriginExternal' : 'pluginOriginBuiltIn'),
+                    t(pluginStatusLabel(entry)),
+                    isLocalPlugin(entry) ? t('pluginLocal') : update && t('pluginUpdateAvailable'),
+                  ]}
+                  onClick={() => onOpen(entry.id, update)}
+                />
+              )
+            })}
+          </section>
+        )
+      })}
+    </div>
   )
 }
 
@@ -243,8 +226,7 @@ export function PluginSettings({
   const [selected, setSelected] = useState<NpmPlugin>()
   const [back, setBack] = useState('plugins')
   const { installer, installation } = usePluginInstaller(bridge, setSelected)
-  const external = plugins.filter((entry) => entry.contentId)
-  const published = external.filter((entry) => !isLocalPlugin(entry))
+  const published = plugins.filter((entry) => entry.contentId && !isLocalPlugin(entry))
   const { updates, checking, checkUpdates } = usePluginUpdateCheck(
     bridge,
     externalAvailable,
@@ -372,12 +354,10 @@ export function PluginSettings({
         )}
         <div hidden={page === 'plugin-find'}>
           <InstalledGroups
-            external={external}
             plugins={plugins}
             updates={updates}
-            showExternal={!!bridge}
             locale={locale}
-            onOpen={open}
+            onOpen={(name, update) => open(name, 'plugins', update)}
           />
         </div>
       </div>
