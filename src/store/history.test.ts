@@ -6,6 +6,7 @@ import { createNessoStore } from './create.ts'
 import { historyLimit } from './history.ts'
 import { NessoError } from '@nesso-how/errors'
 import { applyStateOperations } from './operations.ts'
+import type { HostOperation } from './types.ts'
 import { reuseConceptOperations } from '../../packages/concept-map/src/creation.ts'
 
 const fixture = (): Graph => ({
@@ -20,20 +21,22 @@ const members = (...ids: number[]) =>
   ids.map((i) => ({ id: `urn:n${i}`, position: { x: i, y: 0 } }))
 const viewed = (): WorkspaceState => ({
   activeMapId: 'urn:v',
+  pinnedMapIds: [],
   mapGroups: [],
   viewports: {},
-  maps: [{ id: 'urn:v', name: 'Map', pinned: false, members: members(0, 1, 2, 3) }],
+  maps: [{ id: 'urn:v', name: 'Map', members: members(0, 1, 2, 3) }],
 })
 
 test('undo and redo restore deletion, incident relations, custom types, memberships and order atomically', () => {
   const host = createNessoStore(fixture(), {
     workspace: {
       activeMapId: 'urn:v1',
+      pinnedMapIds: ['urn:v1'],
       mapGroups: [],
       viewports: {},
       maps: [
-        { id: 'urn:v1', name: 'First', pinned: true, members: members(0, 1, 2) },
-        { id: 'urn:v2', name: 'Second', pinned: false, members: members(3, 1) },
+        { id: 'urn:v1', name: 'First', members: members(0, 1, 2) },
+        { id: 'urn:v2', name: 'Second', members: members(3, 1) },
       ],
     },
   })
@@ -159,16 +162,10 @@ test('membership deltas contain changed IDs rather than copies of all map member
   const host = createNessoStore(fixture(), {
     workspace: {
       activeMapId: 'urn:v',
+      pinnedMapIds: [],
       mapGroups: [],
       viewports: {},
-      maps: [
-        {
-          id: 'urn:v',
-          name: 'Map',
-          pinned: false,
-          members: members(0, 1, 2, 3),
-        },
-      ],
+      maps: [{ id: 'urn:v', name: 'Map', members: members(0, 1, 2, 3) }],
     },
   })
   const { delta } = applyStateOperations(
@@ -207,7 +204,7 @@ test('undo restores a deleted group, its maps and its last collapse state', () =
   const removed = store.getState()
   assert.deepEqual(removed.workspace, {
     ...before.workspace,
-    maps: [{ ...before.workspace.maps[0], pinned: true }],
+    pinnedMapIds: [mapId],
     mapGroups: [{ id: other, name: 'Empty' }],
     collapsedMapGroupIds: [other],
   })
@@ -241,20 +238,147 @@ test('redo restores a newly created group with its last collapse state', () => {
   assert.deepEqual(store.getState().workspace, collapsed)
 })
 
+test('moving maps, pins and groups is one undo step each and keeps map contents', () => {
+  const { store } = createNessoStore(fixture())
+  const [a, b, c, d] = ['A', 'B', 'C', 'D'].map((name, i) => store.createMap(name, [`urn:n${i}`]))
+  store.applyOperations([
+    { kind: 'map-group.create', id: 'urn:g', name: 'G' },
+    { kind: 'map-group.create', id: 'urn:h', name: 'H' },
+    { kind: 'map.group', id: c, groupId: 'urn:g' },
+    { kind: 'map.group', id: a, groupId: 'urn:g' },
+    ...[a, b, c].map((id) => ({ kind: 'map.pin', id, pinned: true }) as const),
+  ])
+  store.setSelection([{ kind: 'concept', id: 'urn:n3' }])
+  const layout = () => {
+    const { maps, mapGroups, pinnedMapIds } = store.getState().workspace
+    const names = (ids: readonly string[]) =>
+      ids.map((id) => maps.find((map) => map.id === id)!.name)
+    const section = (groupId?: string) =>
+      maps.filter((map) => map.groupId === groupId).map(({ name }) => name)
+    return [
+      names(pinnedMapIds),
+      ...mapGroups.map(({ id, name }) => [name, ...section(id)]),
+      section(),
+    ]
+  }
+  assert.deepEqual(layout(), [['A', 'B', 'C'], ['G', 'C', 'A'], ['H'], ['B', 'D']])
+  const initial = store.getState()
+  const steps: [HostOperation, string[][]][] = [
+    [
+      { kind: 'map.move', id: d, groupId: 'urn:g', beforeId: c },
+      [['A', 'B', 'C'], ['G', 'D', 'C', 'A'], ['H'], ['B']],
+    ],
+    [
+      { kind: 'map.move', id: a, groupId: null, beforeId: b },
+      [['A', 'B', 'C'], ['G', 'D', 'C'], ['H'], ['A', 'B']],
+    ],
+    [
+      { kind: 'map.move', id: d, groupId: 'urn:h', beforeId: null },
+      [
+        ['A', 'B', 'C'],
+        ['G', 'C'],
+        ['H', 'D'],
+        ['A', 'B'],
+      ],
+    ],
+    [
+      { kind: 'map.pin.move', id: c, beforeId: a },
+      [
+        ['C', 'A', 'B'],
+        ['G', 'C'],
+        ['H', 'D'],
+        ['A', 'B'],
+      ],
+    ],
+    [
+      { kind: 'map-group.move', id: 'urn:g', beforeId: null },
+      [
+        ['C', 'A', 'B'],
+        ['H', 'D'],
+        ['G', 'C'],
+        ['A', 'B'],
+      ],
+    ],
+    [
+      { kind: 'map-group.remove', id: 'urn:g' },
+      [
+        ['C', 'A', 'B'],
+        ['H', 'D'],
+        ['A', 'B', 'C'],
+      ],
+    ],
+  ]
+  for (const [operation, expected] of steps) {
+    const before = store.getState().workspace
+    store.applyOperations([operation])
+    const after = store.getState().workspace
+    assert.deepEqual(layout(), expected)
+    store.undo()
+    assert.deepEqual(store.getState().workspace, before)
+    store.redo()
+    assert.deepEqual(store.getState().workspace, after)
+  }
+  const settled = store.getState()
+  assert.equal(settled.graph, initial.graph)
+  assert.equal(settled.selected, initial.selected)
+  for (const map of settled.workspace.maps)
+    assert.equal(map.members, initial.workspace.maps.find(({ id }) => id === map.id)!.members)
+  store.applyOperations([{ kind: 'map.move', id: b, groupId: null, beforeId: c }])
+  store.applyOperations([{ kind: 'map.move', id: c, groupId: null, beforeId: null }])
+  store.applyOperations([{ kind: 'map.group', id: d, groupId: 'urn:h' }])
+  store.applyOperations([{ kind: 'map.pin.move', id: b, beforeId: null }])
+  store.applyOperations([{ kind: 'map-group.move', id: 'urn:h', beforeId: null }])
+  assert.equal(store.getState(), settled)
+  store.applyOperations([{ kind: 'map.group', id: b, groupId: 'urn:h' }])
+  assert.deepEqual(layout(), [
+    ['C', 'A', 'B'],
+    ['H', 'D', 'B'],
+    ['A', 'C'],
+  ])
+})
+
+test('batched moves undo exactly and same-slot moves are no-ops', () => {
+  const map = (id: string, groupId: string) => ({ id, name: id, groupId, members: [] })
+  const { store } = createNessoStore(fixture(), {
+    workspace: {
+      activeMapId: null,
+      pinnedMapIds: ['urn:a', 'urn:b', 'urn:c'],
+      viewports: {},
+      mapGroups: [
+        { id: 'urn:g', name: 'G' },
+        { id: 'urn:h', name: 'H' },
+      ],
+      maps: [
+        map('urn:a', 'urn:g'),
+        map('urn:x', 'urn:h'),
+        map('urn:b', 'urn:g'),
+        map('urn:c', 'urn:g'),
+      ],
+    },
+  })
+  const before = store.getState()
+  store.applyOperations([{ kind: 'map.move', id: 'urn:a', groupId: 'urn:g', beforeId: 'urn:b' }])
+  assert.equal(store.getState(), before)
+  store.applyOperations([
+    { kind: 'map.pin.move', id: 'urn:b', beforeId: 'urn:a' },
+    { kind: 'map.pin.move', id: 'urn:c', beforeId: 'urn:b' },
+  ])
+  const after = store.getState().workspace
+  assert.deepEqual(after.pinnedMapIds, ['urn:c', 'urn:b', 'urn:a'])
+  store.undo()
+  assert.deepEqual(store.getState().workspace, before.workspace)
+  store.redo()
+  assert.deepEqual(store.getState().workspace, after)
+})
+
 test('map metadata, membership reordering and removal round-trip without changing the graph', () => {
   const host = createNessoStore(fixture(), {
     workspace: {
       activeMapId: 'urn:v',
+      pinnedMapIds: [],
       mapGroups: [],
       viewports: {},
-      maps: [
-        {
-          id: 'urn:v',
-          name: 'Map',
-          pinned: false,
-          members: members(0, 1, 2, 3),
-        },
-      ],
+      maps: [{ id: 'urn:v', name: 'Map', members: members(0, 1, 2, 3) }],
     },
   })
   const before = host.store.getState()
@@ -266,8 +390,10 @@ test('map metadata, membership reordering and removal round-trip without changin
   ])
   const changed = host.store.getState()
   host.store.deleteMap('urn:v')
+  assert.deepEqual(host.store.getState().workspace.pinnedMapIds, [])
   host.store.undo()
   assert.deepEqual(host.store.getState().workspace.maps, changed.workspace.maps)
+  assert.deepEqual(host.store.getState().workspace.pinnedMapIds, ['urn:v'])
   host.store.undo()
   assert.equal(host.store.getState().graph, before.graph)
   assert.deepEqual(host.store.getState().workspace.maps, before.workspace.maps)
@@ -505,7 +631,7 @@ test('grouped structural edits reconcile indices of surviving changes across rem
 test('map removal separates history groups before editing a shifted map', () => {
   const workspace = {
     ...viewed(),
-    maps: [{ id: 'urn:first', name: 'First', pinned: false, members: [] }, ...viewed().maps],
+    maps: [{ id: 'urn:first', name: 'First', members: [] }, ...viewed().maps],
   }
   const { store } = createNessoStore(fixture(), { workspace })
   store.applyOperations([{ kind: 'map.remove', id: 'urn:first' }], { historyGroup: 'maps' })

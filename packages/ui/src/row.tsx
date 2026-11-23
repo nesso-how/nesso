@@ -1,16 +1,15 @@
 import { cn } from 'cn'
 import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react'
 
-export function ListRow({ className, children }: { className?: string; children: ReactNode }) {
+export function ListRow({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
         'group flex min-h-14 items-center gap-1 rounded-sm hover:bg-accent has-[:focus-visible]:bg-accent',
         className,
       )}
-    >
-      {children}
-    </div>
+      {...props}
+    />
   )
 }
 

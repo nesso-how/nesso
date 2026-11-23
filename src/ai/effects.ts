@@ -17,11 +17,14 @@ export function summarizeEffects({
   const relations = count(
     delta.relations.filter((change) => !before.has(change.id) && !after.has(change.id)),
   )
+  const maps = count(delta.maps)
+  const changedMaps = new Set(delta.maps.map(({ id }) => id))
+  const pins = delta.pinnedMapIds.filter(({ id }) => !changedMaps.has(id)).length
   const groups = {
     concepts: count(delta.concepts),
     relations: { ...relations, updated: relations.updated + relationRewrites.length },
     relationTypes: count(delta.relationTypes),
-    maps: count(delta.maps),
+    maps: { ...maps, updated: maps.updated + pins },
     mapGroups: count(delta.mapGroups),
   }
   const updatedMaps = delta.maps.filter((map) => map.before && map.after)

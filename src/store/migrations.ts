@@ -35,6 +35,7 @@ const documentV5 = documentV2.extend({ version: z.literal(5) })
 const documentV6 = documentV2.extend({ version: z.literal(6) })
 const documentV7 = documentV2.extend({ version: z.literal(7) })
 const documentV8 = documentV2.extend({ version: z.literal(8) })
+const documentV9 = documentV2.extend({ version: z.literal(9) })
 const workspaceV2 = z.looseObject({
   savedViews: z.array(z.looseObject({ conceptIds: z.array(z.string()) })),
 })
@@ -50,6 +51,10 @@ const workspaceV7 = z.strictObject({
   activeMapId: z.unknown(),
   maps: z.unknown(),
   viewports: z.unknown(),
+})
+const workspaceV8 = z.looseObject({
+  maps: z.array(z.looseObject({ id: z.unknown(), pinned: z.boolean() })),
+  pinnedMapIds: z.never().optional(),
 })
 const legacySections = new Map([
   ['sidebar.pinned-views', 'sidebar.pinned-maps'],
@@ -205,7 +210,7 @@ export function migratePluginStorage(value: unknown): unknown {
   }
 }
 
-export function migrateDocument(value: unknown): z.infer<typeof documentV8> {
+export function migrateDocument(value: unknown): z.infer<typeof documentV9> {
   const { version } = parseSettings(versionSchema, value)
   switch (version) {
     case 1: {
@@ -300,8 +305,22 @@ export function migrateDocument(value: unknown): z.infer<typeof documentV8> {
         workspace: workspace && { ...workspace, mapGroups: [] },
       })
     }
-    case 8:
-      return parseSettings(documentV8, value)
+    case 8: {
+      const saved = parseSettings(documentV8, value)
+      const workspace =
+        saved.workspace === null ? null : parseSettings(workspaceV8, saved.workspace, 'workspace')
+      return migrateDocument({
+        ...saved,
+        version: 9,
+        workspace: workspace && {
+          ...workspace,
+          maps: workspace.maps.map(({ pinned: _pinned, ...map }) => map),
+          pinnedMapIds: workspace.maps.flatMap(({ id, pinned }) => (pinned ? [id] : [])),
+        },
+      })
+    }
+    case 9:
+      return parseSettings(documentV9, value)
     default:
       return fail('version', 'Unsupported storage version')
   }

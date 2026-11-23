@@ -125,7 +125,7 @@ test('persisted bends round-trip and invalid references block loading', async ()
   store.setRelationBend(key, 0.25)
   const state = store.getState()
   const record = {
-    version: 8,
+    version: 9,
     documentId: state.documentId,
     graph: serializeGraph(graph()),
     workspace: state.workspace,

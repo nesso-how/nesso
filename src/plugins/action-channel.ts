@@ -109,10 +109,10 @@ export function connectActionChannel(
       locale: state.preferences.locale ?? base.locale,
       workspace: {
         activeMapId: state.workspace.activeMapId,
-        maps: state.workspace.maps.map(({ id, name, pinned }) => ({
+        maps: state.workspace.maps.map(({ id, name }) => ({
           id,
           name,
-          pinned,
+          pinned: state.workspace.pinnedMapIds.includes(id),
         })),
       },
       targetMapId: target,

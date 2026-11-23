@@ -56,7 +56,11 @@ export function OpenMapMenu({
               maps={maps}
               renderMap={(map) => (
                 <MenuItem key={map.id} onClick={() => onOpen(map.id)}>
-                  {map.pinned ? <Pin aria-hidden="true" /> : <Layers aria-hidden="true" />}
+                  {workspace.pinnedMapIds.includes(map.id) ? (
+                    <Pin aria-hidden="true" />
+                  ) : (
+                    <Layers aria-hidden="true" />
+                  )}
                   {map.name}
                 </MenuItem>
               )}

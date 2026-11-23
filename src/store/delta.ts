@@ -13,6 +13,7 @@ export class ListEdit<T> {
   private indices?: Map<string, number>
   private originalIndices?: Map<string, number>
   private readonly touched = new Map<string, Entry<T> | undefined>()
+  private readonly moved = new Set<string>()
   private readonly original: readonly T[]
   private readonly key: (item: T) => string
   private readonly equal: (a: T, b: T) => boolean
@@ -74,6 +75,19 @@ export class ListEdit<T> {
     this.writable()[index] = item
   }
 
+  move(id: string, beforeId: string | null): void {
+    const from = this.index(id)
+    if (from === undefined) return
+    this.touch(id)
+    this.moved.add(id)
+    const items = this.writable()
+    const [item] = items.splice(from, 1)
+    const to =
+      beforeId === null ? items.length : items.findIndex((other) => this.key(other) === beforeId)
+    items.splice(to, 0, item)
+    this.indices = undefined
+  }
+
   removeWhere(remove: (item: T) => boolean): void {
     const next = this.current.filter((item) => {
       if (!remove(item)) return true
@@ -87,6 +101,10 @@ export class ListEdit<T> {
 
   finish(): { items: readonly T[]; changes: Change<T>[] } {
     const changes: Change<T>[] = []
+    const reordered =
+      this.moved.size > 0 &&
+      (this.current.length !== this.original.length ||
+        this.current.some((item, index) => this.key(item) !== this.key(this.original[index])))
     for (const [id, before] of this.touched) {
       const index = this.index(id)
       const after = index === undefined ? undefined : { index, value: this.current[index] }
@@ -95,7 +113,8 @@ export class ListEdit<T> {
         before &&
         after &&
         before.index === after.index &&
-        this.equal(before.value, after.value)
+        this.equal(before.value, after.value) &&
+        !(reordered && this.moved.has(id))
       ) {
         this.writable()[index!] = before.value
         continue
@@ -230,7 +249,7 @@ type MapMetadata = Omit<WorkspaceMap, 'members' | 'relationBends'>
 export const sameMapGroup = (a: WorkspaceMapGroup, b: WorkspaceMapGroup): boolean =>
   a.id === b.id && a.name === b.name
 export const sameMapMetadata = (a: MapMetadata, b: MapMetadata): boolean =>
-  sameMapGroup(a, b) && a.pinned === b.pinned && a.groupId === b.groupId
+  sameMapGroup(a, b) && a.groupId === b.groupId
 export const sameMap = (a: WorkspaceMap, b: WorkspaceMap): boolean =>
   sameMapMetadata(a, b) &&
   sameMembers(a.members, b.members) &&
@@ -245,6 +264,7 @@ export type DocumentDelta = {
   readonly relations: readonly Change<GraphSnapshot['relations'][number]>[]
   readonly relationTypes: readonly Change<GraphSnapshot['relationTypes'][number]>[]
   readonly maps: readonly MapChange[]
+  readonly pinnedMapIds: readonly Change<string>[]
   readonly mapGroups: readonly Change<WorkspaceMapGroup>[]
 }
 
@@ -309,5 +329,6 @@ export const hasDelta = (delta: DocumentDelta): boolean =>
     delta.relations.length +
     delta.relationTypes.length +
     delta.maps.length +
+    delta.pinnedMapIds.length +
     delta.mapGroups.length >
   0

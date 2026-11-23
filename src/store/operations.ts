@@ -192,9 +192,9 @@ export const newDocument = (
         id: mapId,
         name: defaultMapName,
         members: [{ id: conceptId, position: { x: 0, y: 0 } }],
-        pinned: false,
       },
     ],
+    pinnedMapIds: [],
     mapGroups: [],
     viewports: {},
   },
@@ -203,6 +203,7 @@ export const newDocument = (
 export const newWorkspace = (): WorkspaceState => ({
   activeMapId: null,
   maps: [],
+  pinnedMapIds: [],
   mapGroups: [],
   viewports: {},
 })
@@ -224,6 +225,7 @@ export const sameGraph = (left: GraphSnapshot, right: GraphSnapshot): boolean =>
 export const sameWorkspace = (left: WorkspaceState, right: WorkspaceState): boolean =>
   left.activeMapId === right.activeMapId &&
   sameItems(left.maps, right.maps, sameMap) &&
+  sameIds(left.pinnedMapIds, right.pinnedMapIds) &&
   sameItems(left.mapGroups, right.mapGroups, sameMapGroup) &&
   sameIds(left.collapsedMapGroupIds ?? [], right.collapsedMapGroupIds ?? []) &&
   Object.keys(left.viewports).length === Object.keys(right.viewports).length &&
@@ -277,6 +279,11 @@ export const applyStateOperations = (
   )
   let types = new ListEdit(state.graph.relationTypes, (item) => item.id, sameType)
   let maps = new ListEdit(state.workspace.maps, (item) => item.id, sameMap)
+  let pins = new ListEdit(
+    state.workspace.pinnedMapIds,
+    (id) => id,
+    (a, b) => a === b,
+  )
   let mapGroups = new ListEdit(state.workspace.mapGroups, (item) => item.id, sameMapGroup)
   let relationOrigins: Map<string, string> | undefined
   const origins = () =>
@@ -427,6 +434,39 @@ export const applyStateOperations = (
     const { relationBends, ...metadata } = next
     maps.set(id, relationBends?.length === 0 ? metadata : next)
     if (maps.items !== workspace.maps) workspace = { ...workspace, maps: maps.items }
+  }
+
+  const placeMap = (id: string, groupId: string | null, beforeId: string | null): void => {
+    const section = maps.items.filter((map) => (map.groupId ?? null) === groupId)
+    const index = section.findIndex((map) => map.id === id)
+    if (index >= 0 && (section[index + 1]?.id ?? null) === beforeId) return
+    updateMap(id, (map) => {
+      if (groupId !== null) return map.groupId === groupId ? map : { ...map, groupId }
+      if (map.groupId === undefined) return map
+      const { groupId: _group, ...ungrouped } = map
+      return ungrouped
+    })
+    const others = maps.items.filter((map) => map.id !== id)
+    const last = others.findLastIndex((map) => (map.groupId ?? null) === groupId)
+    if (beforeId === null && last < 0) return
+    maps.move(id, beforeId ?? others[last + 1]?.id ?? null)
+    workspace = { ...workspace, maps: maps.items }
+  }
+
+  const moveItem = <T>(
+    list: ListEdit<T>,
+    { id, beforeId }: { readonly id: string; readonly beforeId: string | null },
+    path: string,
+    message: string,
+  ): void => {
+    if (!list.get(id)) fail(`${path}.id`, message)
+    if (beforeId !== null && (beforeId === id || !list.get(beforeId)))
+      fail(`${path}.beforeId`, message)
+    list.move(id, beforeId)
+  }
+
+  const checkGroup = (groupId: string | null): void => {
+    if (groupId !== null && !mapGroups.get(groupId)) fail('map.groupId', 'Unknown group')
   }
 
   const trimName = (name: string, path: string): string => {
@@ -676,6 +716,11 @@ export const applyStateOperations = (
         relations = new ListEdit([], relationKey, (a, b) => relationKey(a) === relationKey(b))
         types = new ListEdit([], (item: Readonly<RelationType>) => item.id, sameType)
         maps = new ListEdit(document.workspace.maps, (item: WorkspaceMap) => item.id, sameMap)
+        pins = new ListEdit(
+          document.workspace.pinnedMapIds,
+          (id: string) => id,
+          (a, b) => a === b,
+        )
         mapGroups = new ListEdit(
           document.workspace.mapGroups,
           (item: WorkspaceMapGroup) => item.id,
@@ -710,12 +755,7 @@ export const applyStateOperations = (
         const members: Member[] = []
         for (const id of new Set(operation.conceptIds))
           members.push(placeMember(id, members, sources))
-        maps.add({
-          id: operation.id,
-          name: trimName(operation.name, 'map.name'),
-          members,
-          pinned: false,
-        })
+        maps.add({ id: operation.id, name: trimName(operation.name, 'map.name'), members })
         workspace = { ...workspace, activeMapId: operation.id, maps: maps.items }
         break
       }
@@ -726,19 +766,32 @@ export const applyStateOperations = (
         })
         break
       case 'map.pin':
-        updateMap(operation.id, (map) =>
-          map.pinned === operation.pinned ? map : { ...map, pinned: operation.pinned },
+        if (!maps.get(operation.id)) fail('map.id', 'Unknown map')
+        if (typeof operation.pinned !== 'boolean') fail('map.pinned', 'Expected a boolean')
+        if (!operation.pinned) pins.removeWhere((id) => id === operation.id)
+        else if (!pins.get(operation.id)) pins.add(operation.id)
+        break
+      case 'map.pin.move':
+        moveItem(pins, operation, 'map', 'Map is not pinned')
+        break
+      case 'map.group': {
+        const map = maps.get(operation.id) ?? fail('map.id', 'Unknown map')
+        checkGroup(operation.groupId)
+        if ((map.groupId ?? null) !== operation.groupId) placeMap(map.id, operation.groupId, null)
+        break
+      }
+      case 'map.move': {
+        if (!maps.get(operation.id)) fail('map.id', 'Unknown map')
+        checkGroup(operation.groupId)
+        const before = operation.beforeId === null ? null : maps.get(operation.beforeId)
+        if (
+          before !== null &&
+          (!before || before.id === operation.id || (before.groupId ?? null) !== operation.groupId)
         )
+          fail('map.beforeId', 'Map is not in the target group')
+        placeMap(operation.id, operation.groupId, operation.beforeId)
         break
-      case 'map.group':
-        if (operation.groupId !== null && !mapGroups.get(operation.groupId))
-          fail('map.groupId', 'Unknown group')
-        updateMap(operation.id, (map) => {
-          if (operation.groupId !== null) return { ...map, groupId: operation.groupId }
-          const { groupId: _group, ...ungrouped } = map
-          return ungrouped
-        })
-        break
+      }
       case 'map-group.create':
         if (mapGroups.get(operation.id)) fail('map-group.id', 'Duplicate group id')
         mapGroups.add({ id: operation.id, name: trimName(operation.name, 'map-group.name') })
@@ -748,14 +801,14 @@ export const applyStateOperations = (
         mapGroups.set(group.id, { ...group, name: trimName(operation.name, 'map-group.name') })
         break
       }
+      case 'map-group.move':
+        moveItem(mapGroups, operation, 'map-group', 'Unknown group')
+        break
       case 'map-group.remove':
         if (!mapGroups.get(operation.id)) fail('map-group.id', 'Unknown group')
         mapGroups.removeWhere(({ id }) => id === operation.id)
-        for (const map of maps.items) {
-          if (map.groupId !== operation.id) continue
-          const { groupId: _group, ...ungrouped } = map
-          updateMap(map.id, () => ungrouped)
-        }
+        for (const map of maps.items.filter(({ groupId }) => groupId === operation.id))
+          placeMap(map.id, null, null)
         break
       case 'map-group.setOpen': {
         if (!mapGroups.get(operation.id)) fail('map-group.id', 'Unknown group')
@@ -787,6 +840,7 @@ export const applyStateOperations = (
       case 'map.remove':
         if (!workspace.maps.some((map) => map.id === operation.id)) fail('map.id', 'Unknown map')
         maps.removeWhere((map) => map.id === operation.id)
+        pins.removeWhere((id) => id === operation.id)
         workspace = {
           ...workspace,
           activeMapId: workspace.activeMapId === operation.id ? null : workspace.activeMapId,
@@ -907,6 +961,7 @@ export const applyStateOperations = (
       updateMap(map.id, (map) => ({ ...map, relationBends: kept }))
   }
   const mapEdit = maps.finish()
+  const pinEdit = pins.finish()
   const mapGroupEdit = mapGroups.finish()
   let candidate: GraphSnapshot = {
     concepts: conceptEdit.items,
@@ -924,6 +979,8 @@ export const applyStateOperations = (
   }
   if (candidate !== state.graph) checkGraph(candidate)
   if (mapEdit.items !== workspace.maps) workspace = { ...workspace, maps: mapEdit.items }
+  if (pinEdit.items !== workspace.pinnedMapIds)
+    workspace = { ...workspace, pinnedMapIds: pinEdit.items }
   if (mapGroupEdit.items !== workspace.mapGroups)
     workspace = pruneCollapsedMapGroups({ ...workspace, mapGroups: mapGroupEdit.items })
   if (workspace !== state.workspace) {
@@ -991,6 +1048,7 @@ export const applyStateOperations = (
       relations: relationEdit.changes,
       relationTypes: typeEdit.changes,
       maps: mapChanges(mapEdit.changes),
+      pinnedMapIds: pinEdit.changes,
       mapGroups: mapGroupEdit.changes,
     },
   }

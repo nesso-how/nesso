@@ -468,6 +468,8 @@
   "mapGroupActionsFor": "Azioni per il gruppo {{name}}",
   "moveMapToGroup": "Sposta nel gruppo",
   "removeMapFromGroup": "Rimuovi dal gruppo",
+  "moveUp": "Sposta su",
+  "moveDown": "Sposta giù",
   "noMapsInGroup": "Nessuna mappa",
   "completeGraph": "Grafo",
   "default": "Predefinito",

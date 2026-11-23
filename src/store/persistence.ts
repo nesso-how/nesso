@@ -202,7 +202,7 @@ export const connectPersistence = (
           const saved =
             section === 'document'
               ? {
-                  version: 8,
+                  version: 9,
                   documentId: state.documentId,
                   graph: serializedGraph!.value,
                   workspace: state.workspace,

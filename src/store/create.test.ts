@@ -24,12 +24,12 @@ const fixture = (): Graph => ({
 })
 const viewed = (graph: Graph = fixture()): WorkspaceState => ({
   activeMapId: 'urn:map',
+  pinnedMapIds: [],
   mapGroups: [],
   maps: [
     {
       id: 'urn:map',
       name: 'Map',
-      pinned: false,
       members: graph.concepts.map(({ id }, x) => ({ id, position: { x, y: 0 } })),
     },
   ],
@@ -949,9 +949,10 @@ test('state batches share ordered graph, map and preference changes, including r
       members: members.map(({ id }) => id),
     }))
   assert.deepEqual(maps(state), [
-    { id: 'urn:first', name: 'First', members: ['urn:n1', 'urn:n4'], pinned: true },
-    { id: 'urn:second', name: 'Second', members: ['urn:n2', 'urn:n5', 'urn:n4'], pinned: false },
+    { id: 'urn:first', name: 'First', members: ['urn:n1', 'urn:n4'] },
+    { id: 'urn:second', name: 'Second', members: ['urn:n2', 'urn:n5', 'urn:n4'] },
   ])
+  assert.deepEqual(state.workspace.pinnedMapIds, ['urn:first'])
   assert.deepEqual(state.graph.relations.at(-1), {
     source: 'urn:n1',
     predicate: vocabB.defaultTypeId,
@@ -982,8 +983,9 @@ test('state batches share ordered graph, map and preference changes, including r
   )
   assert.deepEqual(
     maps(store.getState()).filter(({ id }) => id === 'urn:fresh-map'),
-    [{ id: 'urn:fresh-map', name: 'Fresh', members: ['urn:fresh', 'urn:child'], pinned: false }],
+    [{ id: 'urn:fresh-map', name: 'Fresh', members: ['urn:fresh', 'urn:child'] }],
   )
+  assert.deepEqual(store.getState().workspace.pinnedMapIds, [])
   assert.deepEqual(store.getState().workspace.viewports, {})
   assert.equal(store.getState().preferences, state.preferences)
 })
@@ -1002,6 +1004,10 @@ test('invalid state batches reject every preceding change without notification',
     { kind: 'map.create', id: mapId, name: 'Duplicate', conceptIds: [] },
     { kind: 'map.membership', mapId, conceptId: 'missing', included: true },
     { kind: 'map.group', id: mapId, groupId: 'urn:missing' },
+    { kind: 'map.move', id: mapId, groupId: null, beforeId: mapId },
+    { kind: 'map.move', id: mapId, groupId: 'urn:group', beforeId: 'urn:missing' },
+    { kind: 'map.pin.move', id: 'urn:missing', beforeId: null },
+    { kind: 'map-group.move', id: 'urn:group', beforeId: 'urn:group' },
     group,
     { ...group, id: 'urn:empty', name: ' ' },
     { kind: 'preferences.panels', value: { explorerWidth: NaN, inspectorWidth: 300 } },
@@ -1059,6 +1065,7 @@ test('empty and cancelling batches preserve state identity and do not notify', (
     { kind: 'map.group', id: mapId, groupId: 'urn:temporary-group' },
     { kind: 'map.group', id: mapId, groupId: null },
     { kind: 'map-group.remove', id: 'urn:temporary-group' },
+    { kind: 'map.move', id: mapId, groupId: null, beforeId: null },
     { kind: 'map.activate', id: mapId },
     { kind: 'viewport.set', rendererId: 'graph', value: { x: NaN, y: 10, zoom: 1 } },
     { kind: 'viewport.set', rendererId: 'graph', value: { x: 0, y: 0, zoom: 1 } },
@@ -1380,7 +1387,7 @@ test('edits and removals of unknown or duplicate items reject the whole batch', 
 test('restoration resolves saved plugin preferences, falling back when unavailable', () => {
   for (const missing of [false, true]) {
     const host = createNessoStore(fixture(), {
-      workspace: { activeMapId: null, maps: [], mapGroups: [], viewports: {} },
+      workspace: { activeMapId: null, maps: [], pinnedMapIds: [], mapGroups: [], viewports: {} },
       preferences: {
         activeVocabId: missing ? 'removed' : 'b',
         activeRendererId: missing ? 'removed' : 'other',

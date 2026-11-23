@@ -457,6 +457,8 @@
   "mapGroupActionsFor": "Actions for group {{name}}",
   "moveMapToGroup": "Move to group",
   "removeMapFromGroup": "Remove from group",
+  "moveUp": "Move up",
+  "moveDown": "Move down",
   "noMapsInGroup": "No maps",
   "completeGraph": "Graph",
   "default": "Default",
