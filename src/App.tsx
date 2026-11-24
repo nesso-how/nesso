@@ -143,7 +143,13 @@ export default function App({
           className="workspace-boot relative flex min-h-0 flex-1 overflow-hidden"
           style={{ display: introOpen ? 'none' : undefined }}
         >
-          {!compact && <AppSidebar onOpenSettings={openSettings} onOpenSearch={openSearch} />}
+          {!compact && (
+            <AppSidebar
+              onOpenSettings={openSettings}
+              onOpenAiSettings={() => openSettingsPage('ai')}
+              onOpenSearch={openSearch}
+            />
+          )}
           <SidebarInset className="relative min-w-0 overflow-hidden">
             <div className="flex min-h-0 flex-1">
               <div id="canvas" className="relative flex min-h-0 min-w-0 flex-1 flex-col">

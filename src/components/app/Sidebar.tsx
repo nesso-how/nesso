@@ -33,6 +33,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useId, useRef, useState, type PointerEvent, type ReactNode } from 'react'
 import { Sidebar } from './SidebarLayout'
+import { McpStatusButton } from './McpStatusButton'
 import { NewMapButton } from './NewMapButton'
 import { DeleteMapDialog } from './DeleteMapDialog'
 import { nessoStore, useNessoStore } from '@/store'
@@ -52,6 +53,7 @@ export function AppSidebar({
   bare = false,
   onNavigate,
   onOpenSettings,
+  onOpenAiSettings,
   onOpenSearch,
 }: {
   store?: HostStore
@@ -59,9 +61,11 @@ export function AppSidebar({
   bare?: boolean
   onNavigate?: () => void
   onOpenSettings?: () => void
+  onOpenAiSettings?: () => void
   onOpenSearch?: () => void
 }) {
   const t = useTranslation(store)
+  const mcpEnabled = useNessoStore((state) => state.preferences.mcpEnabled, store)
   const workspace = useNessoStore((state) => state.workspace, store)
   const conceptCount = useNessoStore((state) => state.graph.concepts.length, store)
   const collapsed = useNessoStore((state) => state.preferences.collapsedSections, store)
@@ -424,16 +428,21 @@ export function AppSidebar({
       {(onOpenSettings || readonly) && (
         <div className="shrink-0 px-3 py-2">
           <div aria-hidden className="mb-2 h-px bg-border" />
-          <Button
-            data-settings-trigger
-            disabled={readonly}
-            variant="ghost"
-            className="w-full justify-start"
-            onClick={onOpenSettings}
-          >
-            <Settings2 />
-            {t('settings')}
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              data-settings-trigger
+              disabled={readonly}
+              variant="ghost"
+              className="min-w-0 flex-1 justify-start"
+              onClick={onOpenSettings}
+            >
+              <Settings2 />
+              <span className="truncate">{t('settings')}</span>
+            </Button>
+            {mcpEnabled && window.nessoMcp && onOpenAiSettings && (
+              <McpStatusButton bridge={window.nessoMcp} onClick={onOpenAiSettings} />
+            )}
+          </div>
         </div>
       )}
     </>
