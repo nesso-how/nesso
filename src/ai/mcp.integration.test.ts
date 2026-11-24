@@ -2,11 +2,11 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { setImmediate } from 'node:timers/promises'
 import { aiTools, type AiDocumentation, type AiEffects, type AiResult } from '@nesso-how/ai'
-import type { McpBridge, McpEvent } from '../../electron/mcp/bridge.ts'
+import type { McpBridge, McpEvent, McpState } from '../../electron/mcp/bridge.ts'
 import { createNessoStore } from '../store/create.ts'
 import type { PluginPackageInput } from '@nesso-how/plugin/package'
 import { NessoError } from '@nesso-how/errors'
-import { connectMcpHost, setMcpEnabled } from './mcp.ts'
+import { connectMcpHost, mcpIssueText, mcpStatus, setMcpEnabled, watchMcpState } from './mcp.ts'
 import type { AiPlugins } from './plugins.ts'
 
 const fixture = (enabled = false, failure?: 'result' | 'reject') => {
@@ -303,3 +303,70 @@ test(
     }
   },
 )
+
+test('MCP status prefers live updates over the initial snapshot and stops after unwatching', async () => {
+  const state = { url: 'http://127.0.0.1:3210/mcp', token: '0'.repeat(64), changing: false }
+  const watch = (snapshot: () => Promise<AiResult<McpState>>) => {
+    let listener: (state: McpState) => void = () => {}
+    let subscribed = false
+    const updates: McpState[] = []
+    const failures: (string | undefined)[] = []
+    const unwatch = watchMcpState(
+      {
+        getState: snapshot,
+        subscribeState: (next) => {
+          listener = next
+          subscribed = true
+          return () => {
+            subscribed = false
+          }
+        },
+      },
+      (next) => updates.push(next),
+      (issue) => failures.push(issue),
+    )
+    return {
+      emit: (next: McpState) => listener(next),
+      unwatch,
+      updates,
+      failures,
+      subscribed: () => subscribed,
+    }
+  }
+
+  const stopped = { ...state, running: false }
+  const running = { ...state, running: true }
+  const initial = watch(async () => ({ value: stopped }))
+  await setImmediate()
+  assert.deepEqual(initial.updates, [stopped])
+
+  const snapshot = Promise.withResolvers<AiResult<McpState>>()
+  const live = watch(() => snapshot.promise)
+  live.emit(running)
+  snapshot.resolve({ value: stopped })
+  await setImmediate()
+  assert.deepEqual(live.updates, [running])
+
+  const issue = watch(async () => ({ issues: [{ path: 'mcp', message: 'Unavailable' }] }))
+  const rejected = watch(() => Promise.reject(new Error('Disconnected')))
+  const unwatched = watch(async () => ({ value: stopped }))
+  unwatched.unwatch()
+  await setImmediate()
+  assert.deepEqual(issue.failures, ['Unavailable'])
+  assert.deepEqual(rejected.failures, [undefined])
+  assert.deepEqual([unwatched.updates, unwatched.subscribed()], [[], false])
+
+  assert.deepEqual(
+    [
+      mcpStatus(null, false),
+      mcpStatus(null, true),
+      mcpStatus(running, false),
+      mcpStatus({ ...running, changing: true }, true),
+    ],
+    ['mcpStopped', 'mcpNotRunning', 'mcpRunning', 'aiSettingsWorking'],
+  )
+  assert.equal(
+    mcpIssueText('mcpPortUnavailable\nUntrusted request', (key) => `${key}.`),
+    'mcpPortUnavailable.\nUntrusted request',
+  )
+})

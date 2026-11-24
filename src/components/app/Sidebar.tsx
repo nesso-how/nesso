@@ -33,7 +33,6 @@ import {
 } from 'lucide-react'
 import { useEffect, useId, useRef, useState, type PointerEvent, type ReactNode } from 'react'
 import { Sidebar } from './SidebarLayout'
-import { McpStatusButton } from './McpStatusButton'
 import { NewMapButton } from './NewMapButton'
 import { DeleteMapDialog } from './DeleteMapDialog'
 import { nessoStore, useNessoStore } from '@/store'
@@ -54,6 +53,7 @@ export function AppSidebar({
   onNavigate,
   onOpenSettings,
   onOpenSearch,
+  status,
 }: {
   store?: HostStore
   readonly?: boolean
@@ -61,6 +61,7 @@ export function AppSidebar({
   onNavigate?: () => void
   onOpenSettings?: () => void
   onOpenSearch?: () => void
+  status?: ReactNode
 }) {
   const t = useTranslation(store)
   const workspace = useNessoStore((state) => state.workspace, store)
@@ -436,9 +437,7 @@ export function AppSidebar({
               <Settings2 />
               <span className="truncate">{t('settings')}</span>
             </Button>
-            {!readonly && window.nessoMcp && (
-              <McpStatusButton bridge={window.nessoMcp} store={store} />
-            )}
+            {status}
           </div>
         </div>
       )}

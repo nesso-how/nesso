@@ -4,7 +4,7 @@ import {
   type AiResult,
   type AiToolResults,
 } from '@nesso-how/ai'
-import type { McpBridge } from '../../electron/mcp/bridge.ts'
+import type { McpBridge, McpState } from '../../electron/mcp/bridge.ts'
 import { NessoError } from '@nesso-how/errors'
 import { createAiTurn } from './turn.ts'
 import { executeAiPluginTool, type AiPlugins } from './plugins.ts'
@@ -14,6 +14,47 @@ export function setMcpEnabled(bridge: McpBridge, store: HostStore, enabled: bool
   store.applyOperations([{ kind: 'preferences.mcpEnabled', value: enabled }])
   return bridge.setEnabled(enabled)
 }
+
+export function watchMcpState(
+  bridge: Pick<McpBridge, 'getState' | 'subscribeState'>,
+  update: (state: McpState) => void,
+  fail: (issue?: string) => void,
+) {
+  let snapshot = true
+  const unsubscribe = bridge.subscribeState((state) => {
+    snapshot = false
+    update(state)
+  })
+  void bridge.getState().then(
+    (result) => {
+      if (!snapshot) return
+      if ('issues' in result) fail(result.issues.map(({ message }) => message).join('\n'))
+      else update(result.value)
+    },
+    () => {
+      if (snapshot) fail()
+    },
+  )
+  return () => {
+    snapshot = false
+    unsubscribe()
+  }
+}
+
+export const mcpIssueText = (message: string, t: (key: 'mcpPortUnavailable') => string) =>
+  message
+    .split('\n')
+    .map((line) => (line === 'mcpPortUnavailable' ? t(line) : line))
+    .join('\n')
+
+export const mcpStatus = (state: McpState | null, enabled: boolean) =>
+  state?.changing
+    ? 'aiSettingsWorking'
+    : state?.running
+      ? 'mcpRunning'
+      : enabled
+        ? 'mcpNotRunning'
+        : 'mcpStopped'
 
 export function connectMcpHost(
   bridge: McpBridge,

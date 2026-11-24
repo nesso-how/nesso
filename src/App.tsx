@@ -6,6 +6,7 @@ import { Inspector } from '@/components/app/Inspector'
 import { ToastsHost } from '@/components/app/Toasts'
 import { PersistenceBanner } from '@/components/app/PersistenceBanner'
 import { AppSidebar } from '@/components/app/Sidebar'
+import { McpStatusButton } from '@/components/app/McpStatusButton'
 import { SettingsDialog } from '@/components/app/SettingsDialog'
 import { Dialog, SidePanel, useMediaQuery } from '@nesso-how/ui'
 import { SidebarInset, SidebarProvider } from '@/components/app/SidebarLayout'
@@ -143,7 +144,17 @@ export default function App({
           className="workspace-boot relative flex min-h-0 flex-1 overflow-hidden"
           style={{ display: introOpen ? 'none' : undefined }}
         >
-          {!compact && <AppSidebar onOpenSettings={openSettings} onOpenSearch={openSearch} />}
+          {!compact && (
+            <AppSidebar
+              onOpenSettings={openSettings}
+              onOpenSearch={openSearch}
+              status={
+                window.nessoMcp && (
+                  <McpStatusButton bridge={window.nessoMcp} onOpen={() => openSettingsPage('ai')} />
+                )
+              }
+            />
+          )}
           <SidebarInset className="relative min-w-0 overflow-hidden">
             <div className="flex min-h-0 flex-1">
               <div id="canvas" className="relative flex min-h-0 min-w-0 flex-1 flex-col">

@@ -5,14 +5,14 @@ import type { AiResult } from '@nesso-how/ai'
 import type { McpBridge, McpState } from '../../../electron/mcp/bridge'
 import { useTranslation } from '@/i18n'
 import { host, useNessoStore } from '@/store'
-import { setMcpEnabled } from '@/ai/mcp'
+import { mcpIssueText, mcpStatus, setMcpEnabled, watchMcpState } from '@/ai/mcp'
 
 export function McpSettings({ bridge }: { bridge: McpBridge }) {
   const t = useTranslation()
   const enabled = useNessoStore((state) => state.preferences.mcpEnabled ?? false)
   const id = useId()
   const [state, setState] = useState<McpState | null>(null)
-  const [busy, setBusy] = useState(true)
+  const [busy, setBusy] = useState(false)
   const [showToken, setShowToken] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [issue, setIssue] = useState('')
@@ -25,29 +25,17 @@ export function McpSettings({ bridge }: { bridge: McpBridge }) {
     setCopiedToken(false)
   }
   useEffect(() => {
-    let mounted = true
-    const unsubscribe = bridge.subscribeState((next) => {
-      if (!mounted) return
-      setState(next)
-      clearCopied()
-      setShowToken(false)
-    })
-    void bridge
-      .getState()
-      .then((result) => {
-        if (!mounted) return
-        if ('issues' in result) setIssue(result.issues.map(({ message }) => message).join('\n'))
-        else setState(result.value)
-      })
-      .catch(() => {
-        if (mounted) setIssue(t('mcpFailure'))
-      })
-      .finally(() => {
-        if (mounted) setBusy(false)
-      })
+    const unwatch = watchMcpState(
+      bridge,
+      (next) => {
+        setState(next)
+        clearCopied()
+        setShowToken(false)
+      },
+      (message) => setIssue(message ?? t('mcpFailure')),
+    )
     return () => {
-      mounted = false
-      unsubscribe()
+      unwatch()
       clearTimeout(copiedTimer.current)
     }
   }, [bridge, t])
@@ -83,24 +71,16 @@ export function McpSettings({ bridge }: { bridge: McpBridge }) {
   }
   const running = state?.running ?? false
   const active = enabled || running
-  const working = busy || !!state?.changing
+  const working = busy || (!state && !issue) || !!state?.changing
   return (
     <>
       <section className="settings-section" aria-labelledby={`${id}-title`}>
         <div className="ai-section-heading">
           <div className="mcp-title-group">
             <h3 id={`${id}-title`}>{t('mcp')}</h3>
-            <span className={`mcp-status${running ? ' running' : ''}`} role="status">
+            <span className="mcp-status" data-status={mcpStatus(state, enabled)} role="status">
               <span className="mcp-status-dot" aria-hidden="true" />
-              {t(
-                state?.changing
-                  ? 'aiSettingsWorking'
-                  : running
-                    ? 'mcpRunning'
-                    : enabled
-                      ? 'mcpNotRunning'
-                      : 'mcpStopped',
-              )}
+              {t(mcpStatus(state, enabled))}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -199,7 +179,7 @@ export function McpSettings({ bridge }: { bridge: McpBridge }) {
         )}
         {issue && (
           <p role="alert" className="mt-3 text-xs whitespace-pre-wrap">
-            {t('mcpFailure')} {issue}
+            {t('mcpFailure')} {mcpIssueText(issue, t)}
           </p>
         )}
       </section>

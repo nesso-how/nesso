@@ -261,6 +261,7 @@
   "mcpRegenerateTitle": "重新生成令牌？",
   "mcpRegenerateDescription": "当前令牌将失效，服务器将使用新令牌重新启动。请用新配置更新你的外部助手。图谱保持不变。",
   "mcpFailure": "MCP 服务器操作失败。",
+  "mcpPortUnavailable": "端口可能已被占用。",
   "mcpCopyFailure": "无法复制，请重试。",
   "mcpApproval": "应用外部 MCP 更改？",
   "aiRemovalApproval": "应用 AI 的删除操作？",
