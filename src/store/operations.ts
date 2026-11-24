@@ -116,9 +116,10 @@ export const hiddenConceptIds = (
 ): Set<string> => {
   const excluded = new Set<string>()
   if (!hidden.length) return excluded
+  const groups = new Set(hidden)
   const visible = new Set<string>()
   for (const map of maps) {
-    const ids = hidden.includes(map.groupId ?? null) ? excluded : visible
+    const ids = groups.has(map.groupId ?? null) ? excluded : visible
     for (const { id } of map.members) ids.add(id)
   }
   for (const id of visible) excluded.delete(id)
@@ -131,6 +132,14 @@ const visibleGraph = (
   hidden: readonly (string | null)[],
   previous?: HostState,
 ): GraphSnapshot => {
+  if (!hidden.length) return graph
+  if (
+    previous?.workspace.activeMapId === null &&
+    previous.graph === graph &&
+    previous.workspace.maps === workspace.maps &&
+    previous.hiddenMapGroupIds === hidden
+  )
+    return previous.mapGraph
   const excluded = hiddenConceptIds(workspace.maps, hidden)
   if (!excluded.size) return graph
   const concepts = graph.concepts.filter(({ id }) => !excluded.has(id))
@@ -145,6 +154,14 @@ const visibleGraph = (
     same(relations, last.relations)
     ? last
     : { concepts, relations, relationTypes: graph.relationTypes }
+}
+
+export const pruneHiddenMapGroups = (
+  hidden: readonly (string | null)[],
+  mapGroups: readonly WorkspaceMapGroup[],
+): readonly (string | null)[] => {
+  const kept = hidden.filter((id) => id === null || mapGroups.some((group) => group.id === id))
+  return kept.length < hidden.length ? kept : hidden
 }
 
 export const materialize = (
@@ -769,6 +786,7 @@ export const applyStateOperations = (
         conversationReplaced = true
         selected = []
         explicitSelection = selected
+        hiddenMapGroupIds = []
         reset = true
         break
       }
@@ -1043,12 +1061,12 @@ export const applyStateOperations = (
     parsePreferences(preferences)
     if (samePreferences(preferences, state.preferences)) preferences = state.preferences
   }
-  if (reset) hiddenMapGroupIds = []
-  else if (mapGroupEdit.items !== state.workspace.mapGroups) {
-    const ids = new Set(mapGroupEdit.items.map(({ id }) => id))
-    const kept = hiddenMapGroupIds.filter((id) => id === null || ids.has(id))
-    if (kept.length < hiddenMapGroupIds.length) hiddenMapGroupIds = kept
-  }
+  hiddenMapGroupIds = pruneHiddenMapGroups(hiddenMapGroupIds, mapGroupEdit.items)
+  if (
+    hiddenMapGroupIds.length === state.hiddenMapGroupIds.length &&
+    hiddenMapGroupIds.every((id) => state.hiddenMapGroupIds.includes(id))
+  )
+    hiddenMapGroupIds = state.hiddenMapGroupIds
   const mapGraph = materialize(candidate, workspace, state, hiddenMapGroupIds)
   selected = reconcileSelection(mapGraph, selected)
   if (

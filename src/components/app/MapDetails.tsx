@@ -97,7 +97,7 @@ export function MapDetails({
           ))}
         </dl>
       </section>
-      {!map && workspace.mapGroups.length > 0 && (
+      {!map && groups.length > 0 && (
         <section aria-labelledby="map-groups-heading">
           <h3 id="map-groups-heading" className="text-xs font-medium">
             {t('mapGroups')}
@@ -114,7 +114,6 @@ export function MapDetails({
                   <span className="min-w-0 break-words">{group.name}</span>
                   <IconButton
                     aria-label={t(visible ? 'hideMapGroup' : 'showMapGroup', { name: group.name })}
-                    aria-pressed={!visible}
                     onClick={() =>
                       store.applyOperations([
                         { kind: 'map-group.setVisible', id: group.id, visible: !visible },

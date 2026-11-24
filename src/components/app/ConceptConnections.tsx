@@ -56,7 +56,7 @@ export function ConceptConnections({
 
   const select = (id: string) => {
     store.applyOperations([
-      ...revealConceptOperations(store.getState(), id),
+      ...(activeMapId === null ? revealConceptOperations(store.getState(), id) : []),
       { kind: 'selection.set', value: [{ kind: 'concept', id }] },
     ])
     renderer?.current?.focusConcept(id)

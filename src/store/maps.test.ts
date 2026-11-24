@@ -128,4 +128,21 @@ test('hidden groups filter the graph view without touching the document or histo
   state = store.getState()
   assert.deepEqual(state.hiddenMapGroupIds, [null])
   assert.deepEqual(visible(), ['urn:three'])
+  store.undo()
+  store.applyOperations([{ kind: 'map-group.setVisible', id: 'urn:group', visible: false }])
+  store.redo()
+  assert.deepEqual(store.getState().hiddenMapGroupIds, [null])
+  store.undo()
+  state = store.getState()
+  assert.deepEqual(state.hiddenMapGroupIds, [null])
+  store.applyOperations([
+    { kind: 'map-group.setVisible', id: 'urn:group', visible: false },
+    { kind: 'map-group.setVisible', id: 'urn:group', visible: true },
+  ])
+  assert.equal(store.getState(), state)
+  store.applyOperations([
+    { kind: 'document.reset', id: 'urn:document' },
+    { kind: 'map-group.setVisible', id: null, visible: false },
+  ])
+  assert.deepEqual(store.getState().hiddenMapGroupIds, [null])
 })
