@@ -53,7 +53,6 @@ export function AppSidebar({
   bare = false,
   onNavigate,
   onOpenSettings,
-  onOpenAiSettings,
   onOpenSearch,
 }: {
   store?: HostStore
@@ -61,11 +60,9 @@ export function AppSidebar({
   bare?: boolean
   onNavigate?: () => void
   onOpenSettings?: () => void
-  onOpenAiSettings?: () => void
   onOpenSearch?: () => void
 }) {
   const t = useTranslation(store)
-  const mcpEnabled = useNessoStore((state) => state.preferences.mcpEnabled, store)
   const workspace = useNessoStore((state) => state.workspace, store)
   const conceptCount = useNessoStore((state) => state.graph.concepts.length, store)
   const collapsed = useNessoStore((state) => state.preferences.collapsedSections, store)
@@ -439,8 +436,8 @@ export function AppSidebar({
               <Settings2 />
               <span className="truncate">{t('settings')}</span>
             </Button>
-            {mcpEnabled && window.nessoMcp && onOpenAiSettings && (
-              <McpStatusButton bridge={window.nessoMcp} onClick={onOpenAiSettings} />
+            {!readonly && window.nessoMcp && (
+              <McpStatusButton bridge={window.nessoMcp} store={store} />
             )}
           </div>
         </div>
