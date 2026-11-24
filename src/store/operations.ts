@@ -131,23 +131,20 @@ const visibleGraph = (
   hidden: readonly (string | null)[],
   previous?: HostState,
 ): GraphSnapshot => {
-  if (!hidden.length) return graph
-  if (
-    previous?.workspace.activeMapId === null &&
-    previous.graph === graph &&
-    previous.workspace.maps === workspace.maps &&
-    previous.hiddenMapGroupIds === hidden
-  )
-    return previous.mapGraph
   const excluded = hiddenConceptIds(workspace.maps, hidden)
   if (!excluded.size) return graph
-  return {
-    concepts: graph.concepts.filter(({ id }) => !excluded.has(id)),
-    relations: graph.relations.filter(
-      ({ source, target }) => !excluded.has(source) && !excluded.has(target),
-    ),
-    relationTypes: graph.relationTypes,
-  }
+  const concepts = graph.concepts.filter(({ id }) => !excluded.has(id))
+  const relations = graph.relations.filter(
+    ({ source, target }) => !excluded.has(source) && !excluded.has(target),
+  )
+  const last = previous?.workspace.activeMapId === null ? previous.mapGraph : undefined
+  const same = <T>(left: readonly T[], right: readonly T[]) => sameItems(left, right, () => false)
+  return last &&
+    last.relationTypes === graph.relationTypes &&
+    same(concepts, last.concepts) &&
+    same(relations, last.relations)
+    ? last
+    : { concepts, relations, relationTypes: graph.relationTypes }
 }
 
 export const materialize = (
