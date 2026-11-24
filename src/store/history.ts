@@ -19,7 +19,7 @@ import {
   checkWorkspace,
   materialize,
   pruneCollapsedMapGroups,
-  pruneHiddenMapGroups,
+  pruneMapVisibility,
   reconcileSelection,
 } from './operations.ts'
 import { parseWorkspace } from './settings.ts'
@@ -188,14 +188,14 @@ const restore = (
     parseWorkspace(workspace)
     checkWorkspace(graph, workspace)
   }
-  const hiddenMapGroupIds = pruneHiddenMapGroups(state.hiddenMapGroupIds, workspace.mapGroups)
-  const mapGraph = materialize(graph, workspace, state, hiddenMapGroupIds)
+  const visibility = pruneMapVisibility(state, workspace)
+  const mapGraph = materialize(graph, workspace, state, visibility)
   return {
     ...state,
     graph,
     workspace,
     selected: reconcileSelection(mapGraph, state.selected),
-    hiddenMapGroupIds,
+    ...visibility,
     mapGraph,
   }
 }

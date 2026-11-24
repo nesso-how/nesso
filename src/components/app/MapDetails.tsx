@@ -1,11 +1,12 @@
 import type { WorkspaceMap } from '@nesso-how/core'
-import { Button, ContextLabel, IconButton, Input, Label } from '@nesso-how/ui'
-import { Eye, EyeOff, Trash2 } from 'lucide-react'
+import { Button, ContextLabel, Input, Label } from '@nesso-how/ui'
+import { Trash2 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { nessoStore, useNessoStore } from '@/store'
 import type { HostStore } from '@/store/types'
 import { ConceptColor } from './ConceptColor'
 import { DeleteMapDialog } from './DeleteMapDialog'
+import { MapVisibility } from './MapVisibility'
 import { maxMapNameLength } from '@/store/settings'
 import { useTranslation } from '@/i18n'
 
@@ -55,22 +56,9 @@ export function MapDetails({
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const deleteTrigger = useRef<HTMLButtonElement>(null)
   const workspace = useNessoStore((state) => state.workspace, store)
-  const hidden = useNessoStore((state) => state.hiddenMapGroupIds, store)
   const mapGraph = useNessoStore((state) => state.mapGraph, store)
   const map = workspace.maps.find((map) => map.id === workspace.activeMapId)
   const pinned = !!map && workspace.pinnedMapIds.includes(map.id)
-  const visibleMaps = workspace.maps.filter(({ groupId }) => !hidden.includes(groupId ?? null))
-  const stats = [
-    { label: t('concepts'), count: mapGraph.concepts.length },
-    { label: t('relations'), count: mapGraph.relations.length },
-    ...(!map ? [{ label: t('maps'), count: visibleMaps.length }] : []),
-  ]
-  const groups: { id: string | null; name: string }[] = [
-    ...workspace.mapGroups,
-    ...(hidden.includes(null) || workspace.maps.some(({ groupId }) => !groupId)
-      ? [{ id: null, name: t('ungroupedMaps') }]
-      : []),
-  ]
 
   return (
     <>
@@ -84,50 +72,7 @@ export function MapDetails({
           readonly={readonly || mapGraph.concepts.length === 0}
         />
       )}
-      <section aria-labelledby="map-content-heading">
-        <h3 id="map-content-heading" className="text-xs font-medium">
-          {t('content')}
-        </h3>
-        <dl className="mt-3 space-y-2">
-          {stats.map(({ label, count }) => (
-            <div key={label} className="flex items-center justify-between gap-3 text-xs">
-              <dt className="text-muted-foreground">{label}</dt>
-              <dd className="font-mono">{count}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
-      {!map && groups.length > 0 && (
-        <section aria-labelledby="map-groups-heading">
-          <h3 id="map-groups-heading" className="text-xs font-medium">
-            {t('mapGroups')}
-          </h3>
-          <ul className="mt-2 space-y-0.5">
-            {groups.map((group) => {
-              const visible = !hidden.includes(group.id)
-              return (
-                <li
-                  key={group.id ?? ''}
-                  className="flex items-center justify-between gap-3 text-xs data-hidden:text-muted-foreground"
-                  data-hidden={visible ? undefined : ''}
-                >
-                  <span className="min-w-0 break-words">{group.name}</span>
-                  <IconButton
-                    aria-label={t(visible ? 'hideMapGroup' : 'showMapGroup', { name: group.name })}
-                    onClick={() =>
-                      store.applyOperations([
-                        { kind: 'map-group.setVisible', id: group.id, visible: !visible },
-                      ])
-                    }
-                  >
-                    {visible ? <Eye /> : <EyeOff />}
-                  </IconButton>
-                </li>
-              )
-            })}
-          </ul>
-        </section>
-      )}
+      {!map && <MapVisibility store={store} />}
       {map && (
         <div className="flex items-center justify-between gap-3">
           <Label id="map-pin-label">{t('pinned')}</Label>

@@ -72,6 +72,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     vocabs: [],
     persistenceIssues: [],
     hiddenMapGroupIds: [],
+    hiddenMapIds: [],
     history: { canUndo: false, canRedo: false },
   }))
 
