@@ -92,6 +92,7 @@ test('opening search results is atomic navigation, preserves document history an
   store.applyOperations([
     { kind: 'preferences.section', id: 'inspector', open: false },
     { kind: 'preferences.inspectorTab', value: 'chat' },
+    { kind: 'map-group.setVisible', id: null, visible: false },
   ])
   const before = store.getState()
   let publications = 0
@@ -107,6 +108,7 @@ test('opening search results is atomic navigation, preserves document history an
   const after = store.getState()
   assert.equal(after.workspace.activeMapId, null)
   assert.deepEqual(after.selected, [{ kind: 'concept', id: 'urn:nesso:example:sleep' }])
+  assert.deepEqual(after.hiddenMapGroupIds, [])
   assert.equal(after.graph, before.graph)
   assert.equal(after.workspace.maps, before.workspace.maps)
   assert.equal(after.history, before.history)

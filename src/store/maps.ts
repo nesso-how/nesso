@@ -1,6 +1,7 @@
 import type { NessoOperation, NessoState } from '@nesso-how/core'
 import { newIri } from '@nesso-how/schema'
-import { defaultMapName } from './operations.ts'
+import { defaultMapName, hiddenConceptIds } from './operations.ts'
+import type { HostOperation, HostState } from './types.ts'
 
 export const exclusiveConceptIds = (state: NessoState, mapId: string): Set<string> => {
   const maps = state.workspace.maps
@@ -35,4 +36,17 @@ export const buildDeleteMapOperations = (
     )
   }
   return operations
+}
+
+export const revealConceptOperations = (
+  { workspace, hiddenMapGroupIds }: HostState,
+  conceptId: string,
+): HostOperation[] => {
+  if (!hiddenConceptIds(workspace.maps, hiddenMapGroupIds).has(conceptId)) return []
+  const groupIds = new Set(
+    workspace.maps
+      .filter(({ members }) => members.some(({ id }) => id === conceptId))
+      .map(({ groupId }) => groupId ?? null),
+  )
+  return [...groupIds].map((id) => ({ kind: 'map-group.setVisible', id, visible: true }))
 }

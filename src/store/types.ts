@@ -27,6 +27,7 @@ export type HostState = NessoState & {
   readonly pluginStorage: readonly PluginStorageNamespace[]
   readonly conversation: { readonly messages: readonly AiChatMessage[] }
   readonly persistenceIssues: readonly Readonly<PersistenceIssue>[]
+  readonly hiddenMapGroupIds: readonly (string | null)[]
 }
 
 export type HostOperation =
@@ -45,6 +46,7 @@ export type HostOperation =
   | { readonly kind: 'map-group.move'; readonly id: string; readonly beforeId: string | null }
   | { readonly kind: 'map-group.remove'; readonly id: string }
   | { readonly kind: 'map-group.setOpen'; readonly id: string; readonly open: boolean }
+  | { readonly kind: 'map-group.setVisible'; readonly id: string | null; readonly visible: boolean }
   | { readonly kind: 'preferences.intro-seen' }
   | { readonly kind: 'preferences.mcpEnabled'; readonly value: boolean }
   | {
