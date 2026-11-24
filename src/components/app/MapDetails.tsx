@@ -59,10 +59,17 @@ export function MapDetails({
   const mapGraph = useNessoStore((state) => state.mapGraph, store)
   const map = workspace.maps.find((map) => map.id === workspace.activeMapId)
   const pinned = !!map && workspace.pinnedMapIds.includes(map.id)
+  const visibleMaps = workspace.maps.filter(({ groupId }) => !hidden.includes(groupId ?? null))
   const stats = [
     { label: t('concepts'), count: mapGraph.concepts.length },
     { label: t('relations'), count: mapGraph.relations.length },
-    ...(!map ? [{ label: t('maps'), count: workspace.maps.length }] : []),
+    ...(!map ? [{ label: t('maps'), count: visibleMaps.length }] : []),
+  ]
+  const groups: { id: string | null; name: string }[] = [
+    ...workspace.mapGroups,
+    ...(hidden.includes(null) || workspace.maps.some(({ groupId }) => !groupId)
+      ? [{ id: null, name: t('ungroupedMaps') }]
+      : []),
   ]
 
   return (
@@ -96,11 +103,11 @@ export function MapDetails({
             {t('mapGroups')}
           </h3>
           <ul className="mt-2 space-y-0.5">
-            {workspace.mapGroups.map((group) => {
+            {groups.map((group) => {
               const visible = !hidden.includes(group.id)
               return (
                 <li
-                  key={group.id}
+                  key={group.id ?? ''}
                   className="flex items-center justify-between gap-3 text-xs data-hidden:text-muted-foreground"
                   data-hidden={visible ? undefined : ''}
                 >
