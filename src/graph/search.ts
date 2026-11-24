@@ -1,4 +1,5 @@
 import type { GraphSnapshot, WorkspaceMap } from '@nesso-how/core'
+import { revealConceptOperations } from '../store/maps.ts'
 import type { HostStore } from '../store/types.ts'
 
 export type SearchResult = { readonly label: string } & (
@@ -85,18 +86,18 @@ export function addToActiveMap(
 }
 
 export function openSearchResult(store: HostStore, result: SearchResult): void {
-  const { graph, workspace } = store.getState()
+  const state = store.getState()
+  const { graph, workspace } = state
   if (result.kind === 'map') {
     if (result.id !== null && !workspace.maps.some(({ id }) => id === result.id)) return
     store.setMap(result.id)
   } else {
     if (!graph.concepts.some(({ id }) => id === result.id)) return
     const current = workspace.maps.find(({ id }) => id === workspace.activeMapId)
+    const mapId = current?.members.some(({ id }) => id === result.id) ? current.id : null
     store.applyOperations([
-      {
-        kind: 'map.activate',
-        id: current?.members.some(({ id }) => id === result.id) ? current.id : null,
-      },
+      { kind: 'map.activate', id: mapId },
+      ...(mapId === null ? revealConceptOperations(state, result.id) : []),
       { kind: 'selection.set', value: [{ kind: 'concept', id: result.id }] },
       { kind: 'preferences.section', id: 'inspector', open: true },
       { kind: 'preferences.inspectorTab', value: 'details' },

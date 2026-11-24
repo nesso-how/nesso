@@ -95,7 +95,7 @@ export function KnowledgeGraph({
     const element = canvas.current!
     const context = element.getContext('2d')!
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    let graph = store.getState().graph
+    let graph = store.getState().mapGraph
     let current = settle(graph, layout)
     let byId = new Map(current.bubbles.map((bubble) => [bubble.id, bubble]))
     let hovered: string | null = null
@@ -208,8 +208,9 @@ export function KnowledgeGraph({
     }
     const unsubscribe = store.subscribe(() => {
       const state = store.getState()
-      if (state.graph !== graph) {
-        graph = state.graph
+      const visible = state.workspace.activeMapId === null ? state.mapGraph : graph
+      if (visible !== graph) {
+        graph = visible
         const lines = new Set(current.lines.map(({ id }) => id))
         const next = scene(graph, layout, byId)
         const changed =

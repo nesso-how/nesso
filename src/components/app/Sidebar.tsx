@@ -36,6 +36,7 @@ import { Sidebar } from './SidebarLayout'
 import { NewMapButton } from './NewMapButton'
 import { DeleteMapDialog } from './DeleteMapDialog'
 import { nessoStore, useNessoStore } from '@/store'
+import { hiddenConceptIds } from '@/store/operations'
 import { maxMapNameLength } from '@/store/settings'
 import type { HostStore } from '@/store/types'
 import { useTranslation } from '@/i18n'
@@ -63,7 +64,14 @@ export function AppSidebar({
 }) {
   const t = useTranslation(store)
   const workspace = useNessoStore((state) => state.workspace, store)
-  const conceptCount = useNessoStore((state) => state.graph.concepts.length, store)
+  const conceptCount = useNessoStore(
+    (state) =>
+      state.workspace.activeMapId === null
+        ? state.mapGraph.concepts.length
+        : state.graph.concepts.length -
+          hiddenConceptIds(state.workspace.maps, state.hiddenMapGroupIds).size,
+    store,
+  )
   const collapsed = useNessoStore((state) => state.preferences.collapsedSections, store)
   const pinnedOpen = !collapsed?.includes('sidebar.pinned-maps')
   const mapsOpen = !collapsed?.includes('sidebar.maps')

@@ -1,7 +1,6 @@
 import type {
   GraphSnapshot,
   NessoOperation,
-  NessoState,
   Preferences,
   WorkspaceMap,
   WorkspaceMapGroup,
@@ -111,12 +110,67 @@ export const reconcileSelection = (graph: GraphSnapshot, selected: Selection): S
   return next.length === selected.length ? selected : next
 }
 
+export const hiddenConceptIds = (
+  maps: readonly WorkspaceMap[],
+  hidden: readonly (string | null)[],
+): Set<string> => {
+  const excluded = new Set<string>()
+  if (!hidden.length) return excluded
+  const groups = new Set(hidden)
+  const visible = new Set<string>()
+  for (const map of maps) {
+    const ids = groups.has(map.groupId ?? null) ? excluded : visible
+    for (const { id } of map.members) ids.add(id)
+  }
+  for (const id of visible) excluded.delete(id)
+  return excluded
+}
+
+const visibleGraph = (
+  graph: GraphSnapshot,
+  workspace: WorkspaceState,
+  hidden: readonly (string | null)[],
+  previous?: HostState,
+): GraphSnapshot => {
+  if (!hidden.length) return graph
+  if (
+    previous?.workspace.activeMapId === null &&
+    previous.graph === graph &&
+    previous.workspace.maps === workspace.maps &&
+    previous.hiddenMapGroupIds === hidden
+  )
+    return previous.mapGraph
+  const excluded = hiddenConceptIds(workspace.maps, hidden)
+  if (!excluded.size) return graph
+  const concepts = graph.concepts.filter(({ id }) => !excluded.has(id))
+  const relations = graph.relations.filter(
+    ({ source, target }) => !excluded.has(source) && !excluded.has(target),
+  )
+  const last = previous?.workspace.activeMapId === null ? previous.mapGraph : undefined
+  const same = <T>(left: readonly T[], right: readonly T[]) => sameItems(left, right, () => false)
+  return last &&
+    last.relationTypes === graph.relationTypes &&
+    same(concepts, last.concepts) &&
+    same(relations, last.relations)
+    ? last
+    : { concepts, relations, relationTypes: graph.relationTypes }
+}
+
+export const pruneHiddenMapGroups = (
+  hidden: readonly (string | null)[],
+  mapGroups: readonly WorkspaceMapGroup[],
+): readonly (string | null)[] => {
+  const kept = hidden.filter((id) => id === null || mapGroups.some((group) => group.id === id))
+  return kept.length < hidden.length ? kept : hidden
+}
+
 export const materialize = (
   graph: GraphSnapshot,
   workspace: WorkspaceState,
-  previous?: NessoState,
+  previous?: HostState,
+  hidden: readonly (string | null)[] = previous?.hiddenMapGroupIds ?? [],
 ): MapGraphSnapshot => {
-  if (workspace.activeMapId === null) return graph
+  if (workspace.activeMapId === null) return visibleGraph(graph, workspace, hidden, previous)
   const map = workspace.maps.find(({ id }) => id === workspace.activeMapId)
   const previousMap =
     previous?.workspace.activeMapId === workspace.activeMapId
@@ -305,6 +359,7 @@ export const applyStateOperations = (
   let pluginStorage = state.pluginStorage
   let selected = state.selected
   let explicitSelection = state.selected
+  let hiddenMapGroupIds = state.hiddenMapGroupIds
   let reset = false
 
   const creationSource = () => {
@@ -731,6 +786,7 @@ export const applyStateOperations = (
         conversationReplaced = true
         selected = []
         explicitSelection = selected
+        hiddenMapGroupIds = []
         reset = true
         break
       }
@@ -746,7 +802,10 @@ export const applyStateOperations = (
           fail('workspace.activeMapId', 'Unknown map')
         if (workspace.activeMapId === operation.id) break
         workspace = { ...workspace, activeMapId: operation.id }
-        selected = reconcileSelection(materialize(graph(), workspace), selected)
+        selected = reconcileSelection(
+          materialize(graph(), workspace, undefined, hiddenMapGroupIds),
+          selected,
+        )
         explicitSelection = selected
         break
       case 'map.create': {
@@ -821,6 +880,16 @@ export const applyStateOperations = (
             ? collapsed.filter((id) => id !== operation.id)
             : [...collapsed, operation.id],
         }
+        break
+      }
+      case 'map-group.setVisible': {
+        if (operation.id !== null && !mapGroups.get(operation.id))
+          fail('map-group.id', 'Unknown group')
+        if (typeof operation.visible !== 'boolean') fail('map-group.visible', 'Expected a boolean')
+        if (!hiddenMapGroupIds.includes(operation.id) === operation.visible) break
+        hiddenMapGroupIds = operation.visible
+          ? hiddenMapGroupIds.filter((id) => id !== operation.id)
+          : [...hiddenMapGroupIds, operation.id]
         break
       }
       case 'map.membership':
@@ -992,7 +1061,13 @@ export const applyStateOperations = (
     parsePreferences(preferences)
     if (samePreferences(preferences, state.preferences)) preferences = state.preferences
   }
-  const mapGraph = materialize(candidate, workspace, state)
+  hiddenMapGroupIds = pruneHiddenMapGroups(hiddenMapGroupIds, mapGroupEdit.items)
+  if (
+    hiddenMapGroupIds.length === state.hiddenMapGroupIds.length &&
+    hiddenMapGroupIds.every((id) => state.hiddenMapGroupIds.includes(id))
+  )
+    hiddenMapGroupIds = state.hiddenMapGroupIds
+  const mapGraph = materialize(candidate, workspace, state, hiddenMapGroupIds)
   selected = reconcileSelection(mapGraph, selected)
   if (
     conversationReplaced &&
@@ -1015,7 +1090,8 @@ export const applyStateOperations = (
     selected === state.selected &&
     conversation === state.conversation &&
     documentId === state.documentId &&
-    pluginStorage === state.pluginStorage
+    pluginStorage === state.pluginStorage &&
+    hiddenMapGroupIds === state.hiddenMapGroupIds
   const next = unchanged
     ? state
     : {
@@ -1027,6 +1103,7 @@ export const applyStateOperations = (
         documentId,
         pluginStorage,
         selected,
+        hiddenMapGroupIds,
         mapGraph,
       }
   let relationRewrites: { before: string; after: string }[] = []
