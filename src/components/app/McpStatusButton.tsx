@@ -42,7 +42,10 @@ export function McpStatusButton({ bridge, store }: { bridge: McpBridge; store: H
     >
       <span aria-hidden="true" className={`mcp-status relative${running ? ' running' : ''}`}>
         <Plug />
-        <span className="mcp-status-dot absolute -right-0.5 -top-0.5" />
+        <span
+          className="mcp-status-dot absolute -right-0.5 -top-0.5"
+          style={running ? { backgroundColor: 'color-mix(in srgb, #51a568 60%, var(--foreground))' } : undefined}
+        />
       </span>
     </IconButton>
   )
