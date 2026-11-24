@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.0-beta.30 — 2026-11-24
+
+### Features
+
+- **graph:** Show or hide map groups in the overview (#390)
+- **mcp:** Show server status in the desktop sidebar (#391)
+- **graph:** Show or hide maps in the overview (#395)
+- **notes:** Find text in the current note (#396)
+
+### Fixes
+
+- **e2e:** Wait for the safe-mode viewport save (#394)
+
 ## 1.0.0-beta.29 — 2026-11-23
 
 ### Breaking Changes

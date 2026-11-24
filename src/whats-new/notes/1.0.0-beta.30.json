@@ -1,0 +1,17 @@
+{
+  "en": [
+    "Press **Cmd/Ctrl+F** in Notes to find text in the current note. Use Enter and Shift+Enter to move between matches.",
+    "Choose which **maps and map groups** appear in the graph overview without deleting them.",
+    "Check the **MCP server status** directly from the desktop sidebar."
+  ],
+  "it": [
+    "Premi **Cmd/Ctrl+F** in Note per cercare nella nota corrente. Usa Invio e Maiusc+Invio per passare da un risultato all’altro.",
+    "Scegli quali **mappe e gruppi di mappe** mostrare nella panoramica del grafo, senza eliminarli.",
+    "Controlla lo **stato del server MCP** direttamente dalla barra laterale dell’app desktop."
+  ],
+  "zh-CN": [
+    "在笔记中按 **Cmd/Ctrl+F** 搜索当前笔记，按 Enter 和 Shift+Enter 在匹配项之间切换。",
+    "选择在图谱概览中显示哪些**导图和导图分组**，无需删除它们。",
+    "在桌面应用的侧边栏中直接查看 **MCP 服务器状态**。"
+  ]
+}
