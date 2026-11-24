@@ -1,4 +1,5 @@
-import type { NessoState, WorkspaceMap } from '@nesso-how/core'
+import type { WorkspaceMap } from '@nesso-how/core'
+import type { HostState } from './types.ts'
 import { relationKey } from '@nesso-how/schema'
 import {
   applyChanges,
@@ -111,7 +112,7 @@ type HistoryEntry = {
 }
 
 const removedCollapsedGroups = (
-  { workspace }: NessoState,
+  { workspace }: HostState,
   delta: DocumentDelta,
   forward: boolean,
 ): readonly string[] | undefined => {
@@ -125,10 +126,10 @@ const removedCollapsedGroups = (
 }
 
 const restore = (
-  state: NessoState,
+  state: HostState,
   { delta, collapsedMapGroupIds }: HistoryEntry,
   forward: boolean,
-): NessoState => {
+): HostState => {
   const concepts = applyChanges(
     state.graph.concepts,
     delta.concepts,
@@ -196,7 +197,7 @@ const restore = (
   }
 }
 
-export const createHistory = (getState: () => NessoState, publish: (next: NessoState) => void) => {
+export const createHistory = (getState: () => HostState, publish: (next: HostState) => void) => {
   const past: HistoryEntry[] = []
   const future: HistoryEntry[] = []
   const flags = () => ({ canUndo: past.length > 0, canRedo: future.length > 0 })

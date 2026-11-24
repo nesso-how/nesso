@@ -6,6 +6,7 @@ import { relationKey } from '@nesso-how/schema'
 import { ArrowLeft, ArrowRight, Plus } from 'lucide-react'
 import type { RefObject } from 'react'
 import { nessoStore, useNessoStore } from '@/store'
+import { revealConceptOperations } from '@/store/maps'
 import type { HostStore } from '@/store/types'
 import { InspectorSection } from './InspectorSection'
 import { useTranslation } from '@/i18n'
@@ -45,7 +46,7 @@ export function ConceptConnections({
         otherId,
         label: graph.concepts.find((concept) => concept.id === otherId)?.label ?? '',
         type: type ? resolveRelationTypeLabel(type, vocabs, locale) : '',
-        included: visible.has(otherId),
+        included: activeMapId === null || visible.has(otherId),
       }
     })
     .sort(
@@ -54,7 +55,10 @@ export function ConceptConnections({
   if (connections.length === 0) return null
 
   const select = (id: string) => {
-    store.setSelection([{ kind: 'concept', id }])
+    store.applyOperations([
+      ...revealConceptOperations(store.getState(), id),
+      { kind: 'selection.set', value: [{ kind: 'concept', id }] },
+    ])
     renderer?.current?.focusConcept(id)
   }
   const add = (id: string) => {

@@ -17,7 +17,6 @@ import { useGraphInteractions } from '../../graph/interactions.ts'
 import type { HostOperation, HostStore } from '../../store/types.ts'
 import { defaultMapName } from '../../store/operations.ts'
 import { maxConceptLabelLength, maxMapNameLength } from '../../store/settings.ts'
-import { useGroupVisibility, hiddenConcepts } from './group-visibility.ts'
 import { OpenMapMenu } from './OpenMapMenu.tsx'
 
 export function GraphWorkspace({
@@ -47,9 +46,6 @@ export function GraphWorkspace({
     store.subscribe,
     () => store.getState().workspace.activeMapId,
   )
-  const [hiddenGroups] = useGroupVisibility(store)
-  const maps = useSyncExternalStore(store.subscribe, () => store.getState().workspace.maps)
-  const excluded = useMemo(() => hiddenConcepts(maps, hiddenGroups), [maps, hiddenGroups])
   const inGraph = activeMapId === null
   const localFocus = useRef<HTMLDivElement>(null)
   const target = focusRef ?? localFocus
@@ -125,7 +121,6 @@ export function GraphWorkspace({
     <div key={epoch} {...surfaceProps} className="h-full w-full">
       {inGraph ? (
         <KnowledgeGraph
-          hiddenConceptIds={excluded}
           ref={graph}
           store={store}
           layout={store.knowledgeGraphLayout}

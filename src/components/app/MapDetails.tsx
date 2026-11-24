@@ -6,7 +6,6 @@ import { nessoStore, useNessoStore } from '@/store'
 import type { HostStore } from '@/store/types'
 import { ConceptColor } from './ConceptColor'
 import { DeleteMapDialog } from './DeleteMapDialog'
-import { useGroupVisibility } from './group-visibility'
 import { maxMapNameLength } from '@/store/settings'
 import { useTranslation } from '@/i18n'
 
@@ -56,7 +55,7 @@ export function MapDetails({
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const deleteTrigger = useRef<HTMLButtonElement>(null)
   const workspace = useNessoStore((state) => state.workspace, store)
-  const [hiddenGroups, toggleGroup] = useGroupVisibility(store)
+  const hidden = useNessoStore((state) => state.hiddenMapGroupIds, store)
   const mapGraph = useNessoStore((state) => state.mapGraph, store)
   const map = workspace.maps.find((map) => map.id === workspace.activeMapId)
   const pinned = !!map && workspace.pinnedMapIds.includes(map.id)
@@ -98,7 +97,7 @@ export function MapDetails({
           </h3>
           <ul className="mt-2 space-y-0.5">
             {workspace.mapGroups.map((group) => {
-              const visible = !hiddenGroups.has(group.id)
+              const visible = !hidden.includes(group.id)
               return (
                 <li
                   key={group.id}
@@ -109,7 +108,11 @@ export function MapDetails({
                   <IconButton
                     aria-label={t(visible ? 'hideMapGroup' : 'showMapGroup', { name: group.name })}
                     aria-pressed={!visible}
-                    onClick={() => toggleGroup(group.id)}
+                    onClick={() =>
+                      store.applyOperations([
+                        { kind: 'map-group.setVisible', id: group.id, visible: !visible },
+                      ])
+                    }
                   >
                     {visible ? <Eye /> : <EyeOff />}
                   </IconButton>
