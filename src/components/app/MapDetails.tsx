@@ -1,11 +1,12 @@
 import type { WorkspaceMap } from '@nesso-how/core'
-import { Button, ContextLabel, Input, Label } from '@nesso-how/ui'
-import { Trash2 } from 'lucide-react'
+import { Button, ContextLabel, IconButton, Input, Label } from '@nesso-how/ui'
+import { Eye, EyeOff, Trash2 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { nessoStore, useNessoStore } from '@/store'
 import type { HostStore } from '@/store/types'
 import { ConceptColor } from './ConceptColor'
 import { DeleteMapDialog } from './DeleteMapDialog'
+import { useGroupVisibility } from './group-visibility'
 import { maxMapNameLength } from '@/store/settings'
 import { useTranslation } from '@/i18n'
 
@@ -55,6 +56,7 @@ export function MapDetails({
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const deleteTrigger = useRef<HTMLButtonElement>(null)
   const workspace = useNessoStore((state) => state.workspace, store)
+  const [hiddenGroups, toggleGroup] = useGroupVisibility(store)
   const mapGraph = useNessoStore((state) => state.mapGraph, store)
   const map = workspace.maps.find((map) => map.id === workspace.activeMapId)
   const pinned = !!map && workspace.pinnedMapIds.includes(map.id)
@@ -89,6 +91,34 @@ export function MapDetails({
           ))}
         </dl>
       </section>
+      {!map && workspace.mapGroups.length > 0 && (
+        <section aria-labelledby="map-groups-heading">
+          <h3 id="map-groups-heading" className="text-xs font-medium">
+            {t('mapGroups')}
+          </h3>
+          <ul className="mt-2 space-y-0.5">
+            {workspace.mapGroups.map((group) => {
+              const visible = !hiddenGroups.has(group.id)
+              return (
+                <li
+                  key={group.id}
+                  className="flex items-center justify-between gap-3 text-xs data-hidden:text-muted-foreground"
+                  data-hidden={visible ? undefined : ''}
+                >
+                  <span className="min-w-0 break-words">{group.name}</span>
+                  <IconButton
+                    aria-label={t(visible ? 'hideMapGroup' : 'showMapGroup', { name: group.name })}
+                    aria-pressed={!visible}
+                    onClick={() => toggleGroup(group.id)}
+                  >
+                    {visible ? <Eye /> : <EyeOff />}
+                  </IconButton>
+                </li>
+              )
+            })}
+          </ul>
+        </section>
+      )}
       {map && (
         <div className="flex items-center justify-between gap-3">
           <Label id="map-pin-label">{t('pinned')}</Label>

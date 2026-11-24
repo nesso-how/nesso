@@ -42,10 +42,6 @@ export function MenuItem({ className, ...props }: Menu.Item.Props) {
   return <Menu.Item className={cn(menuItemClass, className)} {...props} />
 }
 
-export function MenuCheckboxItem({ className, ...props }: Menu.CheckboxItem.Props) {
-  return <Menu.CheckboxItem className={cn(menuItemClass, className)} {...props} />
-}
-
 export function MenuSubmenuTrigger({ className, ...props }: Menu.SubmenuTrigger.Props) {
   return <Menu.SubmenuTrigger className={cn(menuItemClass, className)} {...props} />
 }

@@ -26,7 +26,7 @@ export {
   RevealActions,
 } from './row'
 export { PreferenceSelect } from './preference-select'
-export { Menu, MenuCheckboxItem, MenuItem, MenuPopup, MenuRadioItem, MenuSubmenuTrigger } from './menu'
+export { Menu, MenuItem, MenuPopup, MenuRadioItem, MenuSubmenuTrigger } from './menu'
 export { Popover, PopoverPopup } from './popover'
 export { ColorPicker } from './color-picker'
 export { conceptColor } from './color'
