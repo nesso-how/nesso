@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { createNessoStore } from './create.ts'
-import { buildDeleteMapOperations, exclusiveConceptIds } from './maps.ts'
+import { buildDeleteMapOperations, exclusiveConceptIds, revealConceptOperations } from './maps.ts'
 
 const fixture = () => ({
   concepts: ['urn:one', 'urn:two', 'urn:three'].map((id) => ({
@@ -81,4 +81,51 @@ test('deleting all concepts leaves a fresh disconnected concept and preserves un
     assert.deepEqual(store.getState().graph, after.graph)
     assert.deepEqual(store.getState().workspace.maps, after.workspace.maps)
   }
+})
+
+test('hidden groups filter the graph view without touching the document or history', () => {
+  const { store } = createNessoStore({
+    ...fixture(),
+    relations: [
+      { source: 'urn:one', predicate: 'urn:links', target: 'urn:two' },
+      { source: 'urn:two', predicate: 'urn:links', target: 'urn:three' },
+    ],
+  })
+  store.applyOperations([
+    { kind: 'map-group.create', id: 'urn:group', name: 'Group' },
+    { kind: 'map.create', id: 'urn:grouped', name: 'Grouped', conceptIds: ['urn:one', 'urn:two'] },
+    { kind: 'map.group', id: 'urn:grouped', groupId: 'urn:group' },
+    { kind: 'map.create', id: 'urn:loose', name: 'Loose', conceptIds: ['urn:two'] },
+    { kind: 'map.activate', id: null },
+  ])
+  store.setSelection([
+    { kind: 'concept', id: 'urn:one' },
+    { kind: 'concept', id: 'urn:two' },
+  ])
+  const before = store.getState()
+  const visible = () => store.getState().mapGraph.concepts.map(({ id }) => id)
+  store.applyOperations([{ kind: 'map-group.setVisible', id: 'urn:group', visible: false }])
+  let state = store.getState()
+  assert.deepEqual(visible(), ['urn:two', 'urn:three'])
+  assert.deepEqual(state.mapGraph.relations, [before.graph.relations[1]])
+  assert.deepEqual(state.selected, [{ kind: 'concept', id: 'urn:two' }])
+  assert.equal(state.graph, before.graph)
+  assert.equal(state.workspace, before.workspace)
+  assert.equal(state.history, before.history)
+  store.renameMap('urn:loose', 'Renamed')
+  assert.equal(store.getState().mapGraph, state.mapGraph)
+  store.applyOperations([{ kind: 'map-group.setVisible', id: null, visible: false }])
+  assert.deepEqual(visible(), ['urn:three'])
+  assert.deepEqual(revealConceptOperations(store.getState(), 'urn:two'), [
+    { kind: 'map-group.setVisible', id: 'urn:group', visible: true },
+    { kind: 'map-group.setVisible', id: null, visible: true },
+  ])
+  assert.deepEqual(revealConceptOperations(store.getState(), 'urn:three'), [])
+  store.setMap('urn:grouped')
+  assert.deepEqual(visible(), ['urn:one', 'urn:two'])
+  store.setMap(null)
+  store.applyOperations([{ kind: 'map-group.remove', id: 'urn:group' }])
+  state = store.getState()
+  assert.deepEqual(state.hiddenMapGroupIds, [null])
+  assert.deepEqual(visible(), ['urn:three'])
 })
