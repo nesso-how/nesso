@@ -71,7 +71,7 @@ export function AppSidebar({
       state.workspace.activeMapId === null
         ? state.mapGraph.concepts.length
         : state.graph.concepts.length -
-          hiddenConceptIds(state.workspace.maps, state.hiddenMapGroupIds).size,
+          hiddenConceptIds(state.graph, state.workspace.maps, state).size,
     store,
   )
   const collapsed = useNessoStore((state) => state.preferences.collapsedSections, store)

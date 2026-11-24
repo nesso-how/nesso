@@ -38,15 +38,17 @@ export const buildDeleteMapOperations = (
   return operations
 }
 
-export const revealConceptOperations = (
-  { workspace, hiddenMapGroupIds }: HostState,
-  conceptId: string,
-): HostOperation[] => {
-  if (!hiddenConceptIds(workspace.maps, hiddenMapGroupIds).has(conceptId)) return []
-  const groupIds = new Set(
-    workspace.maps
-      .filter(({ members }) => members.some(({ id }) => id === conceptId))
-      .map(({ groupId }) => groupId ?? null),
-  )
-  return [...groupIds].map((id) => ({ kind: 'map-group.setVisible', id, visible: true }))
+export const revealConceptOperations = (state: HostState, conceptId: string): HostOperation[] => {
+  const { graph, workspace } = state
+  if (!hiddenConceptIds(graph, workspace.maps, state).has(conceptId)) return []
+  const maps = workspace.maps.filter(({ members }) => members.some(({ id }) => id === conceptId))
+  if (!maps.length) return [{ kind: 'map.setVisible', id: null, visible: true }]
+  return [
+    ...[...new Set(maps.map(({ groupId }) => groupId ?? null))]
+      .filter((id) => state.hiddenMapGroupIds.includes(id))
+      .map((id): HostOperation => ({ kind: 'map-group.setVisible', id, visible: true })),
+    ...maps
+      .filter(({ id }) => state.hiddenMapIds.includes(id))
+      .map(({ id }): HostOperation => ({ kind: 'map.setVisible', id, visible: true })),
+  ]
 }

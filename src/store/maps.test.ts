@@ -146,3 +146,42 @@ test('hidden groups filter the graph view without touching the document or histo
   ])
   assert.deepEqual(store.getState().hiddenMapGroupIds, [null])
 })
+
+test('hidden maps and unmapped concepts filter the graph view', () => {
+  const { store } = createNessoStore(fixture())
+  store.applyOperations([
+    { kind: 'map-group.create', id: 'urn:group', name: 'Group' },
+    { kind: 'map.create', id: 'urn:grouped', name: 'Grouped', conceptIds: ['urn:one', 'urn:two'] },
+    { kind: 'map.group', id: 'urn:grouped', groupId: 'urn:group' },
+    { kind: 'map.create', id: 'urn:loose', name: 'Loose', conceptIds: ['urn:two'] },
+    { kind: 'map.activate', id: null },
+  ])
+  const { graph, history } = store.getState()
+  const visible = () => store.getState().mapGraph.concepts.map(({ id }) => id)
+  const hide = (id: string | null) =>
+    store.applyOperations([{ kind: 'map.setVisible', id, visible: false }])
+  hide(null)
+  assert.deepEqual(visible(), ['urn:one', 'urn:two'])
+  assert.equal(store.getState().mapGraph.relations, graph.relations)
+  assert.equal(store.getState().history, history)
+  assert.deepEqual(revealConceptOperations(store.getState(), 'urn:three'), [
+    { kind: 'map.setVisible', id: null, visible: true },
+  ])
+  hide('urn:grouped')
+  store.applyOperations([{ kind: 'map-group.setVisible', id: 'urn:group', visible: false }])
+  assert.deepEqual(revealConceptOperations(store.getState(), 'urn:one'), [
+    { kind: 'map-group.setVisible', id: 'urn:group', visible: true },
+    { kind: 'map.setVisible', id: 'urn:grouped', visible: true },
+  ])
+  store.applyOperations([{ kind: 'map-group.setVisible', id: 'urn:group', visible: true }])
+  assert.deepEqual(visible(), ['urn:two'])
+  store.applyOperations([{ kind: 'map.remove', id: 'urn:grouped' }])
+  assert.deepEqual(store.getState().hiddenMapIds, [null])
+  store.undo()
+  assert.deepEqual(visible(), ['urn:one', 'urn:two'])
+  hide('urn:loose')
+  store.undo()
+  assert.deepEqual(store.getState().hiddenMapIds, [null])
+  store.applyOperations([{ kind: 'document.reset', id: 'urn:document' }])
+  assert.deepEqual(store.getState().hiddenMapIds, [])
+})

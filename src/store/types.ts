@@ -21,14 +21,19 @@ export const sectionIds = [
   'inspector.nodes',
 ] as const satisfies readonly SectionId[]
 
-export type HostState = NessoState & {
-  readonly documentEpoch: number
-  readonly documentId: string
-  readonly pluginStorage: readonly PluginStorageNamespace[]
-  readonly conversation: { readonly messages: readonly AiChatMessage[] }
-  readonly persistenceIssues: readonly Readonly<PersistenceIssue>[]
+export type MapVisibility = {
   readonly hiddenMapGroupIds: readonly (string | null)[]
+  readonly hiddenMapIds: readonly (string | null)[]
 }
+
+export type HostState = NessoState &
+  MapVisibility & {
+    readonly documentEpoch: number
+    readonly documentId: string
+    readonly pluginStorage: readonly PluginStorageNamespace[]
+    readonly conversation: { readonly messages: readonly AiChatMessage[] }
+    readonly persistenceIssues: readonly Readonly<PersistenceIssue>[]
+  }
 
 export type HostOperation =
   | NessoOperation
@@ -47,6 +52,7 @@ export type HostOperation =
   | { readonly kind: 'map-group.remove'; readonly id: string }
   | { readonly kind: 'map-group.setOpen'; readonly id: string; readonly open: boolean }
   | { readonly kind: 'map-group.setVisible'; readonly id: string | null; readonly visible: boolean }
+  | { readonly kind: 'map.setVisible'; readonly id: string | null; readonly visible: boolean }
   | { readonly kind: 'preferences.intro-seen' }
   | { readonly kind: 'preferences.mcpEnabled'; readonly value: boolean }
   | {
