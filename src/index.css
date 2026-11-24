@@ -1546,15 +1546,16 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--muted-foreground);
-  opacity: 0.5;
+  background: currentColor;
+  opacity: var(--mcp-status-dot-opacity, 0.5);
 }
-.mcp-status.running {
+.mcp-status[data-status='mcpRunning'] {
+  --mcp-status-dot-opacity: 1;
   color: color-mix(in srgb, #427b53 60%, var(--foreground));
 }
-.mcp-status.running .mcp-status-dot {
-  background: color-mix(in srgb, #427b53 60%, var(--foreground));
-  opacity: 1;
+.mcp-status[data-status='mcpNotRunning'] {
+  --mcp-status-dot-opacity: 1;
+  color: color-mix(in srgb, #934a35 60%, var(--foreground));
 }
 .mcp-credentials {
   display: grid;

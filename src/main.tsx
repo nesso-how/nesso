@@ -13,7 +13,7 @@ import { host, startAutosave } from '@/store'
 import { connectTheme, resolveColorScheme } from '@/theme'
 import { translate } from '@/i18n'
 import { aiPlugins, chat, documentation } from '@/ai'
-import { connectMcpHost } from '@/ai/mcp'
+import { connectMcpHost, mcpIssueText } from '@/ai/mcp'
 import { createAiApproval, createAiHistoryApproval } from '@/ai/approval'
 import './index.css'
 import App from './App'
@@ -88,7 +88,7 @@ const stopMcp = window.nessoMcp
         notifications.api.notify({
           tone: 'warning',
           title: getTranslation()('mcpFailure'),
-          description: message,
+          description: mcpIssueText(message, getTranslation()),
         }),
       aiPlugins,
     )

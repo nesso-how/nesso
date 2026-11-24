@@ -193,7 +193,7 @@ export async function startMcpServer(
       resolve()
     })
   }).catch(() => {
-    throw failure('Could not start the local MCP server. The port may already be in use')
+    throw failure('mcpPortUnavailable')
   })
   return {
     state: { url: `http://${host}/mcp` },

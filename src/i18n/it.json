@@ -265,6 +265,7 @@
   "mcpRegenerateTitle": "Rigenerare il token?",
   "mcpRegenerateDescription": "Il token attuale smette di funzionare e il server riparte con un nuovo token. Aggiorna gli assistenti esterni con la nuova configurazione. Il grafo resta invariato.",
   "mcpFailure": "Operazione del server MCP non riuscita.",
+  "mcpPortUnavailable": "La porta potrebbe essere già in uso.",
   "mcpCopyFailure": "Impossibile copiare. Riprova.",
   "mcpApproval": "Applicare modifiche MCP esterne?",
   "aiRemovalApproval": "Applicare le eliminazioni dell'AI?",
