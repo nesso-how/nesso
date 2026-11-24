@@ -1,6 +1,6 @@
 ---
 description: Reviews Nesso changes for documentation drift, ineffective tests, high-risk defects, and undeclared decisions
-mode: primary
+mode: all
 permissions:
   - { action: edit, resource: '*', effect: deny }
 ---
