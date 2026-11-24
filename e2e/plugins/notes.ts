@@ -128,7 +128,7 @@ export async function verifyNotes({ window, url }: CheckContext) {
     true,
   )
   await evaluate(
-    `window.__notesRecords.push({key:'notes',value:{version:1,text:'Line\\n'.repeat(200)}});for(const record of window.__notesRecords)if(record.scope)record.value.text+='\\nLine'.repeat(200)`,
+    `window.__notesRecords.push({key:'notes',value:{version:1,text:'Line\\n'.repeat(200)}});for(const record of window.__notesRecords)if(record.scope)record.value.text+='\\nLine'.repeat(200)+'\\nIDEA'`,
   )
   const scrollTop = () =>
     frame.executeJavaScript(
@@ -156,6 +156,50 @@ export async function verifyNotes({ window, url }: CheckContext) {
       `document.querySelector('.cm-content').textContent.includes('Project ideas')`,
     ),
     true,
+  )
+  const key = (key: string, modifiers = {}) =>
+    frame.executeJavaScript(
+      `document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:${JSON.stringify(key)},...${JSON.stringify(modifiers)},bubbles:true,cancelable:true}))`,
+    )
+  const count = (expected: string) =>
+    waitFor(
+      () =>
+        frame.executeJavaScript(
+          `document.querySelector('[role="search"] [role="status"]')?.textContent`,
+        ),
+      (value) => value === expected,
+    )
+  await frame.executeJavaScript(`document.querySelector('.cm-content').focus()`)
+  await key('f', process.platform === 'darwin' ? { metaKey: true } : { ctrlKey: true })
+  await waitFor(
+    () => frame.executeJavaScript(`document.activeElement.matches('[role="search"] input')`),
+    Boolean,
+  )
+  assert.equal(
+    await frame.executeJavaScript(`document.execCommand('insertText',false,'idea')`, true),
+    true,
+  )
+  await count('1/3')
+  await key('Enter', { shiftKey: true })
+  await count('3/3')
+  assert.ok((await scrollTop()) > 0)
+  assert.equal(
+    await frame.executeJavaScript(`(() => {
+      const bar = document.querySelector('[role="search"]')
+      const panel = document.querySelector('.notes-page')
+      return bar.getBoundingClientRect().bottom === panel.getBoundingClientRect().bottom
+    })()`),
+    true,
+  )
+  await key('Enter')
+  await count('1/3')
+  await key('Escape')
+  await waitFor(
+    () =>
+      frame.executeJavaScript(
+        `document.activeElement.matches('.cm-content') && !document.querySelector('[role="search"]')`,
+      ),
+    Boolean,
   )
   await evaluate(`window.__notesFailure='save'`)
   await type('Unsaved draft')

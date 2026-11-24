@@ -48,6 +48,53 @@
   border-radius: 0;
 }
 
+.notes-find-scope {
+  height: 100%;
+}
+
+.notes-find {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+  background: var(--background);
+  font-size: var(--nesso-reading-font-size);
+}
+
+.notes-find-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding-block: 0.5rem;
+}
+
+.notes-find-field {
+  position: relative;
+  min-width: 0;
+  flex: 1;
+}
+
+.notes-find-field svg {
+  position: absolute;
+  inset-inline-start: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+
+.notes-find input {
+  height: 2rem;
+  padding-inline-start: 1.75rem;
+}
+
+.notes-find [role='status'] {
+  min-width: 4ch;
+  margin-inline: 0.25rem;
+  color: var(--muted-foreground);
+  text-align: end;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
 @media (max-width: 767px) {
   .notes-document h1 {
     font-size: 25px;

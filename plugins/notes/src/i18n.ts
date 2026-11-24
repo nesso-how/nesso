@@ -7,6 +7,12 @@ export const messages = {
     saveError:
       'Notes could not be saved. Copy your text before reopening Notes. Check the app’s saving status before closing.',
     reload: 'Reload notes',
+    find: {
+      label: 'Find in notes',
+      previous: 'Previous match',
+      next: 'Next match',
+      close: 'Close find',
+    },
   },
   it: {
     graph: 'Grafo',
@@ -16,6 +22,12 @@ export const messages = {
     saveError:
       'Impossibile salvare le note. Copia il testo prima di riaprire Note. Controlla lo stato del salvataggio nell’app prima di chiudere.',
     reload: 'Ricarica note',
+    find: {
+      label: 'Trova nelle note',
+      previous: 'Risultato precedente',
+      next: 'Risultato successivo',
+      close: 'Chiudi ricerca',
+    },
   },
   'zh-CN': {
     graph: '图谱',
@@ -24,5 +36,11 @@ export const messages = {
     restoreError: '无法恢复已保存的笔记。未覆盖任何数据。',
     saveError: '无法保存笔记。重新打开笔记前请复制文本。关闭前请检查应用的保存状态。',
     reload: '重新加载笔记',
+    find: {
+      label: '在笔记中查找',
+      previous: '上一个匹配项',
+      next: '下一个匹配项',
+      close: '关闭查找',
+    },
   },
 } as const

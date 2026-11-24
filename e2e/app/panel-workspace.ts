@@ -341,11 +341,34 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     ),
     null,
   )
-  assert.ok(
-    preloaded.includes(
-      await panelFrame(context.window, `!!document.querySelector('.notes-editor .cm-content')`),
-    ),
+  const notesFrame = await panelFrame(
+    context.window,
+    `!!document.querySelector('.notes-editor .cm-content')`,
   )
+  assert.ok(preloaded.includes(notesFrame))
+  await notesFrame.executeJavaScript(`(() => {
+    const editor = document.querySelector('.cm-content')
+    editor.focus()
+    editor.dispatchEvent(new KeyboardEvent('keydown', {key:'f', metaKey:true, bubbles:true, cancelable:true}))
+  })()`)
+  const findInput = `document.querySelector('.notes-find input')`
+  await waitFor(
+    () => notesFrame.executeJavaScript(`document.activeElement === ${findInput}`),
+    Boolean,
+  )
+  assert.equal(
+    await notesFrame.executeJavaScript(`document.execCommand('insertText',false,'Ideas')`, true),
+    true,
+  )
+  const allSelected = () =>
+    notesFrame.executeJavaScript(
+      `${findInput}.selectionStart === 0 && ${findInput}.selectionEnd === 5`,
+    )
+  const selectAll = Menu.getApplicationMenu()?.getMenuItemById('selectAll')
+  assert.ok(selectAll)
+  await waitFor(async () => selectAll.enabled, Boolean, 2_000)
+  selectAll.click(undefined, context.window, undefined)
+  await waitFor(allSelected, Boolean, 2_000)
   await choose('Review')
   assert.ok(
     preloaded.includes(
