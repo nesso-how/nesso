@@ -9,6 +9,7 @@ import {
 import { Banner, BannerRow, Button, MarkdownInput, PluginContent, PluginPage } from '@nesso-how/ui'
 import type { ActionContext } from '@nesso-how/plugin'
 import { createNotes, type Notes } from './notes.ts'
+import { NotesFind } from './find-bar.tsx'
 import { messages } from './i18n.ts'
 import './styles.css'
 
@@ -18,11 +19,13 @@ function NotesPage({
   title,
   children,
   banner,
+  footer,
   mapId,
 }: {
   title: string
   children?: ReactNode
   banner?: ReactNode
+  footer?: ReactNode
   mapId?: string | null
 }) {
   const content = useRef<HTMLDivElement>(null)
@@ -58,6 +61,7 @@ function NotesPage({
           {banner}
         </Banner>
       )}
+      {footer}
     </PluginPage>
   )
 }
@@ -127,21 +131,28 @@ function Editor({
   const state = useSyncExternalStore(notes.subscribe, notes.getSnapshot)
   const t = messages[locale]
   return (
-    <NotesPage
-      title={title}
-      mapId={mapId}
-      banner={state.failed ? <BannerRow message={t.saveError} /> : undefined}
-    >
-      <MarkdownInput
-        className="notes-editor"
-        aria-labelledby="notes-title"
-        value={state.text}
-        onChange={notes.setText}
-        readOnly={state.failed}
-        tasks
-        placeholder={t.placeholder}
-      />
-    </NotesPage>
+    <NotesFind labels={t.find}>
+      {(findBar) => (
+        <NotesPage
+          title={title}
+          mapId={mapId}
+          banner={state.failed ? <BannerRow message={t.saveError} /> : undefined}
+          footer={findBar}
+        >
+          <MarkdownInput
+            className="notes-editor"
+            aria-labelledby="notes-title"
+            aria-keyshortcuts="Meta+F Control+F"
+            value={state.text}
+            onChange={notes.setText}
+            readOnly={state.failed}
+            tabIndex={state.failed ? 0 : undefined}
+            tasks
+            placeholder={t.placeholder}
+          />
+        </NotesPage>
+      )}
+    </NotesFind>
   )
 }
 

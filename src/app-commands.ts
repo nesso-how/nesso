@@ -136,6 +136,8 @@ export function useAppCommands({
       })
     const stopStore = menu ? store.subscribe(update) : undefined
     window.addEventListener('keydown', onKeyDown)
+    window.addEventListener('focus', onFocus)
+    window.addEventListener('blur', onFocus)
     document.addEventListener('focusin', onFocus)
     document.addEventListener('focusout', onFocus)
     update()
@@ -145,6 +147,8 @@ export function useAppCommands({
       stopTabs?.()
       stopStore?.()
       window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('focus', onFocus)
+      window.removeEventListener('blur', onFocus)
       document.removeEventListener('focusin', onFocus)
       document.removeEventListener('focusout', onFocus)
     }
