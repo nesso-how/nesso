@@ -2,11 +2,12 @@ import assert from 'node:assert/strict'
 import { app } from 'electron'
 import { readFile, readdir } from 'node:fs/promises'
 import path from 'node:path'
+import { viewportKey, type WorkspaceState } from '@nesso-how/core'
 import { connectPlugins } from '../../electron/plugins/plugins.ts'
 import { createPluginStorage } from '../../electron/plugins/storage/index.ts'
 import { appUrl, createTrustedRequest } from '../../electron/ipc.ts'
 import { preparePluginPackage } from '@nesso-how/plugin/package'
-import { openFixtureWorkspace, type CheckContext } from '../helpers.ts'
+import { openFixtureWorkspace, waitFor, type CheckContext } from '../helpers.ts'
 
 export async function verifySafePlugins({ window, url }: CheckContext) {
   assert.ok(process.argv.includes('--safe-plugins'))
@@ -37,7 +38,13 @@ export async function verifySafePlugins({ window, url }: CheckContext) {
   const before = await readFile(filename, 'utf8')
   connectPlugins(createTrustedRequest(appUrl(false)))
   const { saved, evaluate } = await openFixtureWorkspace({ window, url })
-  const document = structuredClone(saved.get('document'))
+  const initialViewportKey = viewportKey('concept-map', 'coffee')
+  const document = structuredClone(
+    await waitFor(
+      async () => saved.get('document') as { workspace: WorkspaceState | null } | undefined,
+      (record) => Boolean(record?.workspace?.viewports[initialViewportKey]),
+    ),
+  )
   await evaluate(`document.querySelector('[data-settings-trigger]').click()`)
   await evaluate(
     `const plugins = [...document.querySelectorAll('.settings-sidebar button')].find(button => button.textContent.trim() === 'Plugins'); plugins.click()`,
