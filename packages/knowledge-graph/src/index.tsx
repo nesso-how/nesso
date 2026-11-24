@@ -62,6 +62,7 @@ export function KnowledgeGraph({
   ref,
   store,
   layout,
+  hiddenConceptIds,
   readOnly = false,
   focusRef,
   onOpen,
@@ -69,6 +70,7 @@ export function KnowledgeGraph({
   ref?: Ref<KnowledgeGraphHandle>
   store: Pick<NessoStore, 'getState' | 'subscribe' | 'applyOperations' | 'undo' | 'redo'>
   layout: KnowledgeGraphLayout
+  hiddenConceptIds?: ReadonlySet<string>
   readOnly?: boolean
   focusRef?: RefObject<HTMLDivElement | null>
   onOpen?: (id: string, point: Point) => void
@@ -96,7 +98,10 @@ export function KnowledgeGraph({
     const context = element.getContext('2d')!
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     let graph = store.getState().graph
-    let current = settle(graph, layout)
+    const visibleGraph = () => hiddenConceptIds?.size
+      ? { ...graph, concepts: graph.concepts.filter(({ id }) => !hiddenConceptIds.has(id)) }
+      : graph
+    let current = settle(visibleGraph(), layout)
     let byId = new Map(current.bubbles.map((bubble) => [bubble.id, bubble]))
     let hovered: string | null = null
     let pending: string[] = []
@@ -211,7 +216,7 @@ export function KnowledgeGraph({
       if (state.graph !== graph) {
         graph = state.graph
         const lines = new Set(current.lines.map(({ id }) => id))
-        const next = scene(graph, layout, byId)
+        const next = scene(visibleGraph(), layout, byId)
         const changed =
           next.bubbles.length !== current.bubbles.length ||
           next.lines.length !== current.lines.length ||
@@ -495,7 +500,7 @@ export function KnowledgeGraph({
       element.removeEventListener('wheel', onWheel)
       container.removeEventListener('keydown', onKeyDown)
     }
-  }, [store, layout, focusRef, readOnly])
+  }, [store, layout, focusRef, readOnly, hiddenConceptIds])
 
   return (
     <div

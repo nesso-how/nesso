@@ -8,6 +8,7 @@ import {
   ListRowDetail,
   ListRowTitle,
   Menu,
+  MenuCheckboxItem,
   MenuItem,
   MenuPopup,
   MenuRadioItem,
@@ -17,6 +18,8 @@ import {
   TextPromptDialog,
 } from '@nesso-how/ui'
 import {
+  Eye,
+  EyeOff,
   ArrowDown,
   ArrowUp,
   ChevronRight,
@@ -32,6 +35,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import { useEffect, useId, useRef, useState, type PointerEvent, type ReactNode } from 'react'
+import { useGroupVisibility } from './group-visibility.ts'
 import { Sidebar } from './SidebarLayout'
 import { NewMapButton } from './NewMapButton'
 import { DeleteMapDialog } from './DeleteMapDialog'
@@ -61,6 +65,7 @@ export function AppSidebar({
   onOpenSettings?: () => void
   onOpenSearch?: () => void
 }) {
+  const [hiddenGroups, toggleGroup] = useGroupVisibility(store)
   const t = useTranslation(store)
   const workspace = useNessoStore((state) => state.workspace, store)
   const conceptCount = useNessoStore((state) => state.graph.concepts.length, store)
@@ -330,6 +335,19 @@ export function AppSidebar({
             <ListRowTitle>{t('completeGraph')}</ListRowTitle>
             <ListRowDetail>{t('conceptCount', { count: conceptCount })}</ListRowDetail>
           </ListRowButton>
+          {groups.length > 0 && actions('graph', t('actionsFor', { name: t('completeGraph') }),
+            groups.map((group) => (
+              <MenuCheckboxItem
+                key={group.id}
+                checked={!hiddenGroups.has(group.id)}
+                onCheckedChange={() => toggleGroup(group.id)}
+                closeOnClick={false}
+              >
+                {hiddenGroups.has(group.id) ? <EyeOff /> : <Eye />}
+                <span className="min-w-0 break-words">{group.name}</span>
+              </MenuCheckboxItem>
+            )),
+          )}
         </ListRow>
         <div
           ref={scroller}
