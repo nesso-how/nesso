@@ -1,16 +1,32 @@
-import { useLayoutEffect, useRef, useState, type ComponentProps } from 'react'
+import { useLayoutEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react'
 import { cn } from 'cn'
 import { Annotation, Compartment, EditorState, Transaction } from '@codemirror/state'
 import { EditorView, ViewPlugin, keymap, placeholder as editorPlaceholder } from '@codemirror/view'
 import { defaultKeymap, history as editorHistory, historyKeymap, redo } from '@codemirror/commands'
+import { Bold, Code, Italic, List, ListOrdered, ListTodo } from 'lucide-react'
+import { Button } from './button'
 import {
+  activeMarkdownFormats,
   continueMarkdownList,
   indentMarkdownList,
   markdownDecorations,
   markdownTasks,
   toggleMarkdownFormat,
+  toggleMarkdownList,
   toggleMarkdownTask,
 } from './markdown'
+
+const formattingActions = [
+  { label: 'bold', format: '**', key: 'b', shift: false, Icon: Bold },
+  { label: 'italic', format: '*', key: 'i', shift: false, Icon: Italic },
+  { label: 'code', format: '`', key: 'e', shift: false, Icon: Code },
+  { label: 'bullet', format: 'bullet', key: '8', shift: true, Icon: List },
+  { label: 'numbered', format: 'numbered', key: '7', shift: true, Icon: ListOrdered },
+  { label: 'task', format: 'task', key: '9', shift: true, Icon: ListTodo },
+] as const
+
+type Format = ReturnType<typeof activeMarkdownFormats>[number]
+type ToolbarLabels = Record<'label' | (typeof formattingActions)[number]['label'], string>
 
 type MarkdownInputProps = Omit<ComponentProps<'div'>, 'onChange' | 'children' | 'defaultValue'> & {
   value: string
@@ -20,7 +36,29 @@ type MarkdownInputProps = Omit<ComponentProps<'div'>, 'onChange' | 'children' | 
   tasks?: boolean
   onOpenLink?: (url: string) => void
   placeholder?: string
+  toolbar?: ToolbarLabels
+  compactToolbar?: boolean
+  readOnlyToolbar?: boolean
+  toolbarEnd?: ReactNode
 }
+
+function runFormat(view: EditorView, format: Format) {
+  const transaction =
+    format === '**' || format === '*' || format === '`'
+      ? toggleMarkdownFormat(view.state, format)
+      : toggleMarkdownList(view.state, format)
+  if (!transaction) return false
+  view.dispatch(transaction)
+  return true
+}
+
+const formattingKeymap = keymap.of(
+  formattingActions.map(({ format, key, shift }) => ({
+    key: `Mod-${shift ? 'Shift-' : ''}${key}`,
+    preventDefault: format === '**' || format === '*' || format === '`',
+    run: (view: EditorView) => runFormat(view, format),
+  })),
+)
 
 const externalChange = Annotation.define<boolean>()
 const resetHistory = (view: EditorView, compartment: Compartment) => {
@@ -70,6 +108,10 @@ export function MarkdownInput({
   tasks,
   onOpenLink,
   placeholder,
+  toolbar,
+  compactToolbar,
+  readOnlyToolbar,
+  toolbarEnd,
   className,
   id,
   'aria-label': ariaLabel,
@@ -77,11 +119,15 @@ export function MarkdownInput({
   ...props
 }: MarkdownInputProps) {
   const container = useRef<HTMLDivElement>(null)
+  const toolbarElement = useRef<HTMLDivElement>(null)
   const editor = useRef<EditorView | null>(null)
   const callbacks = useRef({ onChange, onOpenLink })
   const [configuration] = useState(() => new Compartment())
   const [historyState] = useState(() => new Compartment())
   const [initialValue] = useState(value)
+  const [activeFormats, setActiveFormats] = useState<Format[]>([])
+  const showToolbar = !!toolbar && (!readOnly || readOnlyToolbar)
+  const mac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
 
   useLayoutEffect(() => {
     callbacks.current = { onChange, onOpenLink }
@@ -106,6 +152,7 @@ export function MarkdownInput({
         livePreview,
         taskCheckboxes,
         configuration.of([]),
+        formattingKeymap,
         keymap.of([
           ...(['Tab', 'Shift-Tab'] as const).map((key) => ({
             key,
@@ -125,26 +172,20 @@ export function MarkdownInput({
               return true
             },
           },
-          ...(
-            [
-              ['Mod-b', '**'],
-              ['Mod-i', '*'],
-              ['Mod-e', '`'],
-            ] as const
-          ).map(([key, marker]) => ({
-            key,
-            run: (view: EditorView) => {
-              const transaction = toggleMarkdownFormat(view.state, marker)
-              if (!transaction) return false
-              view.dispatch(transaction)
-              return true
-            },
-          })),
           ...defaultKeymap,
         ]),
-        EditorView.updateListener.of((update) => {
-          if (update.docChanged && !update.transactions.some((t) => t.annotation(externalChange)))
-            callbacks.current.onChange(update.state.doc.toString())
+        EditorView.updateListener.of(({ docChanged, selectionSet, state, transactions }) => {
+          if (docChanged && !transactions.some((t) => t.annotation(externalChange)))
+            callbacks.current.onChange(state.doc.toString())
+          if (toolbarElement.current && (docChanged || selectionSet))
+            setActiveFormats(activeMarkdownFormats(state))
+        }),
+        EditorView.scrollMargins.of(({ scrollDOM }) => {
+          const toolbar = toolbarElement.current
+          return toolbar &&
+            toolbar.getBoundingClientRect().bottom > scrollDOM.getBoundingClientRect().top
+            ? { top: toolbar.offsetHeight }
+            : {}
         }),
         EditorView.domEventHandlers({
           click(event, view) {
@@ -166,7 +207,9 @@ export function MarkdownInput({
   }, [configuration, initialValue])
 
   useLayoutEffect(() => {
-    editor.current?.dispatch({
+    const view = editor.current
+    if (!view) return
+    view.dispatch({
       effects: configuration.reconfigure([
         EditorState.readOnly.of(readOnly),
         EditorView.editable.of(!readOnly),
@@ -200,6 +243,7 @@ export function MarkdownInput({
         ...(placeholder ? [editorPlaceholder(placeholder)] : []),
       ]),
     })
+    if (showToolbar) setActiveFormats(activeMarkdownFormats(view.state))
   }, [
     configuration,
     historyState,
@@ -210,6 +254,7 @@ export function MarkdownInput({
     ariaLabel,
     ariaLabelledBy,
     placeholder,
+    showToolbar,
   ])
 
   useLayoutEffect(() => {
@@ -225,12 +270,57 @@ export function MarkdownInput({
   return (
     <div
       {...props}
-      ref={container}
       data-local-history={history ? '' : undefined}
       className={cn(
-        'nesso-input nesso-markdown-input nesso-scroll min-h-24 w-full overflow-y-auto border border-input bg-background px-2.5 py-2 focus-within:border-muted-foreground',
+        'nesso-input nesso-markdown-input nesso-scroll min-h-24 w-full flex-col overflow-y-auto border border-input bg-background px-2.5 py-2 focus-within:border-muted-foreground',
         className,
       )}
-    />
+    >
+      {showToolbar && (
+        <div
+          ref={toolbarElement}
+          className="sticky top-0 z-10 mb-2 flex shrink-0 items-start justify-between gap-2 border-b border-border bg-background pb-1"
+        >
+          <div role="group" aria-label={toolbar.label} className="flex min-w-0 flex-wrap gap-0.5">
+            {formattingActions.map(({ label, format, key, shift, Icon }) => {
+              if (format === 'task' && !tasks) return null
+              const shortcut = mac
+                ? `⌘${shift ? '⇧' : ''}${key.toUpperCase()}`
+                : `Ctrl+${shift ? 'Shift+' : ''}${key.toUpperCase()}`
+              return (
+                <Button
+                  key={format}
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className={cn(
+                    'aria-pressed:bg-accent',
+                    compactToolbar
+                      ? 'size-6 any-pointer-coarse:size-10 [&_svg]:size-3'
+                      : 'pointer-coarse:size-10',
+                  )}
+                  aria-label={toolbar[label]}
+                  aria-keyshortcuts={`${mac ? 'Meta' : 'Control'}+${shift ? 'Shift+' : ''}${key}`}
+                  aria-pressed={activeFormats.includes(format)}
+                  disabled={readOnly}
+                  title={`${toolbar[label]} (${shortcut})`}
+                  onPointerDown={(event) => event.preventDefault()}
+                  onClick={() => {
+                    const view = editor.current
+                    if (!view) return
+                    view.focus()
+                    runFormat(view, format)
+                  }}
+                >
+                  <Icon aria-hidden="true" />
+                </Button>
+              )
+            })}
+          </div>
+          {toolbarEnd && <div className="flex shrink-0">{toolbarEnd}</div>}
+        </div>
+      )}
+      <div ref={container} className="flex min-h-0 min-w-0 flex-1" />
+    </div>
   )
 }

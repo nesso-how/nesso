@@ -1,14 +1,18 @@
-.notes-content {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
+.notes-document,
+.notes-find-controls {
+  max-width: 44rem;
 }
 
 .notes-document {
-  min-height: 100%;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding-block-end: 0;
 }
 
 .notes-document h1 {
+  flex-shrink: 0;
   margin: 0 0 1.5rem;
   font-size: 28px;
   font-weight: 450;
@@ -18,7 +22,10 @@
 }
 
 .notes-editor.nesso-markdown-input {
-  min-height: 60vh;
+  flex: 1;
+  min-height: 0;
+  row-gap: var(--spacing);
+  overflow: hidden;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -28,8 +35,13 @@
   box-shadow: none;
 }
 
-.notes-editor .cm-content {
-  min-height: 60vh;
+.notes-editor.nesso-markdown-input .cm-scroller {
+  overflow-y: auto;
+  padding-inline-end: calc(var(--spacing) * 3);
+}
+
+.notes-editor.nesso-markdown-input .cm-content {
+  padding-block-end: calc(var(--spacing) * 3);
 }
 
 .notes-editor .cm-placeholder {

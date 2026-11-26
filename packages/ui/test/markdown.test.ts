@@ -2,11 +2,13 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { EditorSelection, EditorState } from '@codemirror/state'
 import {
+  activeMarkdownFormats,
   continueMarkdownList,
   indentMarkdownList,
   markdownDecorations,
   markdownTasks,
   toggleMarkdownFormat,
+  toggleMarkdownList,
   toggleMarkdownTask,
 } from '../src/markdown.ts'
 
@@ -43,8 +45,8 @@ test('live preview renders emphasis, inline code and links but leaves code block
   assert.ok(result.marks.includes('nesso-markdown-italic'))
   assert.ok(result.marks.includes('nesso-markdown-link'))
   assert.deepEqual(result.links, ['https://nesso.how'])
-  const code = preview('`**code**` and ``a`b``')
-  assert.equal(code.text, '**code** and a`b')
+  const code = preview('`**code**` and `` `a ``')
+  assert.equal(code.text, '**code** and `a')
   assert.deepEqual(code.marks, ['nesso-markdown-code', 'nesso-markdown-code'])
   const literal = '```\n- code\n```\n\n![**image**](https://nesso.how/image.png)'
   assert.equal(preview(literal).text, literal)
@@ -217,14 +219,172 @@ test('formatting shortcuts wrap selections and remove selected or surrounding de
   assert.equal(toggleMarkdownFormat(readonly, '**'), null)
 })
 
-test('formatting shortcuts preserve the other emphasis style and work at the cursor', () => {
+test('combined emphasis can be toggled independently', () => {
   const bold = EditorState.create({ doc: '**Text**', selection: EditorSelection.range(2, 6) })
   const both = bold.update(toggleMarkdownFormat(bold, '*')!).state
   assert.equal(both.doc.toString(), '***Text***')
+  assert.deepEqual(new Set(activeMarkdownFormats(both)), new Set(['*', '**']))
   assert.equal(both.update(toggleMarkdownFormat(both, '*')!).state.doc.toString(), '**Text**')
   assert.equal(both.update(toggleMarkdownFormat(both, '**')!).state.doc.toString(), '*Text*')
-  const cursor = bold.update({ selection: { anchor: 4 } }).state
-  assert.equal(cursor.update(toggleMarkdownFormat(cursor, '**')!).state.doc.toString(), 'Text')
-  const code = EditorState.create({ doc: '``a`b``', selection: { anchor: 3 } })
-  assert.equal(code.update(toggleMarkdownFormat(code, '`')!).state.doc.toString(), 'a`b')
+})
+
+test('applying emphasis merges the same formatting inside the selection', () => {
+  for (const [marker, doc, content] of [
+    ['**', '  **One** and ***two*** with `**code**`  ', 'One and *two* with `**code**`'],
+    ['*', '  One and _two_ with **three**  ', 'One and two with **three**'],
+  ] as const) {
+    const state = EditorState.create({ doc, selection: { anchor: doc.length, head: 0 } })
+    const formatted = state.update(toggleMarkdownFormat(state, marker)!).state
+    const expected = `  ${marker}${content}${marker}  `
+    assert.equal(formatted.doc.toString(), expected)
+    assert.equal(formatted.selection.main.anchor, expected.length)
+    assert.equal(formatted.selection.main.head, 0)
+    assert.deepEqual(activeMarkdownFormats(formatted), [marker])
+    const cleared = formatted.update(toggleMarkdownFormat(formatted, marker)!).state
+    assert.equal(cleared.doc.toString(), `  ${content}  `)
+  }
+})
+
+test('applying inline code merges contained spans while preserving literal text', () => {
+  for (const [doc, merged, unwrapped] of [
+    [
+      '  One `two` and `three` with **four**  ',
+      '  `One two and three with **four**`  ',
+      '  One two and three with **four**  ',
+    ],
+    ['`` `one `` and `two`', '`` `one and two ``', '`one and two'],
+    ['One ``a`b`` and `three`', '``One a`b and three``', 'One a`b and three'],
+  ]) {
+    const state = EditorState.create({ doc, selection: { anchor: doc.length, head: 0 } })
+    const formatted = state.update(toggleMarkdownFormat(state, '`')!).state
+    assert.equal(formatted.doc.toString(), merged)
+    assert.deepEqual(activeMarkdownFormats(formatted), ['`'])
+    const cleared = formatted.update(toggleMarkdownFormat(formatted, '`')!).state
+    assert.equal(cleared.doc.toString(), unwrapped)
+    assert.equal(cleared.selection.main.anchor, unwrapped.length)
+    assert.equal(cleared.selection.main.head, 0)
+  }
+})
+
+test('existing inline formatting is kept when one span would be invalid across Markdown blocks', () => {
+  for (const marker of ['**', '`'] as const) {
+    const doc = `One ${marker}two${marker}\n\nThree`
+    const state = EditorState.create({ doc, selection: { anchor: 0, head: doc.length } })
+    assert.equal(toggleMarkdownFormat(state, marker), null)
+  }
+})
+
+test('inline formatting applies to the whole word under the caret without selecting it', () => {
+  const doc = 'Un caffè caldo'
+  const anchor = 6
+  for (const marker of ['**', '*', '`'] as const) {
+    const state = EditorState.create({ doc, selection: { anchor } })
+    const formatted = state.update(toggleMarkdownFormat(state, marker)!).state
+    assert.equal(formatted.doc.toString(), `Un ${marker}caffè${marker} caldo`)
+    assert.ok(formatted.selection.main.empty)
+    assert.equal(formatted.selection.main.head, anchor + marker.length)
+    assert.ok(activeMarkdownFormats(formatted).includes(marker))
+    const restored = formatted.update(toggleMarkdownFormat(formatted, marker)!).state
+    assert.equal(restored.doc.toString(), doc)
+    assert.equal(restored.selection.main.head, anchor)
+  }
+})
+
+test('inline formatting does nothing without a selection or a caret inside a word', () => {
+  for (const [doc, anchor] of [
+    ['Text', 0],
+    ['Text', 4],
+    ['**Two  words**', 6],
+  ] as const) {
+    const state = EditorState.create({ doc, selection: { anchor } })
+    assert.deepEqual(activeMarkdownFormats(state), [])
+    for (const marker of ['**', '*', '`'] as const)
+      assert.equal(toggleMarkdownFormat(state, marker), null)
+  }
+})
+
+test('list toggles format the selected lines without moving the selection past their text', () => {
+  const source = 'First\n\nSecond\nOutside'
+  const anchor = source.indexOf('Outside')
+  for (const [kind, first, second] of [
+    ['bullet', '- ', '- '],
+    ['numbered', '1. ', '2. '],
+    ['task', '- [ ] ', '- [ ] '],
+  ] as const) {
+    const state = EditorState.create({
+      doc: source,
+      selection: { anchor, head: 0 },
+      extensions: markdownTasks.of(true),
+    })
+    const listed = state.update(toggleMarkdownList(state, kind)!).state
+    assert.equal(listed.doc.toString(), `${first}First\n\n${second}Second\nOutside`)
+    assert.deepEqual(activeMarkdownFormats(listed), [kind])
+    const restored = listed.update(toggleMarkdownList(listed, kind)!).state
+    assert.equal(restored.doc.toString(), source)
+    assert.equal(restored.selection.main.anchor, anchor)
+    assert.equal(restored.selection.main.head, 0)
+  }
+})
+
+test('list toggles preserve checked items when filling out a mixed task list', () => {
+  const source = '- [X] Parent\n  + Child\n- Last'
+  const state = EditorState.create({
+    doc: source,
+    selection: { anchor: 0, head: source.lastIndexOf('- Last') },
+    extensions: markdownTasks.of(true),
+  })
+  const listed = state.update(toggleMarkdownList(state, 'task')!).state
+  assert.equal(listed.doc.toString(), '- [X] Parent\n  - [ ] Child\n- Last')
+  const bullets = listed.update(toggleMarkdownList(listed, 'bullet')!).state
+  assert.equal(bullets.doc.toString(), '- Parent\n  - Child\n- Last')
+})
+
+test('numbering a mixed selection uses a consistent marker and sequence', () => {
+  const doc = '1) First\n- Second\nThird'
+  const state = EditorState.create({ doc, selection: { anchor: 0, head: doc.length } })
+  const listed = state.update(toggleMarkdownList(state, 'numbered')!).state
+  assert.equal(listed.doc.toString(), '1. First\n2. Second\n3. Third')
+  assert.deepEqual(activeMarkdownFormats(listed), ['numbered'])
+})
+
+test('converting nested lists keeps their hierarchy and restarts numbering under each parent', () => {
+  const doc = '- Parent\n  - First\n    - Grandchild\n  - Second\n- Next\n  - Child'
+  const state = EditorState.create({ doc, selection: { anchor: 0, head: doc.length } })
+  const numbered = state.update(toggleMarkdownList(state, 'numbered')!).state
+  assert.equal(
+    numbered.doc.toString(),
+    '1. Parent\n   1. First\n      1. Grandchild\n   2. Second\n2. Next\n   1. Child',
+  )
+  assert.deepEqual(activeMarkdownFormats(numbered), ['numbered'])
+  assert.equal(numbered.update(toggleMarkdownList(numbered, 'bullet')!).state.doc.toString(), doc)
+})
+
+test('numbering from mid-list continues the sequence and keeps unselected content nested', () => {
+  const doc = '8) First\n9) Second\n   - Child\n- Last\n  -\tUnselected\n    continuation'
+  const state = EditorState.create({
+    doc,
+    selection: { anchor: doc.indexOf('9)'), head: doc.indexOf('\n  -\tUnselected') },
+  })
+  const numbered = state.update(toggleMarkdownList(state, 'numbered')!).state
+  assert.equal(
+    numbered.doc.toString(),
+    '8) First\n9) Second\n   1. Child\n10) Last\n    - Unselected\n      continuation',
+  )
+})
+
+test('list toggles respect read-only fields, task settings, and literal Markdown', () => {
+  const readOnly = EditorState.create({ extensions: EditorState.readOnly.of(true) })
+  assert.equal(toggleMarkdownList(readOnly, 'bullet'), null)
+  for (const doc of ['```\n- code\n```', '    - code', '- - -']) {
+    const state = EditorState.create({ doc, selection: { anchor: doc.indexOf('-') + 1 } })
+    assert.equal(toggleMarkdownList(state, 'bullet'), null)
+    assert.deepEqual(activeMarkdownFormats(state), [])
+  }
+  const state = EditorState.create({ doc: '- [x] Text' })
+  assert.equal(toggleMarkdownList(state, 'task'), null)
+  assert.equal(state.update(toggleMarkdownList(state, 'bullet')!).state.doc.toString(), '[x] Text')
+  const empty = EditorState.create()
+  const item = empty.update(toggleMarkdownList(empty, 'bullet')!).state
+  assert.equal(item.doc.toString(), '- ')
+  assert.equal(item.selection.main.head, 2)
 })

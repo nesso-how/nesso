@@ -56,6 +56,10 @@ Use `MenuSubmenuTrigger` inside `Menu.SubmenuRoot`. `MenuPopup` accepts a prefer
 
 `MarkdownInput` accepts Markdown through `value`/`onChange`, with live preview of emphasis, inline code, links, and lists. Syntax reappears around the selection. Cmd/Ctrl+B/I/E toggles bold, italic, and inline code; Enter continues or exits lists, Tab/Shift+Tab changes nesting, and Shift+Enter inserts a line break. Optional `tasks` enables clickable task checkboxes; `placeholder` appears when empty.
 
+Pass localized `toolbar` labels (`label`, `bold`, `italic`, `code`, `bullet`, `numbered`, and `task`) to show formatting controls above editable text. Inline formatting applies to a selection or to the whole word when the caret is strictly inside it. Applying bold, italic, or inline code to a mixed selection merges spans of the same format when Markdown supports a single span. Inline code displays other formatting markers literally. Cmd/Ctrl+Shift+8/7/9 toggles bulleted, numbered, and task lists on the selected lines; the task control and shortcut require `tasks`.
+
+Use `compactToolbar` for 12 px icons, 24 px buttons with a mouse or trackpad, and 40 px touch targets on devices with a coarse pointer. The toolbar is hidden in read-only fields unless `readOnlyToolbar` keeps it visible with formatting buttons disabled. Optional `toolbarEnd` renders a caller-provided control at the end of the visible toolbar, outside the formatting group.
+
 Undo/redo is local by default. Use `history={false}` for host-owned history or `history="focus"` to reset local history on blur and external value changes. Exhausted local history never falls through. Menu commands can send `beforeinput` events (`historyUndo`/`historyRedo`) to the focused editor inside `[data-local-history]`.
 
 Cmd/Ctrl-click calls `onOpenLink`; read-only fields use a regular click. The host validates and opens destinations.

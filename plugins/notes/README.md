@@ -4,9 +4,9 @@ Isolated action plugin for free-form Markdown notes on each map without changing
 
 ## Usage
 
-Open the bundled **Notes** action from a map’s actions. The map name is the title; the shared `MarkdownInput` editor provides live preview, task-list checkboxes, and autosave without a toolbar or Save button. Undo/redo stays local to the editor. The graph has document-level notes; each map has its own notes. Reopening the panel restores each map's scroll position from memory until the app closes or the document changes; it is never saved.
+Open the bundled **Notes** action from a map’s actions. The map name is the title; the editor provides a formatting toolbar, live preview, task-list checkboxes, and autosave. Only the note text scrolls; the title and toolbar stay visible. Undo/redo stays local to the editor. The graph has document-level notes; each map has its own notes. Reopening the panel restores each map's scroll position from memory until the app closes or the document changes; it is never saved.
 
-With the editor focused, press Cmd/Ctrl+F to find text in the current note. Enter goes to the next match, Shift+Enter goes to the previous match, and Escape returns focus to the note.
+Click **Find in notes** at the right of the editor toolbar, or press Cmd/Ctrl+F with the editor focused, to find text in the current note. If a failed write makes the note read-only, the toolbar stays in place with formatting disabled and search still available. Enter goes to the next match, Shift+Enter goes to the previous match, and Escape returns focus to the note.
 
 Notes are private plugin data, separate from concept notes, JSON-LD exports, and graph history, but included in backups. Deleting a map retains its notes across restart; undoing deletion reconnects them. There is no automatic cleanup or orphan-recovery interface.
 

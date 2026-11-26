@@ -187,7 +187,8 @@ export function Inspector({
 }) {
   const t = useTranslation(store)
   const conceptLabelHintId = useId()
-  const textGroup = useRef<string | undefined>(undefined)
+  const labelGroup = useRef<string | undefined>(undefined)
+  const notesGroup = useRef<string | undefined>(undefined)
   const [confirming, setConfirming] = useState(false)
   const graph = useNessoStore((state) => state.graph, store)
   const selected = useNessoStore((state) => state.selected, store)
@@ -298,17 +299,17 @@ export function Inspector({
               value={concept.label}
               readOnly={readonly}
               onFocus={() => {
-                textGroup.current = newIri()
+                labelGroup.current = newIri()
               }}
               onBlur={() => {
-                textGroup.current = undefined
+                labelGroup.current = undefined
               }}
               onChange={(event) => {
                 if (!readonly)
                   store.setConceptLabel(
                     concept.id,
                     event.target.value,
-                    (textGroup.current ??= newIri()),
+                    (labelGroup.current ??= newIri()),
                   )
               }}
             />
@@ -330,19 +331,29 @@ export function Inspector({
               className="max-h-[50vh]"
               aria-label={t('notes')}
               placeholder={t('notesPlaceholder')}
+              toolbar={{
+                label: t('notesFormatting'),
+                bold: t('notesBold'),
+                italic: t('notesItalic'),
+                code: t('notesInlineCode'),
+                bullet: t('notesBulletList'),
+                numbered: t('notesNumberedList'),
+                task: t('notesTaskList'),
+              }}
+              compactToolbar
               value={concept.notes ?? ''}
               readOnly={readonly}
               history="focus"
               onFocus={() => {
-                textGroup.current = newIri()
+                notesGroup.current = newIri()
               }}
               onBlur={() => {
-                textGroup.current = undefined
+                notesGroup.current = undefined
               }}
               onOpenLink={(url) => openNotesLink(url, t('notesLinkOpenFailed'))}
               onChange={(value) => {
                 if (!readonly)
-                  store.setConceptNotes(concept.id, value, (textGroup.current ??= newIri()))
+                  store.setConceptNotes(concept.id, value, (notesGroup.current ??= newIri()))
               }}
             />
           </div>
