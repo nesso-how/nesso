@@ -1,0 +1,14 @@
+{
+  "en": [
+    "Format concept notes and Notes with the new **formatting toolbar**: bold, italic, inline code, and bulleted, numbered, or task lists, no Markdown needed. Hover a button to see its shortcut.",
+    "In Notes, the title and toolbar stay in view while the text scrolls. Use the **search** button at the right of the toolbar to find text in the note."
+  ],
+  "it": [
+    "Formatta le note dei concetti e Note con la nuova **barra di formattazione**: grassetto, corsivo, codice in linea ed elenchi puntati, numerati o di attività, senza conoscere il Markdown. Passa il puntatore su un pulsante per vederne la scorciatoia.",
+    "In Note, il titolo e la barra restano visibili mentre scorri il testo. Usa il pulsante di **ricerca** a destra della barra per trovare il testo nella nota."
+  ],
+  "zh-CN": [
+    "使用新的**格式工具栏**为概念笔记和笔记设置格式：粗体、斜体、行内代码，以及项目符号、编号或任务列表，无需了解 Markdown。将指针悬停在按钮上即可查看快捷键。",
+    "在笔记中滚动文本时，标题和工具栏始终可见。点击工具栏右侧的**搜索**按钮，即可在笔记中查找文本。"
+  ]
+}

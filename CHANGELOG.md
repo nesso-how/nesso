@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-beta.31 — 2026-11-26
+
+### Features
+
+- **ui:** Add a formatting toolbar to markdown notes (#398)
+
 ## 1.0.0-beta.30 — 2026-11-24
 
 ### Features
