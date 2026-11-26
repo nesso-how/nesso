@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useId, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { StateEffect } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { ActionIcon, IconButton, Input, PluginContent } from '@nesso-how/ui'
@@ -6,14 +6,16 @@ import { ChevronDown, ChevronUp, X } from 'lucide-react'
 import { noteSearch, setNoteSearch, type NoteSearch } from './find.ts'
 
 export function NotesFind({
+  editor,
   labels,
   children,
 }: {
+  editor: RefObject<HTMLDivElement | null>
   labels: Record<'label' | 'previous' | 'next' | 'close', string>
-  children: (bar: ReactNode) => ReactNode
+  children: (controls: { button: ReactNode; bar: ReactNode }) => ReactNode
 }) {
-  const container = useRef<HTMLDivElement>(null)
   const input = useRef<HTMLInputElement>(null)
+  const searchId = useId()
   const [search, setSearch] = useState<NoteSearch | null>(null)
   const open = search !== null
   const total = search?.matches.length ?? 0
@@ -22,30 +24,37 @@ export function NotesFind({
     if (open) input.current?.focus()
   }, [open])
 
-  const getView = () => container.current && EditorView.findFromDOM(container.current)
+  const getView = () => editor.current && EditorView.findFromDOM(editor.current)
 
   const searchFor = (query: string, index: number) => {
     const view = getView()
     if (!view) return
+    const effects: StateEffect<unknown>[] = []
     if (view.state.field(noteSearch, false) === undefined) {
-      view.dispatch({
-        effects: StateEffect.appendConfig.of([
+      effects.push(
+        StateEffect.appendConfig.of([
           noteSearch,
-          EditorView.contentAttributes.of({ tabindex: '0' }),
           EditorView.updateListener.of(({ state, startState }) => {
             const current = state.field(noteSearch)
             if (current !== startState.field(noteSearch, false)) setSearch(current)
           }),
         ]),
-      })
+      )
     }
-    view.dispatch({ effects: setNoteSearch.of({ query, index }) })
+    effects.push(setNoteSearch.of({ query, index }))
+    view.dispatch({ effects })
     const match = view.state.field(noteSearch)?.matches[index]
     if (match) view.dispatch({ effects: EditorView.scrollIntoView(match.from, { y: 'center' }) })
   }
 
   const move = (direction: -1 | 1) => {
     if (search && total) searchFor(search.query, (search.index + direction + total) % total)
+  }
+
+  const openFind = () => {
+    if (!open) return searchFor('', 0)
+    input.current?.focus()
+    input.current?.select()
   }
 
   const close = () => {
@@ -64,7 +73,6 @@ export function NotesFind({
 
   return (
     <div
-      ref={container}
       className="notes-find-scope"
       onKeyDownCapture={(event) => {
         if (event.nativeEvent.isComposing) return
@@ -80,16 +88,27 @@ export function NotesFind({
         ) {
           event.preventDefault()
           event.stopPropagation()
-          if (open) {
-            input.current?.focus()
-            input.current?.select()
-          } else searchFor('', 0)
+          openFind()
         }
       }}
     >
-      {children(
-        search && (
-          <div role="search" aria-label={labels.label} className="notes-find">
+      {children({
+        button: (
+          <IconButton
+            type="button"
+            aria-label={labels.label}
+            aria-keyshortcuts="Meta+F Control+F"
+            aria-expanded={open}
+            aria-controls={open ? searchId : undefined}
+            title={labels.label}
+            className="pointer-coarse:size-10"
+            onClick={openFind}
+          >
+            <ActionIcon name="search" />
+          </IconButton>
+        ),
+        bar: search && (
+          <div id={searchId} role="search" aria-label={labels.label} className="notes-find">
             <PluginContent className="notes-find-controls">
               <div className="notes-find-field">
                 <ActionIcon name="search" size={14} />
@@ -131,7 +150,7 @@ export function NotesFind({
             </PluginContent>
           </div>
         ),
-      )}
+      })}
     </div>
   )
 }

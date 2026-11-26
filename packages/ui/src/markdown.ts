@@ -1,25 +1,39 @@
-import { EditorSelection, Facet, type EditorState, type Range } from '@codemirror/state'
+import {
+  countColumn,
+  EditorSelection,
+  Facet,
+  type ChangeSpec,
+  type EditorState,
+  type Line,
+  type Range,
+  type Text,
+} from '@codemirror/state'
 import { Decoration, WidgetType, type DecorationSet, type EditorView } from '@codemirror/view'
 import { parser, TaskList } from '@lezer/markdown'
 
 type SyntaxNode = ReturnType<ReturnType<typeof parser.parse>['resolveInner']>
+type MarkdownRange = { from: number; to: number }
+type InlineMarker = '**' | '*' | '`'
+type MarkdownList = 'bullet' | 'numbered' | 'task'
+type InlineFormat = { marker: InlineMarker; mark: string; decoration: Decoration }
 
 const listPrefix = /^(\s*)([-+*]|(\d{1,9})([.)]))([\t ]+|$)/
 const taskPrefix = /^\[[ xX]\]([\t ]+|$)/
 const taskParser = parser.configure(TaskList)
-const formats = {
-  '**': {
-    node: 'StrongEmphasis',
+const literalBlocks = new Set(['FencedCode', 'CodeBlock', 'HTMLBlock', 'HorizontalRule'])
+const inlineFormats: Partial<Record<string, InlineFormat>> = {
+  StrongEmphasis: {
+    marker: '**',
     mark: 'EmphasisMark',
     decoration: Decoration.mark({ class: 'nesso-markdown-bold' }),
   },
-  '*': {
-    node: 'Emphasis',
+  Emphasis: {
+    marker: '*',
     mark: 'EmphasisMark',
     decoration: Decoration.mark({ class: 'nesso-markdown-italic' }),
   },
-  '`': {
-    node: 'InlineCode',
+  InlineCode: {
+    marker: '`',
     mark: 'CodeMark',
     decoration: Decoration.mark({
       class: 'nesso-markdown-code',
@@ -32,8 +46,19 @@ export const markdownTasks = Facet.define<boolean | undefined, boolean>({
   combine: (values) => values.some(Boolean),
 })
 
-const parse = (state: EditorState) =>
-  (state.facet(markdownTasks) ? taskParser : parser).parse(state.doc.toString())
+const parse = (state: EditorState, doc = state.doc) =>
+  (state.facet(markdownTasks) ? taskParser : parser).parse(doc.toString())
+
+function hasCodeSpanPadding(content: string) {
+  return /^[ \n]/.test(content) && /[ \n]$/.test(content) && /[^ \n]/.test(content)
+}
+
+function markdownInlineBounds(doc: Text, node: SyntaxNode, mark: string) {
+  const [open, close] = node.getChildren(mark)
+  const padded =
+    node.name === 'InlineCode' && hasCodeSpanPadding(doc.sliceString(open.to, close.from))
+  return { open, close, from: open.to + Number(padded), to: close.from - Number(padded) }
+}
 
 class ListMarker extends WidgetType {
   readonly label: string
@@ -155,11 +180,13 @@ export function markdownDecorations(state: EditorState, focused: boolean): Decor
       if (node.name === 'ListItem')
         decorations.push(...listItemDecorations(state, node.node, active))
 
-      const format = Object.values(formats).find((format) => format.node === node.name)
+      const format = inlineFormats[node.name]
       if (format) {
-        const [open, close] = node.node.getChildren(format.mark)
-        decorations.push(format.decoration.range(open.to, close.from))
+        const { open, close, from, to } = markdownInlineBounds(state.doc, node.node, format.mark)
+        decorations.push(format.decoration.range(from, to))
         syntax(open.from, open.to, active)
+        syntax(open.to, from, active)
+        syntax(to, close.from, active)
         syntax(close.from, close.to, active)
       }
 
@@ -207,6 +234,10 @@ function nextListPrefix(prefix: RegExpMatchArray) {
   return `${prefix[1]}${marker}${prefix[5] || ' '}`
 }
 
+function previousListItem(item: SyntaxNode) {
+  return item.prevSibling ?? item.parent?.prevSibling?.lastChild
+}
+
 export function indentMarkdownList(state: EditorState, outdent = false) {
   const item = markdownListItem(state)
   if (!item) return null
@@ -221,7 +252,7 @@ export function indentMarkdownList(state: EditorState, outdent = false) {
       indentation = parentPrefix[1]
     }
   } else {
-    const previous = node.prevSibling ?? node.parent?.prevSibling?.lastChild
+    const previous = previousListItem(node)
     if (previous?.name !== 'ListItem') return {}
     const previousPrefix = state.doc.lineAt(previous.from).text.match(listPrefix)
     if (!previousPrefix) return {}
@@ -293,31 +324,275 @@ export function toggleMarkdownTask(state: EditorState, position: number) {
   }
 }
 
-export function toggleMarkdownFormat(state: EditorState, marker: keyof typeof formats) {
-  if (state.readOnly) return null
-  const { from, to } = state.selection.main
-  const selected = state.sliceDoc(from, to)
-  const format = formats[marker]
-  let delimiters: { from: number; to: number }[] | undefined
-  parse(state).iterate({
+function inlineFormatDelimiters(
+  { from, to }: MarkdownRange,
+  doc: Text,
+  tree: ReturnType<typeof parse>,
+  merge?: InlineMarker,
+) {
+  const enclosing: Partial<Record<InlineMarker, MarkdownRange[]>> = {}
+  const contained: MarkdownRange[] = []
+  tree.iterate({
+    from,
+    to,
     enter(node) {
-      if (node.name !== format.node) return
-      const [open, close] = node.node.getChildren(format.mark)
-      if ((from === node.from && to === node.to) || (from >= open.to && to <= close.from))
-        delimiters = [open, close].map(({ from, to }) => ({ from, to }))
+      const format = inlineFormats[node.name]
+      if (!format) return
+      const { marker, mark } = format
+      const bounds = markdownInlineBounds(doc, node.node, mark)
+      const { open, close } = bounds
+      const delimiters = [
+        { from: open.from, to: bounds.from },
+        { from: bounds.to, to: close.to },
+      ]
+      if ((from === node.from && to === node.to) || (from >= open.to && to <= close.from)) {
+        enclosing[marker] = delimiters
+      } else if (marker === merge && from <= node.from && node.to <= to) {
+        contained.push(...delimiters)
+      }
     },
   })
-  if (delimiters) {
-    const changes = state.changes(delimiters)
-    return {
-      changes,
-      selection: state.selection.map(changes),
-      userEvent: 'input.format',
-    }
+  return { enclosing, contained }
+}
+
+function inlineFormatTarget(state: EditorState) {
+  const selection = state.selection.main
+  const { from, to, head } = selection
+  if (!selection.empty) {
+    const content = state.sliceDoc(from, to)
+    const start = to - content.trimStart().length
+    const end = from + content.trimEnd().length
+    if (start >= end) return null
+    const range = { from: start, to: end }
+    return { wrap: range, match: range }
   }
+  const word = state.wordAt(head)
+  return word && word.from < head && head < word.to ? { wrap: word, match: selection } : null
+}
+
+function codeSpanDelimiters(
+  state: EditorState,
+  { from, to }: MarkdownRange,
+  contained: MarkdownRange[],
+) {
+  const removed = state.changes(contained)
+  const content = removed.apply(state.doc).sliceString(removed.mapPos(from), removed.mapPos(to))
+  let length = 1
+  for (const run of content.matchAll(/`+/g)) length = Math.max(length, run[0].length + 1)
+  const fence = '`'.repeat(length)
+  const padding =
+    content.startsWith('`') || content.endsWith('`') || hasCodeSpanPadding(content) ? ' ' : ''
+  return { open: fence + padding, close: padding + fence }
+}
+
+function wrapInlineFormat(
+  state: EditorState,
+  range: MarkdownRange,
+  marker: InlineMarker,
+  contained: MarkdownRange[],
+) {
+  const { from, to } = range
+  const { open, close } =
+    marker === '`' ? codeSpanDelimiters(state, range, contained) : { open: marker, close: marker }
+  const changes = state.changes([{ from, insert: open }, ...contained, { from: to, insert: close }])
+  if (marker === '`' || contained.length) {
+    const formatted = { from: changes.mapPos(from, 1), to: changes.mapPos(to, -1) }
+    const doc = changes.apply(state.doc)
+    if (!inlineFormatDelimiters(formatted, doc, parse(state, doc)).enclosing[marker]) return null
+  }
+  return changes
+}
+
+export function toggleMarkdownFormat(state: EditorState, marker: InlineMarker) {
+  if (state.readOnly) return null
+  const target = inlineFormatTarget(state)
+  if (!target) return null
+  const { enclosing, contained } = inlineFormatDelimiters(
+    target.match,
+    state.doc,
+    parse(state),
+    marker,
+  )
+  const delimiters = enclosing[marker]
+  const changes = delimiters
+    ? state.changes(delimiters)
+    : wrapInlineFormat(state, target.wrap, marker, contained)
+  if (!changes) return null
   return {
-    changes: { from, to, insert: `${marker}${selected}${marker}` },
-    selection: EditorSelection.range(from + marker.length, to + marker.length),
+    changes,
+    selection: state.selection.map(changes),
     userEvent: 'input.format',
   }
+}
+
+function markdownListLine(line: Line, tree: ReturnType<typeof parse>, tasks: boolean) {
+  const indent = line.text.match(/^[\t ]*/)![0]
+  const from = line.from + indent.length
+  const token = tree.resolveInner(from, 1)
+  for (let node: SyntaxNode | null = token; node; node = node.parent) {
+    if (literalBlocks.has(node.name)) return null
+  }
+  const prefix = token.name === 'ListMark' && line.text.match(listPrefix)
+  if (!prefix) return { from, to: from, indent, token }
+  const taskLength = tasks
+    ? (line.text.slice(prefix[0].length).match(taskPrefix)?.[0].length ?? 0)
+    : 0
+  const kind: MarkdownList = taskLength ? 'task' : prefix[3] ? 'numbered' : 'bullet'
+  return { from, to: line.from + prefix[0].length + taskLength, indent, token, prefix, kind }
+}
+
+function markdownListLines(state: EditorState, tree: ReturnType<typeof parse>) {
+  const { from, to } = state.selection.main
+  const first = state.doc.lineAt(from)
+  const last = state.doc.lineAt(to > from ? to - 1 : to)
+  const tasks = state.facet(markdownTasks)
+  const lines = []
+  for (let number = first.number; number <= last.number; number++) {
+    const line = state.doc.line(number)
+    if (first.number !== last.number && !line.text.trim()) continue
+    const item = markdownListLine(line, tree, tasks)
+    if (item) lines.push({ ...item, line })
+  }
+  return lines
+}
+
+function activeListKind(lines: ReturnType<typeof markdownListLines>) {
+  const kind = lines[0]?.kind
+  return kind && lines.every((line) => line.kind === kind) ? kind : undefined
+}
+
+export function activeMarkdownFormats(state: EditorState): (InlineMarker | MarkdownList)[] {
+  const tree = parse(state)
+  const target = inlineFormatTarget(state)
+  const formats = target
+    ? (Object.keys(
+        inlineFormatDelimiters(target.match, state.doc, tree).enclosing,
+      ) as InlineMarker[])
+    : []
+  const kind = activeListKind(markdownListLines(state, tree))
+  return kind ? [...formats, kind] : formats
+}
+
+type ListLine = ReturnType<typeof markdownListLines>[number]
+type ListShift = { start: number; end: number; column: number; offset: number }
+
+function listContentColumn(line: Line, prefix: RegExpMatchArray) {
+  const markerEnd = countColumn(prefix[1], 4) + prefix[2].length
+  const content = countColumn(prefix[0], 4)
+  return content - markerEnd >= 5 || prefix[0].length === line.length ? markerEnd + 1 : content
+}
+
+function listScope(doc: Text, { token, prefix, indent }: ListLine) {
+  let node = prefix ? token.parent?.parent?.parent : token.parent
+  const column = countColumn(indent, 4)
+  for (; node; node = node.parent) {
+    if (node.name !== 'ListItem') continue
+    const line = doc.lineAt(node.from)
+    const marker = line.text.match(listPrefix)
+    if (!marker || column >= listContentColumn(line, marker)) return node.from
+  }
+  return -1
+}
+
+function initialListNumber(doc: Text, { token, prefix }: ListLine) {
+  const previous = prefix ? previousListItem(token.parent!) : null
+  if (previous?.name === 'ListItem') {
+    const prior = doc.lineAt(previous.from).text.match(listPrefix)
+    if (prior?.[3]) return { next: Number(prior[3]) + 1, separator: prior[4] }
+  }
+  return { next: Number(prefix?.[3] ?? 1), separator: '.' }
+}
+
+function listNumbering(doc: Text) {
+  const siblings = new Map<number, ReturnType<typeof initialListNumber>>()
+  return (line: ListLine) => {
+    const scope = listScope(doc, line)
+    const sequence = siblings.get(scope) ?? initialListNumber(doc, line)
+    const { next, separator } = sequence
+    sequence.next++
+    siblings.set(scope, sequence)
+    return next <= 999999999 ? `${next}${separator} ` : null
+  }
+}
+
+function listBodyShift(doc: Text, { line, prefix, indent, token }: ListLine, width: number) {
+  if (!prefix) return null
+  const column = listContentColumn(line, prefix)
+  const offset = countColumn(indent, 4) + width - column
+  const end = doc.lineAt(token.parent!.to).number
+  return offset && end > line.number ? { start: line.number + 1, end, column, offset } : null
+}
+
+function shiftListLine(
+  line: Line,
+  tree: ReturnType<typeof parse>,
+  parents: ListShift[],
+  markerChanged: boolean,
+) {
+  const indent = line.text.match(/^[\t ]*/)![0]
+  const column = countColumn(indent, 4)
+  const offset = parents.reduce(
+    (total, parent) => total + (column >= parent.column ? parent.offset : 0),
+    0,
+  )
+  if (!offset || indent.length === line.length) return []
+  const from = line.from + indent.length
+  const edits = [{ from: line.from, to: from, insert: ' '.repeat(column + offset) }]
+  const prefix = !markerChanged && line.text.match(listPrefix)
+  if (prefix && prefix[5].includes('\t') && tree.resolveInner(from, 1).name === 'ListMark') {
+    const markerEnd = column + prefix[2].length
+    edits.push({
+      from: from + prefix[2].length,
+      to: line.from + prefix[0].length,
+      insert: ' '.repeat(countColumn(prefix[0], 4) - markerEnd),
+    })
+  }
+  return edits
+}
+
+function listBodyEdits(
+  doc: Text,
+  tree: ReturnType<typeof parse>,
+  shifts: ListShift[],
+  changedMarkers: Map<number, ChangeSpec>,
+) {
+  if (!shifts.length) return []
+  const edits: ChangeSpec[] = []
+  const parents: ListShift[] = []
+  const last = shifts.reduce((end, shift) => Math.max(end, shift.end), 0)
+  let index = 0
+  for (let number = shifts[0].start; number <= last; number++) {
+    while (parents.length && parents.at(-1)!.end < number) parents.pop()
+    if (shifts[index]?.start === number) parents.push(shifts[index++])
+    if (parents.length)
+      edits.push(...shiftListLine(doc.line(number), tree, parents, changedMarkers.has(number)))
+  }
+  return edits
+}
+
+export function toggleMarkdownList(state: EditorState, kind: MarkdownList) {
+  if (state.readOnly || (kind === 'task' && !state.facet(markdownTasks))) return null
+  const { doc } = state
+  const tree = parse(state)
+  const lines = markdownListLines(state, tree)
+  if (!lines.length) return null
+  const remove = activeListKind(lines) === kind
+  const numberMarker = listNumbering(doc)
+  const markers = new Map<number, ChangeSpec>()
+  const shifts: ListShift[] = []
+  for (const target of lines) {
+    if (!remove && kind !== 'numbered' && target.kind === kind) continue
+    const marker = remove ? '' : kind === 'numbered' ? numberMarker(target) : '- '
+    if (marker === null) return null
+    const { from, to, line } = target
+    markers.set(line.number, {
+      from,
+      to,
+      insert: marker + (kind === 'task' && !remove ? '[ ] ' : ''),
+    })
+    const shift = listBodyShift(doc, target, marker.length)
+    if (shift) shifts.push(shift)
+  }
+  const changes = state.changes([...listBodyEdits(doc, tree, shifts, markers), ...markers.values()])
+  return { changes, selection: state.selection.map(changes, 1), userEvent: 'input.format' }
 }

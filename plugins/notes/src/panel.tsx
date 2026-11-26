@@ -6,6 +6,8 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from 'react'
+import { StateEffect } from '@codemirror/state'
+import { EditorView } from '@codemirror/view'
 import { Banner, BannerRow, Button, MarkdownInput, PluginContent, PluginPage } from '@nesso-how/ui'
 import type { ActionContext } from '@nesso-how/plugin'
 import { createNotes, type Notes } from './notes.ts'
@@ -14,48 +16,25 @@ import { messages } from './i18n.ts'
 import './styles.css'
 
 const scrollPositions = new Map<string | null, number>()
+const focusableText = EditorView.contentAttributes.of({ tabindex: '0' })
 
 function NotesPage({
   title,
   children,
   banner,
   footer,
-  mapId,
 }: {
   title: string
   children?: ReactNode
   banner?: ReactNode
   footer?: ReactNode
-  mapId?: string | null
 }) {
-  const content = useRef<HTMLDivElement>(null)
-  useLayoutEffect(() => {
-    if (mapId === undefined) return
-    const element = content.current!
-    const target = scrollPositions.get(mapId) ?? 0
-    const restore = () => {
-      element.scrollTop = target
-    }
-    restore()
-    const frame = requestAnimationFrame(restore)
-    return () => cancelAnimationFrame(frame)
-  }, [mapId])
   return (
     <PluginPage className="notes-page">
-      <div
-        ref={content}
-        className="notes-content nesso-scroll"
-        onScroll={
-          mapId === undefined
-            ? undefined
-            : ({ currentTarget }) => scrollPositions.set(mapId, currentTarget.scrollTop)
-        }
-      >
-        <PluginContent className="notes-document">
-          <h1 id="notes-title">{title}</h1>
-          {children}
-        </PluginContent>
-      </div>
+      <PluginContent className="notes-document">
+        <h1 id="notes-title">{title}</h1>
+        {children}
+      </PluginContent>
       {banner && (
         <Banner tone="warning" className="notes-banner">
           {banner}
@@ -130,25 +109,48 @@ function Editor({
 }) {
   const state = useSyncExternalStore(notes.subscribe, notes.getSnapshot)
   const t = messages[locale]
+  const editor = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const view = editor.current && EditorView.findFromDOM(editor.current)
+    if (!view) return
+    view.dispatch({ effects: StateEffect.appendConfig.of(focusableText) })
+    const { scrollDOM: scroller } = view
+    scroller.classList.add('nesso-scroll')
+    const target = scrollPositions.get(mapId) ?? 0
+    const restore = () => {
+      scroller.scrollTop = target
+    }
+    const record = () => scrollPositions.set(mapId, scroller.scrollTop)
+    scroller.addEventListener('scroll', record)
+    restore()
+    const frame = requestAnimationFrame(restore)
+    return () => {
+      cancelAnimationFrame(frame)
+      scroller.removeEventListener('scroll', record)
+    }
+  }, [mapId])
+
   return (
-    <NotesFind labels={t.find}>
-      {(findBar) => (
+    <NotesFind editor={editor} labels={t.find}>
+      {({ bar, button }) => (
         <NotesPage
           title={title}
-          mapId={mapId}
           banner={state.failed ? <BannerRow message={t.saveError} /> : undefined}
-          footer={findBar}
+          footer={bar}
         >
           <MarkdownInput
+            ref={editor}
             className="notes-editor"
             aria-labelledby="notes-title"
             aria-keyshortcuts="Meta+F Control+F"
             value={state.text}
             onChange={notes.setText}
             readOnly={state.failed}
-            tabIndex={state.failed ? 0 : undefined}
             tasks
             placeholder={t.placeholder}
+            toolbar={t.formatting}
+            readOnlyToolbar
+            toolbarEnd={button}
           />
         </NotesPage>
       )}

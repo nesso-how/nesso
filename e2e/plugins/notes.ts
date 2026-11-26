@@ -66,15 +66,12 @@ export async function verifyNotes({ window, url }: CheckContext) {
       `window.__notesRecords.find(r=>r.scope?.kind==='map'&&r.scope.id==='urn:project')?.value.text`,
     )
   let frame = await open('urn:project')
-  assert.deepEqual(
-    await frame.executeJavaScript(
-      `({title:document.querySelector('h1').textContent,buttons:document.querySelectorAll('button').length})`,
-    ),
-    {
-      title: 'Project',
-      buttons: 0,
-    },
-  )
+  assert.equal(await frame.executeJavaScript(`document.querySelector('h1').textContent`), 'Project')
+  const key = (key: string, modifiers = {}) =>
+    frame.executeJavaScript(
+      `document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:${JSON.stringify(key)},...${JSON.stringify(modifiers)},bubbles:true,cancelable:true}))`,
+    )
+  const mod = process.platform === 'darwin' ? { metaKey: true } : { ctrlKey: true }
   const text = '**Project ideas**\n- First idea'
   const type = async (text: string) => {
     if (process.platform === 'linux') {
@@ -98,13 +95,10 @@ export async function verifyNotes({ window, url }: CheckContext) {
   }
   await type(text)
   await waitFor(savedText, (value) => value === text)
-  await frame.executeJavaScript(
-    `document.querySelector('.cm-content').dispatchEvent(new KeyboardEvent('keydown',{key:'z',metaKey:/Mac/.test(navigator.platform),ctrlKey:!/Mac/.test(navigator.platform),bubbles:true,cancelable:true}))`,
-  )
+  await key('z', mod)
   await waitFor(savedText, (value) => value === '')
-  await frame.executeJavaScript(
-    `document.querySelector('.cm-content').dispatchEvent(new KeyboardEvent('keydown',{key:'z',metaKey:/Mac/.test(navigator.platform),ctrlKey:!/Mac/.test(navigator.platform),shiftKey:true,bubbles:true,cancelable:true}));document.querySelector('.cm-content').blur()`,
-  )
+  await key('z', { ...mod, shiftKey: true })
+  await frame.executeJavaScript(`document.querySelector('.cm-content').blur()`)
   await waitFor(savedText, (value) => value === text)
   assert.equal(
     await frame.executeJavaScript(
@@ -127,20 +121,78 @@ export async function verifyNotes({ window, url }: CheckContext) {
     ),
     true,
   )
+  const wrappedLine = 'x'.repeat(120)
   await evaluate(
-    `window.__notesRecords.push({key:'notes',value:{version:1,text:'Line\\n'.repeat(200)}});for(const record of window.__notesRecords)if(record.scope)record.value.text+='\\nLine'.repeat(200)+'\\nIDEA'`,
+    `window.__notesRecords.push({key:'notes',value:{version:1,text:${JSON.stringify(`Line\n${wrappedLine}\n${'Line\n'.repeat(200)}`)}}});for(const record of window.__notesRecords)if(record.scope)record.value.text+='\\nLine'.repeat(200)+'\\nIDEA'`,
   )
+  const scroller = `document.querySelector('.notes-editor .cm-scroller')`
   const scrollTop = () =>
     frame.executeJavaScript(
-      `new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(document.querySelector('.notes-content').scrollTop))))`,
+      `new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(${scroller}.scrollTop))))`,
     ) as Promise<number>
   frame = await open(null, true)
   assert.equal(await scrollTop(), 0)
-  await frame.executeJavaScript(
-    `(()=>{const content=document.querySelector('.notes-content');content.scrollTop=content.scrollHeight/2})()`,
+  const bullet = `document.querySelector('button[aria-label="Bulleted list"]')`
+  const bulletShortcut = process.platform === 'darwin' ? '⌘⇧8' : 'Ctrl+Shift+8'
+  assert.equal(
+    await frame.executeJavaScript(`${bullet}.title`),
+    `Bulleted list (${bulletShortcut})`,
   )
-  const scrolled = await scrollTop()
+  await frame.executeJavaScript(`document.querySelector('.cm-content').focus()`)
+  await key('End', { shiftKey: true })
+  assert.equal(
+    await frame.executeJavaScript(
+      `!${bullet}.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,cancelable:true}))`,
+    ),
+    true,
+  )
+  await frame.executeJavaScript(`${bullet}.click()`)
+  await waitFor(
+    () =>
+      frame.executeJavaScript(`(${bullet}.getAttribute('aria-pressed') === 'true' &&
+      document.activeElement.matches('.cm-content') && document.getSelection().toString() === 'Line')`),
+    Boolean,
+  )
+  await key('*', { ...mod, keyCode: 56, shiftKey: true })
+  await waitFor(
+    () =>
+      frame.executeJavaScript(`${bullet}.getAttribute('aria-pressed') === 'false' &&
+      document.getSelection().toString() === 'Line'`),
+    Boolean,
+  )
+  await evaluate(`document.querySelector('#notes-probe').style.width = '240px'`)
+  await waitFor(
+    () => frame.executeJavaScript('innerWidth'),
+    (width) => width === 240,
+  )
+  const textClearance = (await frame.executeJavaScript(`(() => {
+    const scroller = ${scroller}
+    const line = [...scroller.querySelectorAll('.cm-line')].find(line => line.textContent === ${JSON.stringify(wrappedLine)})
+    const range = document.createRange()
+    range.selectNodeContents(line)
+    const rightmostText = Math.max(...Array.from(range.getClientRects(), rect => rect.right))
+    return scroller.getBoundingClientRect().left + scroller.clientWidth - rightmostText
+  })()`)) as number
+  assert.ok(textClearance >= 11, `Wrapped text is only ${textClearance}px from the scrollbar edge`)
+  const findButton = `document.querySelector('button[aria-label="Find in notes"]')`
+  const { scrollTop: scrolled, ...layout } = (await frame.executeJavaScript(`(async () => {
+    const header = [document.querySelector('#notes-title'), document.querySelector('[aria-label="Note formatting"]'), ${findButton}]
+    const [title, toolbar, search] = header.map(element => element.getBoundingClientRect())
+    const scroller = ${scroller}
+    const text = scroller.getBoundingClientRect()
+    const panel = document.querySelector('.notes-page').getBoundingClientRect()
+    scroller.scrollTop = scroller.scrollHeight / 2
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+    return {
+      scrollTop: scroller.scrollTop,
+      headerFixed: [title, toolbar, search].every((box, index) => box.top === header[index].getBoundingClientRect().top),
+      controlsAboveText: title.bottom <= toolbar.top && search.left >= toolbar.right &&
+        Math.max(toolbar.bottom, search.bottom) <= text.top,
+      scrollerAtEdge: Math.abs(text.bottom - panel.bottom) < 1,
+    }
+  })()`)) as { scrollTop: number; [key: string]: unknown }
   assert.ok(scrolled > 0)
+  assert.deepEqual(layout, { headerFixed: true, controlsAboveText: true, scrollerAtEdge: true })
   await evaluate(
     `document.querySelector('#notes-probe').hidden=true;window.__notesPort.postMessage({type:'close',reason:'Closed'});new Promise(resolve=>setTimeout(resolve,200))`,
   )
@@ -157,10 +209,6 @@ export async function verifyNotes({ window, url }: CheckContext) {
     ),
     true,
   )
-  const key = (key: string, modifiers = {}) =>
-    frame.executeJavaScript(
-      `document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:${JSON.stringify(key)},...${JSON.stringify(modifiers)},bubbles:true,cancelable:true}))`,
-    )
   const count = (expected: string) =>
     waitFor(
       () =>
@@ -169,10 +217,11 @@ export async function verifyNotes({ window, url }: CheckContext) {
         ),
       (value) => value === expected,
     )
-  await frame.executeJavaScript(`document.querySelector('.cm-content').focus()`)
-  await key('f', process.platform === 'darwin' ? { metaKey: true } : { ctrlKey: true })
+  await frame.executeJavaScript(`${findButton}.click()`)
   await waitFor(
-    () => frame.executeJavaScript(`document.activeElement.matches('[role="search"] input')`),
+    () =>
+      frame.executeJavaScript(`(${findButton}.getAttribute('aria-expanded') === 'true' &&
+        document.activeElement.matches('[role="search"] input'))`),
     Boolean,
   )
   assert.equal(
@@ -187,7 +236,11 @@ export async function verifyNotes({ window, url }: CheckContext) {
     await frame.executeJavaScript(`(() => {
       const bar = document.querySelector('[role="search"]')
       const panel = document.querySelector('.notes-page')
-      return bar.getBoundingClientRect().bottom === panel.getBoundingClientRect().bottom
+      const text = ${scroller}.getBoundingClientRect()
+      const match = document.querySelector('.notes-match-current').getBoundingClientRect()
+      return bar.getBoundingClientRect().bottom === panel.getBoundingClientRect().bottom &&
+        match.top >= text.top && match.bottom <= text.bottom &&
+        Math.abs(text.bottom - bar.getBoundingClientRect().top) < 1
     })()`),
     true,
   )
@@ -201,6 +254,12 @@ export async function verifyNotes({ window, url }: CheckContext) {
       ),
     Boolean,
   )
+  await key('f', mod)
+  await waitFor(
+    () => frame.executeJavaScript(`document.activeElement.matches('[role="search"] input')`),
+    Boolean,
+  )
+  await key('Escape')
   await evaluate(`window.__notesFailure='save'`)
   await type('Unsaved draft')
   await waitFor(
@@ -209,10 +268,23 @@ export async function verifyNotes({ window, url }: CheckContext) {
   )
   assert.deepEqual(
     await frame.executeJavaScript(
-      `({warning:document.querySelector('.notes-page > [role="alert"]').dataset.tone,readonly:document.querySelector('.cm-content').getAttribute('aria-readonly'),draft:document.querySelector('.cm-content').textContent.includes('Unsaved draft')})`,
+      `({warning:document.querySelector('.notes-page > [role="alert"]').dataset.tone,readonly:document.querySelector('.cm-content').getAttribute('aria-readonly'),draft:document.querySelector('.cm-content').textContent.includes('Unsaved draft'),toolbar:[...document.querySelectorAll('[aria-label="Note formatting"] button')].map(button=>button.disabled).join(),tabIndex:document.querySelector('.cm-content').tabIndex})`,
     ),
-    { warning: 'warning', readonly: 'true', draft: true },
+    {
+      warning: 'warning',
+      readonly: 'true',
+      draft: true,
+      toolbar: Array(6).fill(true).join(),
+      tabIndex: 0,
+    },
   )
+  await frame.executeJavaScript(`${findButton}.click()`)
+  await waitFor(
+    () => frame.executeJavaScript(`document.activeElement.matches('[role="search"] input')`),
+    Boolean,
+  )
+  await frame.executeJavaScript(`document.execCommand('insertText',false,'Unsaved draft')`, true)
+  await count('1/1')
   await close()
   await evaluate(`window.__notesFailure='restore'`)
   frame = await open('urn:project')

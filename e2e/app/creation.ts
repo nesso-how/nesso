@@ -215,4 +215,22 @@ export async function verifyCreation(context: CheckContext) {
   await evaluate(`${notes}.blur();${notes}.dispatchEvent(new FocusEvent('blur'));${notes}.focus()`)
   key('Z', mod)
   assert.equal(await evaluate(`${notes}.textContent`), 'Draft')
+
+  const inspectorLabel = `document.querySelector('#concept-label')`
+  await evaluate(`${inspectorLabel}.focus();${inspectorLabel}.select()`)
+  await context.window.webContents.insertText('Renamed')
+  await ready(
+    `document.activeElement === ${inspectorLabel} && ${inspectorLabel}.value === 'Renamed'`,
+  )
+  await click('#details-panel [aria-label="Bulleted list"]')
+  await ready(
+    `document.activeElement === ${notes} && !!${notes}.querySelector('.nesso-markdown-list-item')`,
+  )
+  await click('#canvas [aria-label="Undo"]')
+  assert.deepEqual(await evaluate(`[${notes}.textContent, ${inspectorLabel}.value]`), [
+    'Draft',
+    'Renamed',
+  ])
+  await click('#canvas [aria-label="Undo"]')
+  await ready(`${inspectorLabel}.value === 'Coffee'`)
 }
