@@ -13,10 +13,11 @@ import { viewportKey, type NessoStore, type Selection } from '@nesso-how/core'
 import { defaultLocale } from '@nesso-how/i18n'
 import { bounds, draw, readTheme, relationLabels, type Transform } from './draw.ts'
 import {
+  cool,
   remember,
   scene,
-  settle,
   simulation,
+  warmth,
   type Bubble,
   type KnowledgeGraphLayout,
 } from './layout.ts'
@@ -28,6 +29,7 @@ type Point = { readonly x: number; readonly y: number }
 
 const padding = 48
 const duration = 300
+const budget = 12
 
 const Controls = ({ className, children }: { className: string; children: ReactNode }) => (
   <div
@@ -96,12 +98,13 @@ export function KnowledgeGraph({
     const context = element.getContext('2d')!
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     let graph = store.getState().mapGraph
-    let current = settle(graph, layout)
+    let current = scene(graph, layout.positions)
     let byId = new Map(current.bubbles.map((bubble) => [bubble.id, bubble]))
     let hovered: string | null = null
     let pending: string[] = []
     let frame = 0
     let motion = 0
+    let settling = 0
     const saved = store.getState().workspace.viewports[viewportKey('knowledge-graph', null)]
     let transform: Transform = saved
       ? { x: saved.x, y: saved.y, k: saved.zoom }
@@ -119,6 +122,7 @@ export function KnowledgeGraph({
     }
     const render = () => {
       frame = 0
+      if (settling) return
       const ratio = window.devicePixelRatio || 1
       const state = store.getState()
       const style = getComputedStyle(element)
@@ -140,12 +144,33 @@ export function KnowledgeGraph({
     const invalidate = () => {
       frame ||= requestAnimationFrame(render)
     }
+    const finish = () => {
+      invalidate()
+      const target = aim
+      aim = undefined
+      if (target?.transform === transform) target.apply()
+    }
     const animate = (bubbles: Bubble[], lines: typeof current.lines) =>
-      simulation(bubbles, lines).on('tick', () => {
-        remember(current.bubbles, layout)
-        invalidate()
-      })
+      simulation(bubbles, lines)
+        .on('tick', () => {
+          remember(current.bubbles, layout, forces.alpha())
+          invalidate()
+        })
+        .on('end', finish)
     let forces = animate(current.bubbles, current.lines)
+    const step = () => {
+      const hot = cool(forces, performance.now() + budget)
+      remember(current.bubbles, layout, forces.alpha())
+      settling = hot ? requestAnimationFrame(step) : 0
+      if (!hot) finish()
+    }
+    const heat = (alpha: number) => {
+      cancelAnimationFrame(settling)
+      settling = 0
+      forces.alpha(alpha)
+      if (reduced || alpha < forces.alphaMin()) step()
+      else forces.restart()
+    }
     const move = (next: Transform) => {
       cancelAnimationFrame(motion)
       save(next)
@@ -159,11 +184,14 @@ export function KnowledgeGraph({
       const step = (now: number) => {
         const progress = Math.min(1, (now - start) / duration)
         const eased = 1 - (1 - progress) ** 3
-        transform = {
-          x: from.x + (next.x - from.x) * eased,
-          y: from.y + (next.y - from.y) * eased,
-          k: from.k + (next.k - from.k) * eased,
-        }
+        transform =
+          progress < 1
+            ? {
+                x: from.x + (next.x - from.x) * eased,
+                y: from.y + (next.y - from.y) * eased,
+                k: from.k + (next.k - from.k) * eased,
+              }
+            : next
         render()
         if (progress < 1) motion = requestAnimationFrame(step)
       }
@@ -184,13 +212,10 @@ export function KnowledgeGraph({
         y: height / 2 - (box.y + box.height / 2) * k,
       }
     }
-    if (!saved) {
-      const initial = fit()
-      if (initial) {
-        transform = initial
-        save()
-      }
-    }
+    if (!saved) transform = fit() ?? transform
+    let aim: { transform: Transform; apply: () => void } | undefined = saved
+      ? undefined
+      : { transform, apply: () => recenter.current() }
     recenter.current = () => {
       const next = fit()
       if (next) move(next)
@@ -199,20 +224,24 @@ export function KnowledgeGraph({
       const bubble = byId.get(id)
       if (!bubble) return
       const k = Math.max(transform.k, 1)
-      move({
+      const next = {
         k,
         x: element.clientWidth / 2 - bubble.x! * k,
         y: element.clientHeight / 2 - bubble.y! * k,
-      })
+      }
+      move(next)
+      if (forces.alpha() >= forces.alphaMin())
+        aim = { transform: next, apply: () => focus.current(id) }
       focusRef?.current?.focus()
     }
+    heat(warmth(current, layout))
     const unsubscribe = store.subscribe(() => {
       const state = store.getState()
       const visible = state.workspace.activeMapId === null ? state.mapGraph : graph
       if (visible !== graph) {
         graph = visible
         const lines = new Set(current.lines.map(({ id }) => id))
-        const next = scene(graph, layout, byId)
+        const next = scene(graph, layout.positions, byId)
         const changed =
           next.bubbles.length !== current.bubbles.length ||
           next.lines.length !== current.lines.length ||
@@ -222,10 +251,10 @@ export function KnowledgeGraph({
         byId = new Map(current.bubbles.map((bubble) => [bubble.id, bubble]))
         if (changed) {
           forces.stop()
-          forces = animate(current.bubbles, current.lines).alpha(next.heat)
-          if (reduced) forces.tick(300)
-          else forces.restart()
-          remember(current.bubbles, layout)
+          const alpha = Math.max(next.heat, forces.alpha())
+          forces = animate(current.bubbles, current.lines)
+          heat(alpha)
+          remember(current.bubbles, layout, forces.alpha())
         }
       }
       invalidate()
@@ -248,12 +277,14 @@ export function KnowledgeGraph({
       return { x: (point.x - transform.x) / transform.k, y: (point.y - transform.y) / transform.k }
     }
     const hit = (event: PointerEvent | MouseEvent) => {
+      if (settling) return
       const { x, y } = world(event)
       return current.bubbles.findLast(
         (bubble) => Math.hypot(bubble.x! - x, bubble.y! - y) <= bubble.radius + 4 / transform.k,
       )
     }
     const hitLine = (event: PointerEvent) => {
+      if (settling) return
       const { x, y } = world(event)
       return current.lines.findLast(({ source, target }) => {
         const dx = target.x! - source.x!
@@ -484,6 +515,7 @@ export function KnowledgeGraph({
       restyle.disconnect()
       cancelAnimationFrame(frame)
       cancelAnimationFrame(motion)
+      cancelAnimationFrame(settling)
       focus.current = () => {}
       recenter.current = () => {}
       element.removeEventListener('pointerdown', onPointerDown)

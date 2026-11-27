@@ -5,12 +5,13 @@ import {
   forceSimulation,
   forceX,
   forceY,
+  type Simulation,
   type SimulationLinkDatum,
   type SimulationNodeDatum,
 } from 'd3-force'
 import { relationKey, type Position } from '@nesso-how/schema'
 
-export type KnowledgeGraphLayout = Map<string, Position>
+export type KnowledgeGraphLayout = { readonly positions: Map<string, Position>; alpha: number }
 export type Bubble = SimulationNodeDatum & { id: string; label: string; radius: number }
 export type Line = SimulationLinkDatum<Bubble> & {
   readonly id: string
@@ -29,7 +30,6 @@ export type KnowledgeGraphInput = {
 
 const spacing = 96
 const viewScale = 2.5
-const ticks = 300
 
 const hash = (value: string, seed: number) => {
   let result = seed
@@ -45,7 +45,7 @@ const random = () => {
 
 export function scene(
   graph: KnowledgeGraphInput,
-  layout: KnowledgeGraphLayout,
+  layout: ReadonlyMap<string, Position>,
   previous: ReadonlyMap<string, Bubble> = new Map(),
 ) {
   const ids = new Set(graph.concepts.map(({ id }) => id))
@@ -125,20 +125,36 @@ export const simulation = (bubbles: Bubble[], lines: Line[]) =>
     .force('x', forceX<Bubble>(0).strength(0.05))
     .force('y', forceY<Bubble>(0).strength(0.05))
 
+export const warmth = (
+  { settled, heat }: { readonly settled: boolean; readonly heat: number },
+  layout: KnowledgeGraphLayout,
+) => (settled ? layout.alpha : Math.max(heat, layout.alpha))
+
+export const cool = (forces: Simulation<Bubble, Line>, until = Infinity) => {
+  while (forces.alpha() >= forces.alphaMin() && performance.now() < until) forces.tick()
+  return forces.alpha() >= forces.alphaMin()
+}
+
 export function settle(graph: KnowledgeGraphInput, layout: KnowledgeGraphLayout) {
-  const result = scene(graph, layout)
-  if (!result.settled) simulation(result.bubbles, result.lines).alpha(result.heat).tick(ticks)
-  remember(result.bubbles, layout)
+  const result = scene(graph, layout.positions)
+  const forces = simulation(result.bubbles, result.lines).alpha(warmth(result, layout))
+  cool(forces)
+  remember(result.bubbles, layout, forces.alpha())
   return result
 }
 
-export const remember = (bubbles: readonly Bubble[], layout: KnowledgeGraphLayout) => {
-  for (const { id, x, y } of bubbles) layout.set(id, { x: x!, y: y! })
+export const remember = (
+  bubbles: readonly Bubble[],
+  layout: KnowledgeGraphLayout,
+  alpha: number,
+) => {
+  for (const { id, x, y } of bubbles) layout.positions.set(id, { x: x!, y: y! })
+  layout.alpha = alpha
 }
 
 export const mapPositions = (layout: KnowledgeGraphLayout, ids: readonly string[]) =>
   ids.flatMap((id) => {
-    const position = layout.get(id)
+    const position = layout.positions.get(id)
     return position
       ? [
           {
