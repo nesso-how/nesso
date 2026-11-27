@@ -31,7 +31,10 @@ export async function verifyCreation(context: CheckContext) {
   await evaluate(
     `[...document.querySelectorAll('button')].find(button=>button.textContent.trim().startsWith('Energy')).click()`,
   )
-  await ready(`document.querySelectorAll('#canvas .react-flow__node[data-id]').length===3`)
+  await ready(
+    `document.querySelectorAll('#canvas .react-flow__node[data-id]').length===3 &&
+     document.querySelector('#canvas .react-flow__viewport').style.transform !== 'translate(0px, 0px) scale(1)'`,
+  )
   const baseline = await nodes()
   const pane = '#canvas .react-flow__pane'
   const cut = `document.querySelector('#canvas [aria-label="Cut"]')`
@@ -213,7 +216,14 @@ export async function verifyCreation(context: CheckContext) {
   const notes = `document.querySelector('#concept-notes')`
   const originalNotes = await evaluate<string>(`${notes}.textContent`)
   const beforeNotes = await nodes()
-  const mod: ('meta' | 'control')[] = [process.platform === 'darwin' ? 'meta' : 'control']
+  const mac = process.platform === 'darwin'
+  const mod: ('meta' | 'control')[] = [mac ? 'meta' : 'control']
+  const undoInNotes = () =>
+    evaluate(
+      `document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{
+        key:'z', ${mac ? 'metaKey' : 'ctrlKey'}:true, bubbles:true, cancelable:true
+      }))`,
+    )
   await evaluate(`${notes}.focus()`)
   key('A', mod)
   await ready(`!getSelection().isCollapsed && ${notes}.contains(getSelection().anchorNode)`)
@@ -226,12 +236,12 @@ export async function verifyCreation(context: CheckContext) {
   await ready(`${notes}.textContent==='Draft' && !${notes}.querySelector('.nesso-markdown-bold')`)
   key('Z', mod)
   await ready(`${notes}.textContent===${JSON.stringify(originalNotes)}`)
-  key('Z', mod)
+  await undoInNotes()
   assert.deepEqual(await nodes(), beforeNotes)
   key('Z', [...mod, 'shift'])
   await ready(`${notes}.textContent==='Draft'`)
   await evaluate(`${notes}.blur();${notes}.dispatchEvent(new FocusEvent('blur'));${notes}.focus()`)
-  key('Z', mod)
+  await undoInNotes()
   assert.equal(await evaluate(`${notes}.textContent`), 'Draft')
 
   const inspectorLabel = `document.querySelector('#concept-label')`
@@ -245,6 +255,7 @@ export async function verifyCreation(context: CheckContext) {
     `document.activeElement === ${notes} && !!${notes}.querySelector('.nesso-markdown-list-item')`,
   )
   await click('#canvas [aria-label="Undo"]')
+  await ready(`!${notes}.querySelector('.nesso-markdown-list-item')`)
   assert.deepEqual(await evaluate(`[${notes}.textContent, ${inspectorLabel}.value]`), [
     'Draft',
     'Renamed',
