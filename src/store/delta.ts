@@ -1,4 +1,5 @@
 import type { GraphSnapshot, WorkspaceMap, WorkspaceMapGroup } from '@nesso-how/core'
+import { NessoError } from '@nesso-how/errors'
 import { relationKey, type RelationBend } from '@nesso-how/schema'
 
 type Entry<T> = { readonly index: number; readonly value: T }
@@ -8,23 +9,123 @@ export type Change<T> = {
   readonly after?: Entry<T>
 }
 
-const indexes = new WeakMap<readonly unknown[], Map<string, number>>()
+type Positions = ReadonlyMap<string, number | undefined>
+type Lookup = { get(key: string): number | undefined }
 
-const cachedIndex = <T>(items: readonly T[], key: (item: T) => string): Map<string, number> => {
+const overlayLimit = 256
+
+const count = (sorted: readonly number[], below: (value: number, index: number) => boolean) => {
+  let low = 0
+  let high = sorted.length
+  while (low < high) {
+    const middle = (low + high) >> 1
+    if (below(sorted[middle], middle)) low = middle + 1
+    else high = middle
+  }
+  return low
+}
+
+const remainingRank = (at: number, removed: readonly number[]) =>
+  at - count(removed, (index) => index < at)
+
+const shiftedPosition = (at: number, removed: readonly number[], inserted: readonly number[]) => {
+  const rank = remainingRank(at, removed)
+  return rank + count(inserted, (index, offset) => index - offset <= rank)
+}
+
+class Shift {
+  private readonly sources: number[]
+  private readonly targets: number[]
+
+  constructor(base: Lookup, moved: Positions) {
+    this.sources = []
+    this.targets = []
+    for (const [key, at] of moved) {
+      const source = base.get(key)
+      if (source !== undefined) this.sources.push(source)
+      if (at !== undefined) this.targets.push(at)
+    }
+    this.sources.sort((a, b) => a - b)
+    this.targets.sort((a, b) => a - b)
+  }
+
+  apply(at: number): number {
+    return shiftedPosition(at, this.sources, this.targets)
+  }
+}
+
+class KeyIndex {
+  private shift?: Shift
+  private readonly base: ReadonlyMap<string, number>
+  private readonly moved: Positions
+  readonly size: number
+
+  constructor(base: ReadonlyMap<string, number>, moved: Positions = new Map(), size = base.size) {
+    this.base = base
+    this.moved = moved
+    this.size = size
+  }
+
+  get(key: string): number | undefined {
+    if (this.moved.has(key)) return this.moved.get(key)
+    const at = this.base.get(key)
+    if (at === undefined || this.moved.size === 0) return at
+    return (this.shift ??= new Shift(this.base, this.moved)).apply(at)
+  }
+
+  has(key: string): boolean {
+    return this.get(key) !== undefined
+  }
+
+  derive(moved: Positions, size: number): KeyIndex | undefined {
+    if (moved.size === 0) return this
+    const shift = new Shift(this, moved)
+    const next = new Map<string, number | undefined>()
+    for (const [key, at] of this.moved)
+      if (!moved.has(key)) next.set(key, at === undefined ? undefined : shift.apply(at))
+    for (const [key, at] of moved) if (at !== undefined || this.base.has(key)) next.set(key, at)
+    return next.size > overlayLimit ? undefined : new KeyIndex(this.base, next, size)
+  }
+}
+
+const indexes = new WeakMap<readonly unknown[], KeyIndex>()
+
+export const indexOf = <T>(items: readonly T[], key: (item: T) => string): KeyIndex => {
   let index = indexes.get(items)
-  if (!index) indexes.set(items, (index = new Map(items.map((item, at) => [key(item), at]))))
+  if (!index)
+    indexes.set(items, (index = new KeyIndex(new Map(items.map((item, at) => [key(item), at])))))
   return index
 }
 
-export const indexOf: <T>(
+const splice = <T>(
   items: readonly T[],
-  key: (item: T) => string,
-) => ReadonlyMap<string, number> = cachedIndex
+  removed: readonly number[],
+  inserted: readonly Entry<T>[],
+): T[] => {
+  const start = Math.min(removed[0] ?? items.length, inserted[0]?.index ?? items.length)
+  const next = items.slice(0, start)
+  let read = start
+  let skip = 0
+  let insert = 0
+  while (read < items.length || insert < inserted.length) {
+    if (inserted[insert]?.index === next.length) next.push(inserted[insert++].value)
+    else if (read >= items.length) break
+    else if (removed[skip] === read) {
+      skip++
+      read++
+    } else next.push(items[read++])
+  }
+  if (skip !== removed.length || insert !== inserted.length)
+    throw new NessoError([{ path: 'history', message: 'Cannot apply changes at recorded indices' }])
+  return next
+}
 
 export class ListEdit<T> {
   private current: readonly T[]
-  private indices?: Map<string, number>
-  private originalIndices?: Map<string, number>
+  private base?: KeyIndex
+  private shift?: Shift
+  private exact = true
+  private readonly positions = new Map<string, number | undefined>()
   private readonly touched = new Map<string, Entry<T> | undefined>()
   private readonly moved = new Set<string>()
   private readonly original: readonly T[]
@@ -42,11 +143,23 @@ export class ListEdit<T> {
     return this.current
   }
 
+  snapshot(): readonly T[] {
+    return this.current === this.original ? this.original : [...this.current]
+  }
+
   private index(id: string): number | undefined {
-    if (this.current === this.original)
-      this.indices ??= this.originalIndices ??= cachedIndex(this.original, this.key)
-    else this.indices ??= new Map(this.current.map((item, index) => [this.key(item), index]))
-    return this.indices.get(id)
+    if (!this.exact) {
+      const at = this.current.findLastIndex((item) => this.key(item) === id)
+      return at < 0 ? undefined : at
+    }
+    if (this.positions.has(id)) return this.positions.get(id)
+    const at = this.originalIndex().get(id)
+    if (at === undefined || this.positions.size === 0) return at
+    return (this.shift ??= new Shift(this.originalIndex(), this.positions)).apply(at)
+  }
+
+  private originalIndex(): KeyIndex {
+    return (this.base ??= indexOf(this.original, this.key))
   }
 
   get(id: string): T | undefined {
@@ -56,9 +169,13 @@ export class ListEdit<T> {
 
   private touch(id: string): void {
     if (this.touched.has(id)) return
-    this.originalIndices ??= cachedIndex(this.original, this.key)
-    const index = this.originalIndices.get(id)
+    const index = this.originalIndex().get(id)
     this.touched.set(id, index === undefined ? undefined : { index, value: this.original[index] })
+  }
+
+  private reposition(update: (at: number) => number): void {
+    for (const [id, at] of this.positions) if (at !== undefined) this.positions.set(id, update(at))
+    this.shift = undefined
   }
 
   private writable(): T[] {
@@ -68,10 +185,11 @@ export class ListEdit<T> {
 
   add(item: T): void {
     const id = this.key(item)
-    this.index(id)
     this.touch(id)
-    if (this.indices === this.originalIndices) this.indices = new Map(this.indices)
-    this.indices!.set(id, this.current.length)
+    if (this.index(id) === undefined) {
+      if (this.touched.get(id)) this.moved.add(id)
+      this.positions.set(id, this.current.length)
+    } else this.exact = false
     this.writable().push(item)
   }
 
@@ -81,10 +199,10 @@ export class ListEdit<T> {
     this.touch(id)
     const nextId = this.key(item)
     if (nextId !== id) {
+      if (this.index(nextId) !== undefined) this.exact = false
       this.touch(nextId)
-      if (this.indices === this.originalIndices) this.indices = new Map(this.indices)
-      this.indices!.delete(id)
-      this.indices!.set(nextId, index)
+      this.positions.set(id, undefined)
+      this.positions.set(nextId, index)
     }
     this.writable()[index] = item
   }
@@ -97,20 +215,41 @@ export class ListEdit<T> {
     const items = this.writable()
     const [item] = items.splice(from, 1)
     const to =
-      beforeId === null ? items.length : items.findIndex((other) => this.key(other) === beforeId)
+      beforeId === null ? items.length : items.findIndex((item) => this.key(item) === beforeId)
     items.splice(to, 0, item)
-    this.indices = undefined
+    if (!this.exact) return
+    this.reposition((at) => {
+      const remaining = at > from ? at - 1 : at
+      return remaining >= to ? remaining + 1 : remaining
+    })
+    this.positions.set(id, to)
   }
 
-  removeWhere(remove: (item: T) => boolean): void {
-    const next = this.current.filter((item) => {
-      if (!remove(item)) return true
-      this.touch(this.key(item))
-      return false
-    })
-    if (next.length === this.current.length) return
-    this.current = next
-    this.indices = undefined
+  remove(ids: Iterable<string>): void {
+    if (!this.exact) {
+      const removed = new Set(ids)
+      this.current = this.current.filter((item) => {
+        const id = this.key(item)
+        if (!removed.has(id)) return true
+        this.touch(id)
+        return false
+      })
+      return
+    }
+    const found = new Map<string, number>()
+    for (const id of ids) {
+      const index = this.index(id)
+      if (index !== undefined) found.set(id, index)
+    }
+    if (found.size === 0) return
+    for (const id of found.keys()) {
+      this.touch(id)
+      this.positions.set(id, undefined)
+    }
+    const removed = [...found.values()]
+    removed.sort((a, b) => a - b)
+    this.current = splice(this.current, removed, [])
+    this.reposition((at) => remainingRank(at, removed))
   }
 
   finish(): { items: readonly T[]; changes: Change<T>[] } {
@@ -127,11 +266,11 @@ export class ListEdit<T> {
         before &&
         after &&
         before.index === after.index &&
-        this.equal(before.value, after.value) &&
-        !(reordered && this.moved.has(id))
+        this.equal(before.value, after.value)
       ) {
         this.writable()[index!] = before.value
-        continue
+        if (!(reordered && this.moved.has(id))) continue
+        after.value = before.value
       }
       changes.push({ id, before, after })
     }
@@ -139,7 +278,10 @@ export class ListEdit<T> {
       changes.length === 0 && this.current.length === this.original.length
         ? this.original
         : this.current
-    if (items !== this.original && this.indices) indexes.set(items, this.indices)
+    if (items !== this.original && this.exact) {
+      const index = this.originalIndex().derive(this.positions, items.length)
+      if (index) indexes.set(items, index)
+    }
     return { items, changes }
   }
 }
@@ -161,20 +303,22 @@ export const applyChanges = <T>(
     if (index) indexes.set(next, index)
     return next
   }
-  const ids = new Set(changes.map((change) => change.id))
-  const entries = changes
-    .flatMap((change) => {
-      const entry = forward ? change.after : change.before
-      return entry ? [entry] : []
-    })
-    .sort((a, b) => a.index - b.index)
-  const remaining = items.filter((item) => !ids.has(key(item)))
-  const next: T[] = []
-  let cursor = 0
-  let inserted = 0
-  for (let index = 0; index < remaining.length + entries.length; index++) {
-    next.push(entries[inserted]?.index === index ? entries[inserted++].value : remaining[cursor++])
+  const index = indexOf(items, key)
+  const moved = new Map<string, number | undefined>()
+  const removed: number[] = []
+  const entries: Entry<T>[] = []
+  for (const change of changes) {
+    const at = index.get(change.id)
+    if (at !== undefined) removed.push(at)
+    const entry = forward ? change.after : change.before
+    if (entry) entries.push(entry)
+    moved.set(change.id, entry?.index)
   }
+  removed.sort((a, b) => a - b)
+  entries.sort((a, b) => a.index - b.index)
+  const next = splice(items, removed, entries)
+  const derived = index.derive(moved, index.size - removed.length + entries.length)
+  if (derived) indexes.set(next, derived)
   return next
 }
 
@@ -184,32 +328,22 @@ export const mergeChanges = <T>(
   equal: (a: T, b: T) => boolean,
 ): Change<T>[] => {
   if (left.length === 0 || right.length === 0) return [...left, ...right]
-  const reindex = (changes: readonly Change<T>[], forward: boolean) => {
-    const structural = changes.filter(
-      ({ before, after }) => !before || !after || before.index !== after.index,
-    )
-    const source = structural.flatMap((change) => {
-      const value = forward ? change.before : change.after
-      return value ? [value.index] : []
-    })
-    const target = structural
-      .flatMap((change) => {
-        const value = forward ? change.after : change.before
-        return value ? [value.index] : []
-      })
-      .sort((a, b) => a - b)
+  const positions = (changes: readonly Change<T>[], side: 'before' | 'after') =>
+    changes.flatMap((change) => (change[side] ? [change[side].index] : [])).sort((a, b) => a - b)
+
+  const reindex = (changes: readonly Change<T>[], from: 'before' | 'after') => {
+    if (changes.every(({ before, after }) => before && after && before.index === after.index))
+      return (entry: Entry<T> | undefined) => entry
+    const source = positions(changes, from)
+    const target = positions(changes, from === 'before' ? 'after' : 'before')
     return (entry: Entry<T> | undefined): Entry<T> | undefined => {
-      if (!entry || structural.length === 0) return entry
-      let index = entry.index - source.filter((index) => index < entry.index).length
-      for (const inserted of target) {
-        if (inserted > index) break
-        index++
-      }
+      if (!entry) return entry
+      const index = shiftedPosition(entry.index, source, target)
       return index === entry.index ? entry : { ...entry, index }
     }
   }
-  const after = reindex(right, true)
-  const before = reindex(left, false)
+  const after = reindex(right, 'before')
+  const before = reindex(left, 'after')
   const rightIds = new Set(right.map(({ id }) => id))
   const merged = new Map(
     left.map((change) => [
@@ -224,11 +358,18 @@ export const mergeChanges = <T>(
       before: previous ? previous.before : before(change.before),
     })
   }
-  return [...merged.values()].filter(({ before, after }) =>
-    before && after
-      ? before.index !== after.index || !equal(before.value, after.value)
-      : !!before || !!after,
-  )
+  const changes = [...merged.values()]
+  let beforePositions: number[] | undefined
+  let afterPositions: number[] | undefined
+  return changes.filter(({ before, after }) => {
+    if (!before || !after) return !!before || !!after
+    if (before.index !== after.index || !equal(before.value, after.value)) return true
+    beforePositions ??= positions(changes, 'before')
+    afterPositions ??= positions(changes, 'after')
+    return (
+      remainingRank(before.index, beforePositions) !== remainingRank(after.index, afterPositions)
+    )
+  })
 }
 
 type Member = WorkspaceMap['members'][number]

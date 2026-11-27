@@ -15,7 +15,8 @@ import {
   maxConceptLabelLength,
   maxRelationLabelLength,
   parseWorkspace,
-  workspaceSchema,
+  validReferences,
+  workspaceFieldsSchema,
 } from './settings.ts'
 
 export type GraphChanges = Pick<DocumentDelta, 'concepts' | 'relations' | 'relationTypes'>
@@ -125,12 +126,12 @@ const validWorkspaceChanges = (
   const changed = new Set(
     workspace.maps.filter((map) => previous.maps[before.get(map.id) ?? -1] !== map),
   )
-  const shell = workspace.maps.map((map) => {
-    if (changed.has(map)) return map
-    const { relationBends: _, ...metadata } = map
-    return { ...metadata, members: [] }
-  })
-  if (!workspaceSchema.safeParse({ ...workspace, maps: shell }).success) return false
+  const fields = {
+    ...workspace,
+    maps: [...changed],
+    viewports: workspace.viewports === previous.viewports ? {} : workspace.viewports,
+  }
+  if (!workspaceFieldsSchema.safeParse(fields).success || !validReferences(workspace)) return false
   const concepts = indexOf(graph.concepts, byId)
   const removedConcepts = changes.concepts.filter(({ after }) => !after)
   const removedRelations = new Set(changes.relations.filter(({ after }) => !after).map(byId))

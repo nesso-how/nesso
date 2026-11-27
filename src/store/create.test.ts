@@ -494,7 +494,7 @@ test('maps materialize shared subsets, reconcile membership and never change the
     ['urn:n1', 'urn:n2', 'urn:n3'],
   )
   const graph = state.graph
-  const id = host.store.createMap('Pair', ['urn:n1', 'urn:n2'])
+  const id = host.store.createMap('Pair', ['urn:n2', 'urn:n1'])
   state = host.store.getState()
   assert.equal(state.workspace.activeMapId, id)
   assert.equal(state.graph, graph)
@@ -521,6 +521,7 @@ test('maps materialize shared subsets, reconcile membership and never change the
   host.store.redo()
   host.store.setMapMembership(id, 'urn:n2', true)
   const beforePin = host.store.getState()
+  assert.deepEqual(beforePin.mapGraph.relations, [graph.relations[0]])
   host.store.setMapPinned(id, true)
   assert.equal(host.store.getState().mapGraph, beforePin.mapGraph)
   const added = host.store.addConcept()
@@ -567,6 +568,45 @@ test('switching maps preserves visible selections, including every selection in 
   host.store.setSelection([{ kind: 'concept', id: 'urn:n3' }])
   host.store.setMap(pair)
   assert.deepEqual(host.store.getState().selected, [])
+})
+
+test('activating a map mid-batch includes relations added after the switch', () => {
+  const graph = fixture()
+  const { store } = createNessoStore(graph, { workspace: { ...viewed(), activeMapId: null } })
+  const type = graph.relationTypes[0]
+  const last = { source: 'urn:n3', predicate: type.id, target: 'urn:n1' }
+  store.applyOperations([
+    { kind: 'relation.connect', source: 'urn:n2', target: 'urn:n3', type },
+    { kind: 'map.activate', id: 'urn:map' },
+    { kind: 'relation.connect', source: last.source, target: last.target, type },
+  ])
+  const { mapGraph, selected } = store.getState()
+  assert.deepEqual(mapGraph.relations.at(-1), last)
+  assert.deepEqual(selected, [{ kind: 'relation', id: relationKey(last) }])
+})
+
+test('switching maps after a relation edit or history restore shows relations in graph order', () => {
+  const graph = fixture()
+  const { store } = createNessoStore(graph, { workspace: viewed() })
+  const other = store.createMap(
+    'Other',
+    graph.concepts.map(({ id }) => id),
+  )
+  const [removed, retained] = graph.relations
+  const type = graph.relationTypes[0]
+  const added = { source: 'urn:n2', predicate: type.id, target: 'urn:n3' }
+  store.applyOperations([
+    { kind: 'relation.remove', id: relationKey(removed) },
+    { kind: 'relation.connect', ...added, type },
+  ])
+  store.setMap('urn:map')
+  assert.deepEqual(store.getState().mapGraph.relations, [retained, added])
+  store.undo()
+  store.setMap(other)
+  assert.deepEqual(store.getState().mapGraph.relations, graph.relations)
+  store.redo()
+  store.setMap('urn:map')
+  assert.deepEqual(store.getState().mapGraph.relations, [retained, added])
 })
 
 test('new concepts link to and inherit color only from a single selected concept and join the active map atomically', () => {
@@ -770,7 +810,7 @@ test('reconnecting either endpoint preserves its predicate, shared objects and m
 test('group reconnections publish once, retain selection and undo in one step', () => {
   const graph = fixture()
   graph.concepts.push({ id: 'urn:n4', label: 'Four' })
-  const { store } = createNessoStore(graph)
+  const { store } = createNessoStore(graph, { workspace: viewed(graph) })
   store.setSelection(
     graph.relations.map((relation) => ({ kind: 'relation', id: relationKey(relation) })),
   )
@@ -786,13 +826,13 @@ test('group reconnections publish once, retain selection and undo in one step', 
   )
   const expected = graph.relations.map((relation) => ({ ...relation, source: 'urn:n4' }))
   assert.equal(publications, 1)
-  assert.deepEqual(store.getState().graph.relations, expected)
+  assert.deepEqual(store.getState().mapGraph.relations, expected)
   assert.deepEqual(
     store.getState().selected,
     expected.map((relation) => ({ kind: 'relation', id: relationKey(relation) })),
   )
   store.undo()
-  assert.deepEqual(store.getState().graph, graph)
+  assert.deepEqual(store.getState().mapGraph.relations, graph.relations)
   assert.equal(store.getState().history.canUndo, false)
 })
 
@@ -1380,6 +1420,14 @@ test('edits and removals of unknown or duplicate items reject the whole batch', 
         { kind: 'relation.remove', id },
       ]),
     NessoError,
+  )
+  assert.throws(
+    () =>
+      store.applyOperations([
+        { kind: 'concept.add', id: 'urn:n1' },
+        { kind: 'concept.remove', id: 'urn:n2' },
+      ]),
+    /Duplicate concept IRI/,
   )
   assert.equal(store.getState(), before)
   assert.equal(notifications, 0)

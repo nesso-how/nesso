@@ -19,9 +19,10 @@ import {
 } from '@nesso-how/schema'
 import { aiChatLimits } from '@nesso-how/ai'
 import { fail, parseConversation, parsePreferences } from './settings.ts'
-import { checkGraphChanges, checkWorkspaceChanges } from './validation.ts'
+import { checkGraphChanges, checkWorkspaceChanges, type GraphChanges } from './validation.ts'
 import type { HostOperation, HostState, MapVisibility } from './types.ts'
 import {
+  indexOf,
   ListEdit,
   sameBends,
   sameConcept,
@@ -42,14 +43,68 @@ type Member = WorkspaceMap['members'][number]
 const isRemoval = (operation: HostOperation): operation is Removal =>
   operation.kind === 'concept.remove' || operation.kind === 'relation.remove'
 
-export const reconcileSelection = (graph: GraphSnapshot, selected: Selection): Selection => {
+const byId = ({ id }: { readonly id: string }) => id
+
+const keepSelection = (
+  selected: Selection,
+  available: (item: Selection[number]) => boolean,
+): Selection => {
   if (selected.length === 0) return selected
-  const available = {
-    concept: new Set(graph.concepts.map((concept) => concept.id)),
-    relation: new Set(graph.relations.map(relationKey)),
-  }
-  const next = selected.filter(({ kind, id }) => available[kind].delete(id))
+  const seen = new Set<string>()
+  const next = selected.filter((item) => {
+    const key = `${item.kind} ${item.id}`
+    if (seen.has(key) || !available(item)) return false
+    seen.add(key)
+    return true
+  })
   return next.length === selected.length ? selected : next
+}
+
+export const reconcileSelection = (graph: GraphSnapshot, selected: Selection): Selection =>
+  keepSelection(selected, ({ kind, id }) =>
+    kind === 'concept'
+      ? indexOf(graph.concepts, byId).has(id)
+      : indexOf(graph.relations, relationKey).has(id),
+  )
+
+type Adjacency = {
+  readonly base: GraphSnapshot['relations']
+  readonly positions: ReadonlyMap<string, readonly number[]>
+  readonly updates: ReadonlyMap<string, Relation | undefined>
+}
+
+const adjacency = new WeakMap<GraphSnapshot['relations'], Adjacency>()
+
+const incident = (relations: GraphSnapshot['relations']): Adjacency => {
+  let index = adjacency.get(relations)
+  if (!index) {
+    const next = new Map<string, number[]>()
+    const add = (id: string, at: number) => {
+      const list = next.get(id)
+      if (list) list.push(at)
+      else next.set(id, [at])
+    }
+    relations.forEach(({ source, target }, at) => {
+      add(source, at)
+      add(target, at)
+    })
+    index = { base: relations, positions: next, updates: new Map() }
+    adjacency.set(relations, index)
+  }
+  return index
+}
+
+const carryAdjacency = (
+  before: GraphSnapshot['relations'] | undefined,
+  relations: GraphSnapshot['relations'],
+  changes: GraphChanges['relations'] | undefined,
+): void => {
+  if (!before || !changes || before === relations || adjacency.has(relations)) return
+  const previous = adjacency.get(before)
+  if (!previous) return
+  const updates = new Map(previous.updates)
+  for (const { id, after } of changes) updates.set(id, after?.value)
+  if (updates.size <= 256) adjacency.set(relations, { ...previous, updates })
 }
 
 const allVisible: MapVisibility = { hiddenMapGroupIds: [], hiddenMapIds: [] }
@@ -144,12 +199,53 @@ const setHidden = (
       ? hidden.filter((item) => item !== id)
       : [...hidden, id]
 
+const relationPositions = (
+  relations: GraphSnapshot['relations'],
+  members: ReadonlySet<string>,
+  previous?: {
+    readonly relations: readonly Relation[]
+    readonly presentation: ReadonlyMap<string, unknown>
+    readonly changes?: GraphChanges
+  },
+): number[] => {
+  const found = new Set<number>()
+  const include = (relation: Relation, position?: number) => {
+    if (!members.has(relation.source) || !members.has(relation.target)) return
+    const at = position ?? indexOf(relations, relationKey).get(relationKey(relation))
+    if (at !== undefined) found.add(at)
+  }
+  for (const relation of previous?.relations ?? []) include(relation)
+  for (const { after } of previous?.changes?.relations ?? [])
+    if (after) include(after.value, after.index)
+  const created = new Set(
+    previous?.changes?.concepts.flatMap(({ id, before }) => (before ? [] : [id])),
+  )
+  let adjacent: Adjacency | undefined
+  for (const id of members) {
+    if (previous?.presentation.has(id) || created.has(id)) continue
+    adjacent ??= incident(relations)
+    for (const at of adjacent.positions.get(id) ?? [])
+      include(adjacent.base[at], adjacent.base === relations ? at : undefined)
+  }
+  for (const relation of adjacent?.updates.values() ?? []) if (relation) include(relation)
+  return [...found].sort((a, b) => a - b)
+}
+
+const incidentKeys = (relations: readonly Relation[], conceptIds: ReadonlySet<string>) =>
+  relations.flatMap((relation) =>
+    conceptIds.has(relation.source) || conceptIds.has(relation.target)
+      ? [relationKey(relation)]
+      : [],
+  )
+
 export const materialize = (
   graph: GraphSnapshot,
   workspace: WorkspaceState,
   previous?: HostState,
   hidden: MapVisibility = previous ?? allVisible,
+  changes?: GraphChanges,
 ): MapGraphSnapshot => {
+  carryAdjacency(previous?.graph.relations, graph.relations, changes?.relations)
   if (workspace.activeMapId === null) return visibleGraph(graph, workspace, hidden, previous)
   const map = workspace.maps.find(({ id }) => id === workspace.activeMapId)
   const previousMap =
@@ -166,48 +262,62 @@ export const materialize = (
     !!previousMembers &&
     members.length === previousMembers.length &&
     members.every(({ id }, index) => id === previousMembers[index].id)
-  const presentation = new Map(members.map((member) => [member.id, member]))
-  const reusable = new Map(
-    previousMembers ? previous!.mapGraph.concepts.map((concept) => [concept.id, concept]) : [],
-  )
   const previousPresentation = new Map(previousMembers?.map((member) => [member.id, member]))
-  const previousConcepts = new Map(previous?.graph.concepts.map((concept) => [concept.id, concept]))
-  const relationPresentation = new Map(
-    map?.relationBends?.map((relation) => [relationKey(relation), relation.bend]),
-  )
-  const previousRelations = new Map(
-    previous?.mapGraph.relations.map((relation) => [relationKey(relation), relation]),
-  )
+  const sameRelations = graph.relations === previous?.graph.relations
+  const mapConcepts = () => {
+    const index = indexOf(graph.concepts, byId)
+    const previousConcepts = previousMembers ? previous!.graph.concepts : undefined
+    const previousView = previousMembers ? previous!.mapGraph.concepts : undefined
+    return members
+      .flatMap((member) => {
+        const at = index.get(member.id)
+        return at === undefined ? [] : [{ at, member }]
+      })
+      .sort((a, b) => a.at - b.at)
+      .map(({ at, member }) => {
+        const concept = graph.concepts[at]
+        if (previousView && previousConcepts && previousPresentation.get(concept.id) === member) {
+          const before = indexOf(previousConcepts, byId).get(concept.id)
+          const reused = indexOf(previousView, byId).get(concept.id)
+          if (before !== undefined && previousConcepts[before] === concept && reused !== undefined)
+            return previousView[reused]
+        }
+        const { id: _, ...style } = member
+        return { ...concept, ...style }
+      })
+  }
+  const mapRelations = () => {
+    const positions = relationPositions(
+      graph.relations,
+      new Set(members.map(byId)),
+      previousMembers && (sameRelations || changes)
+        ? { relations: previous!.mapGraph.relations, presentation: previousPresentation, changes }
+        : undefined,
+    )
+    const bends = new Map(
+      map?.relationBends?.map((relation) => [relationKey(relation), relation.bend]),
+    )
+    if (!bends.size) return positions.map((at) => graph.relations[at])
+    const previousRelations = previous?.mapGraph.relations
+    return positions.map((at) => {
+      const relation = graph.relations[at]
+      const id = relationKey(relation)
+      const bend = bends.get(id)
+      if (bend === undefined) return relation
+      const before = previousRelations && indexOf(previousRelations, relationKey).get(id)
+      const reused = before === undefined ? undefined : previousRelations?.[before]
+      return reused?.bend === bend ? reused : { ...relation, bend }
+    })
+  }
   return {
     concepts:
       samePresentation && graph.concepts === previous!.graph.concepts
         ? previous!.mapGraph.concepts
-        : graph.concepts.flatMap((concept) => {
-            const member = presentation.get(concept.id)
-            if (!member) return []
-            const reused = reusable.get(concept.id)
-            if (
-              reused &&
-              previousConcepts.get(concept.id) === concept &&
-              previousPresentation.get(concept.id) === member
-            )
-              return [reused]
-            const { id: _, ...map } = member
-            return [{ ...concept, ...map }]
-          }),
+        : mapConcepts(),
     relations:
-      scoped && sameRelationPresentation && graph.relations === previous!.graph.relations
+      scoped && sameRelationPresentation && sameRelations
         ? previous!.mapGraph.relations
-        : graph.relations
-            .filter(
-              (relation) => presentation.has(relation.source) && presentation.has(relation.target),
-            )
-            .map((relation) => {
-              const bend = relationPresentation.get(relationKey(relation))
-              if (bend === undefined) return relation
-              const previous = previousRelations.get(relationKey(relation))
-              return previous?.bend === bend ? previous : { ...relation, bend }
-            }),
+        : mapRelations(),
     relationTypes: graph.relationTypes,
   }
 }
@@ -316,18 +426,18 @@ export const applyStateOperations = (
     (a, b) => a === b,
   )
   let mapGroups = new ListEdit(state.workspace.mapGroups, (item) => item.id, sameMapGroup)
-  let relationOrigins: Map<string, string> | undefined
-  const origins = () =>
-    (relationOrigins ??= new Map(
-      state.graph.relations
-        .filter((relation) => relations.get(relationKey(relation)) === relation)
-        .map((relation) => [relationKey(relation), relationKey(relation)]),
-    ))
-  const graph = (): GraphSnapshot => ({
-    concepts: concepts.items,
-    relations: relations.items,
-    relationTypes: types.items,
-  })
+  const relationOrigins = new Map<string, string>()
+  const originalRelations = () => indexOf(state.graph.relations, relationKey)
+  const originOf = (id: string): string | undefined => {
+    const origin = relationOrigins.get(id)
+    if (origin !== undefined) return origin
+    const at = originalRelations().get(id)
+    return at !== undefined && relations.get(id) === state.graph.relations[at] ? id : undefined
+  }
+  const reconcile = (items: Selection) =>
+    keepSelection(items, ({ kind, id }) =>
+      kind === 'concept' ? !!concepts.get(id) : !!relations.get(id),
+    )
   let workspace = state.workspace
   let preferences = state.preferences
   let conversation = state.conversation
@@ -342,7 +452,7 @@ export const applyStateOperations = (
 
   const creationSource = () => {
     if (!useSelectionForNewConcepts) return undefined
-    const current = reconcileSelection(graph(), selected)
+    const current = reconcile(selected)
     return current.length === 1 && current[0].kind === 'concept'
       ? concepts.get(current[0].id)
       : undefined
@@ -441,9 +551,9 @@ export const applyStateOperations = (
     if (triple === id) return
     if (relations.get(triple)) fail('relation.id', 'Duplicate relation')
     if (type) withType(type)
-    const origin = origins().get(id)
-    relationOrigins!.delete(id)
-    if (origin !== undefined) relationOrigins!.set(triple, origin)
+    const origin = originOf(id)
+    relationOrigins.delete(id)
+    if (origin !== undefined) relationOrigins.set(triple, origin)
     relations.set(id, next)
     if (next.source === relation.source && next.target === relation.target)
       for (const map of maps.items)
@@ -515,23 +625,19 @@ export const applyStateOperations = (
     for (const { kind, id } of removals) {
       if (kind === 'relation.remove') {
         if (relations.get(id)) {
-          relationOrigins?.delete(id)
+          relationOrigins.delete(id)
           relationIds.add(id)
         } else if (!removedRelations.has(id)) fail('relation.id', 'Unknown relation')
       } else if (concepts.get(id)) conceptIds.add(id)
       else if (!removedConcepts.has(id)) fail('concept.id', 'Unknown concept')
     }
     if (conceptIds.size + relationIds.size === 0) return
-    relations.removeWhere((relation) => {
-      const hit =
-        conceptIds.has(relation.source) ||
-        conceptIds.has(relation.target) ||
-        (relationIds.size > 0 && relationIds.has(relationKey(relation)))
-      if (hit) removedRelations.add(relationKey(relation))
-      return hit
-    })
+    if (conceptIds.size)
+      for (const id of incidentKeys(relations.items, conceptIds)) relationIds.add(id)
+    for (const id of relationIds) removedRelations.add(id)
+    relations.remove(relationIds)
     if (conceptIds.size === 0) return
-    concepts.removeWhere((concept) => conceptIds.has(concept.id))
+    concepts.remove(conceptIds)
     for (const id of conceptIds) removedConcepts.add(id)
     for (const map of maps.items)
       if (map.members.some(({ id }) => conceptIds.has(id)))
@@ -635,7 +741,7 @@ export const applyStateOperations = (
             predicate: vocab.defaultTypeId,
             target: operation.id,
           }
-          relationOrigins?.delete(relationKey(relation))
+          relationOrigins.delete(relationKey(relation))
           relations.add(relation)
         }
         selected = [{ kind: 'concept', id: operation.id }]
@@ -683,7 +789,7 @@ export const applyStateOperations = (
         const key = relationKey(relation)
         if (relations.get(key)) break
         withType(type)
-        relationOrigins?.delete(key)
+        relationOrigins.delete(key)
         relations.add(relation)
         selected = [{ kind: 'relation', id: key }]
         break
@@ -744,7 +850,7 @@ export const applyStateOperations = (
         const document = newDocument(operation.id, newIri())
         documentId = newIri()
         pluginStorage = []
-        relationOrigins?.clear()
+        relationOrigins.clear()
         concepts = new ListEdit(document.graph.concepts, (item) => item.id, sameConcept)
         relations = new ListEdit([], relationKey, (a, b) => relationKey(a) === relationKey(b))
         types = new ListEdit([], (item: Readonly<RelationType>) => item.id, sameType)
@@ -770,10 +876,7 @@ export const applyStateOperations = (
         break
       }
       case 'selection.set':
-        selected = reconcileSelection(
-          graph(),
-          operation.value.map((item) => ({ ...item })),
-        )
+        selected = reconcile(operation.value.map((item) => ({ ...item })))
         explicitSelection = selected
         break
       case 'map.activate':
@@ -781,10 +884,20 @@ export const applyStateOperations = (
           fail('workspace.activeMapId', 'Unknown map')
         if (workspace.activeMapId === operation.id) break
         workspace = { ...workspace, activeMapId: operation.id }
-        selected = reconcileSelection(
-          materialize(graph(), workspace, undefined, { hiddenMapGroupIds, hiddenMapIds }),
-          selected,
-        )
+        if (selected.length)
+          selected = reconcileSelection(
+            materialize(
+              {
+                concepts: concepts.snapshot(),
+                relations: relations.snapshot(),
+                relationTypes: types.items,
+              },
+              workspace,
+              undefined,
+              { hiddenMapGroupIds, hiddenMapIds },
+            ),
+            selected,
+          )
         explicitSelection = selected
         break
       case 'map.create': {
@@ -806,7 +919,7 @@ export const applyStateOperations = (
       case 'map.pin':
         if (!maps.get(operation.id)) fail('map.id', 'Unknown map')
         if (typeof operation.pinned !== 'boolean') fail('map.pinned', 'Expected a boolean')
-        if (!operation.pinned) pins.removeWhere((id) => id === operation.id)
+        if (!operation.pinned) pins.remove([operation.id])
         else if (!pins.get(operation.id)) pins.add(operation.id)
         break
       case 'map.pin.move':
@@ -844,7 +957,7 @@ export const applyStateOperations = (
         break
       case 'map-group.remove':
         if (!mapGroups.get(operation.id)) fail('map-group.id', 'Unknown group')
-        mapGroups.removeWhere(({ id }) => id === operation.id)
+        mapGroups.remove([operation.id])
         for (const map of maps.items.filter(({ groupId }) => groupId === operation.id))
           placeMap(map.id, null, null)
         break
@@ -888,9 +1001,9 @@ export const applyStateOperations = (
         )
         break
       case 'map.remove':
-        if (!workspace.maps.some((map) => map.id === operation.id)) fail('map.id', 'Unknown map')
-        maps.removeWhere((map) => map.id === operation.id)
-        pins.removeWhere((id) => id === operation.id)
+        if (!maps.get(operation.id)) fail('map.id', 'Unknown map')
+        maps.remove([operation.id])
+        pins.remove([operation.id])
         workspace = {
           ...workspace,
           activeMapId: workspace.activeMapId === operation.id ? null : workspace.activeMapId,
@@ -920,16 +1033,17 @@ export const applyStateOperations = (
   const conceptEdit = concepts.finish()
   const relationEdit = relations.finish()
   if (!reset && relationEdit.items !== state.graph.relations) {
-    const used = new Set(relationEdit.items.map((relation) => relation.predicate))
-    const vocabularyTypes = new Set(
-      state.vocabs.flatMap((vocab) => vocab.relationTypes.map((type) => type.id)),
+    const unused = new Set(
+      relationEdit.changes.flatMap((change) =>
+        change.before ? [change.before.value.predicate] : [],
+      ),
     )
-    const removed = new Set(
-      relationEdit.changes
-        .flatMap((change) => (change.before ? [change.before.value.predicate] : []))
-        .filter((id) => !used.has(id) && !vocabularyTypes.has(id)),
-    )
-    types.removeWhere((type) => removed.has(type.id))
+    for (const vocab of state.vocabs) for (const type of vocab.relationTypes) unused.delete(type.id)
+    for (const relation of relationEdit.items) {
+      if (!unused.size) break
+      unused.delete(relation.predicate)
+    }
+    types.remove(unused)
   }
   const typeEdit = types.finish()
   for (const map of maps.items) {
@@ -981,7 +1095,7 @@ export const applyStateOperations = (
     if (samePreferences(preferences, state.preferences)) preferences = state.preferences
   }
   const visibility = pruneMapVisibility({ hiddenMapGroupIds, hiddenMapIds }, workspace, state)
-  const mapGraph = materialize(candidate, workspace, state, visibility)
+  const mapGraph = materialize(candidate, workspace, state, visibility, changes)
   selected = reconcileSelection(mapGraph, selected)
   if (
     conversationReplaced &&
@@ -1021,16 +1135,14 @@ export const applyStateOperations = (
         ...visibility,
         mapGraph,
       }
-  let relationRewrites: { before: string; after: string }[] = []
-  if (relationOrigins?.size) {
-    const originalKeys = new Set(state.graph.relations.map(relationKey))
-    const finalKeys = new Set(candidate.relations.map(relationKey))
-    relationRewrites = [...relationOrigins].flatMap(([after, before]) =>
-      finalKeys.has(after) && !finalKeys.has(before) && !originalKeys.has(after)
-        ? [{ before, after }]
-        : [],
-    )
-  }
+  const relationRewrites = [...relationOrigins].flatMap(([after, before]) => {
+    const finalRelations = indexOf(candidate.relations, relationKey)
+    return finalRelations.has(after) &&
+      !finalRelations.has(before) &&
+      !originalRelations().has(after)
+      ? [{ before, after }]
+      : []
+  })
   return {
     next,
     reset,

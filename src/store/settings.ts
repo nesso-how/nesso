@@ -56,62 +56,59 @@ const mapSchema = z.strictObject({
   groupId: z.string().min(1).optional(),
   relationBends: z.array(relationBendSchema).optional(),
 })
-export const workspaceSchema = z
-  .strictObject({
-    activeMapId: z.string().nullable(),
-    maps: z.array(mapSchema),
-    pinnedMapIds: z
-      .array(mapSchema.shape.id)
-      .refine((ids) => new Set(ids).size === ids.length, 'Duplicate map id'),
-    mapGroups: z.array(z.strictObject({ id: mapSchema.shape.id, name: mapSchema.shape.name })),
-    collapsedMapGroupIds: z
-      .array(mapSchema.shape.id)
-      .refine((ids) => new Set(ids).size === ids.length, 'Duplicate group id')
-      .optional(),
-    viewports: z.record(z.string().min(1), viewportSchema),
+export const workspaceFieldsSchema = z.strictObject({
+  activeMapId: z.string().nullable(),
+  maps: z.array(mapSchema),
+  pinnedMapIds: z
+    .array(mapSchema.shape.id)
+    .refine((ids) => new Set(ids).size === ids.length, 'Duplicate map id'),
+  mapGroups: z.array(z.strictObject({ id: mapSchema.shape.id, name: mapSchema.shape.name })),
+  collapsedMapGroupIds: z
+    .array(mapSchema.shape.id)
+    .refine((ids) => new Set(ids).size === ids.length, 'Duplicate group id')
+    .optional(),
+  viewports: z.record(z.string().min(1), viewportSchema),
+})
+
+const checkReferences = (
+  workspace: WorkspaceState,
+  report: (path: (string | number)[], message: string) => void,
+): void => {
+  const groupIds = new Set<string>()
+  for (const [index, group] of workspace.mapGroups.entries()) {
+    if (groupIds.has(group.id)) report(['mapGroups', index, 'id'], 'Duplicate group id')
+    groupIds.add(group.id)
+  }
+  for (const [index, id] of (workspace.collapsedMapGroupIds ?? []).entries()) {
+    if (!groupIds.has(id)) report(['collapsedMapGroupIds', index], 'Unknown group')
+  }
+  const ids = new Set<string>()
+  for (const [index, map] of workspace.maps.entries()) {
+    if (ids.has(map.id)) report(['maps', index, 'id'], 'Duplicate map id')
+    ids.add(map.id)
+    if (map.groupId !== undefined && !groupIds.has(map.groupId))
+      report(['maps', index, 'groupId'], 'Unknown group')
+  }
+  if (workspace.activeMapId !== null && !ids.has(workspace.activeMapId))
+    report(['activeMapId'], 'Unknown map')
+  for (const [index, id] of workspace.pinnedMapIds.entries()) {
+    if (!ids.has(id)) report(['pinnedMapIds', index], 'Unknown map')
+  }
+}
+
+export const validReferences = (workspace: WorkspaceState): boolean => {
+  let valid = true
+  checkReferences(workspace, () => {
+    valid = false
   })
-  .superRefine((workspace, context) => {
-    const groupIds = new Set<string>()
-    for (const [index, group] of workspace.mapGroups.entries()) {
-      if (groupIds.has(group.id))
-        context.addIssue({
-          code: 'custom',
-          path: ['mapGroups', index, 'id'],
-          message: 'Duplicate group id',
-        })
-      groupIds.add(group.id)
-    }
-    for (const [index, id] of (workspace.collapsedMapGroupIds ?? []).entries()) {
-      if (!groupIds.has(id))
-        context.addIssue({
-          code: 'custom',
-          path: ['collapsedMapGroupIds', index],
-          message: 'Unknown group',
-        })
-    }
-    const ids = new Set<string>()
-    for (const [index, map] of workspace.maps.entries()) {
-      if (ids.has(map.id))
-        context.addIssue({
-          code: 'custom',
-          path: ['maps', index, 'id'],
-          message: 'Duplicate map id',
-        })
-      ids.add(map.id)
-      if (map.groupId !== undefined && !groupIds.has(map.groupId))
-        context.addIssue({
-          code: 'custom',
-          path: ['maps', index, 'groupId'],
-          message: 'Unknown group',
-        })
-    }
-    if (workspace.activeMapId !== null && !ids.has(workspace.activeMapId))
-      context.addIssue({ code: 'custom', path: ['activeMapId'], message: 'Unknown map' })
-    for (const [index, id] of workspace.pinnedMapIds.entries()) {
-      if (!ids.has(id))
-        context.addIssue({ code: 'custom', path: ['pinnedMapIds', index], message: 'Unknown map' })
-    }
-  }) satisfies z.ZodType<WorkspaceState>
+  return valid
+}
+
+const workspaceSchema = workspaceFieldsSchema.superRefine((workspace, context) =>
+  checkReferences(workspace, (path, message) =>
+    context.addIssue({ code: 'custom', path, message }),
+  ),
+) satisfies z.ZodType<WorkspaceState>
 
 export const preferencesSchema = z.strictObject({
   locale: z.custom<NonNullable<Preferences['locale']>>(isLocale, 'Unsupported locale').optional(),

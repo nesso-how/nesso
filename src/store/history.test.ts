@@ -3,6 +3,7 @@ import test from 'node:test'
 import type { NessoOperation, WorkspaceState } from '@nesso-how/core'
 import { relationKey, SchemaError, type Graph } from '@nesso-how/schema'
 import { createNessoStore } from './create.ts'
+import { indexOf } from './delta.ts'
 import { historyLimit } from './history.ts'
 import { NessoError } from '@nesso-how/errors'
 import { applyStateOperations } from './operations.ts'
@@ -626,6 +627,65 @@ test('grouped structural edits reconcile indices of surviving changes across rem
   host.store.redo()
   assert.deepEqual(host.store.getState().graph, after.graph)
   assert.deepEqual(host.store.getState().mapGraph, after.mapGraph)
+})
+
+test('grouped relation edits restore order after reinserting a relation at the same index', () => {
+  const graph = fixture()
+  const [first] = graph.relations
+  const [type] = graph.relationTypes
+  const middle = { ...first, source: 'urn:n1', target: 'urn:n2' }
+  const last = { ...first, source: 'urn:n2', target: 'urn:n3' }
+  graph.relations.push(middle, last)
+  const { store } = createNessoStore(graph, { workspace: viewed() })
+  const apply = (...operations: HostOperation[]) =>
+    store.applyOperations(operations, { historyGroup: 'relations' })
+  const reconnect = (relation: typeof first, { source, target }: typeof first) =>
+    apply({ kind: 'relation.reconnect', id: relationKey(relation), source, target })
+  const reconnectedLast = { ...last, source: 'urn:n3', target: 'urn:n2' }
+  const reconnectedMiddle = { ...middle, source: 'urn:n0', target: 'urn:n3' }
+  reconnect(last, reconnectedLast)
+  apply(
+    { kind: 'relation.remove', id: relationKey(first) },
+    { kind: 'relation.remove', id: relationKey(middle) },
+    { kind: 'relation.connect', ...middle, type },
+  )
+  reconnect(middle, reconnectedMiddle)
+  const edited = [reconnectedLast, reconnectedMiddle]
+  assert.deepEqual(store.getState().mapGraph.relations, edited)
+  store.setSelection([])
+  store.undo()
+  assert.deepEqual(store.getState().graph.relations, graph.relations)
+  assert.deepEqual(store.getState().mapGraph.relations, graph.relations)
+  store.redo()
+  assert.deepEqual(store.getState().graph.relations, edited)
+  assert.deepEqual(store.getState().mapGraph.relations, edited)
+})
+
+test('label edits reuse the concept index through undo and redo', () => {
+  const { store } = createNessoStore(fixture(), { workspace: viewed() })
+  const conceptIndex = () => indexOf(store.getState().graph.concepts, ({ id }) => id)
+  const original = conceptIndex()
+  store.setConceptLabel('urn:n0', 'Renamed')
+  assert.equal(conceptIndex(), original)
+  store.undo()
+  assert.equal(conceptIndex(), original)
+  store.redo()
+  assert.equal(conceptIndex(), original)
+})
+
+test('removing a duplicated concept ID removes both copies and round-trips through history', () => {
+  const { store } = createNessoStore(fixture(), { workspace: viewed() })
+  const before = store.getState().graph
+  store.applyOperations([
+    { kind: 'concept.add', id: 'urn:n0' },
+    { kind: 'concept.remove', id: 'urn:n0' },
+  ])
+  const after = store.getState().graph
+  assert.deepEqual(after.concepts, before.concepts.slice(1))
+  store.undo()
+  assert.deepEqual(store.getState().graph, before)
+  store.redo()
+  assert.deepEqual(store.getState().graph, after)
 })
 
 test('map removal separates history groups before editing a shifted map', () => {

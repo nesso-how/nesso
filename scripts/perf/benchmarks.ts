@@ -76,6 +76,26 @@ const benchmarks: Benchmark[] = [
     },
   },
   {
+    name: 'store: switch map after relation edit',
+    setup: (fixture) => {
+      const { store } = open(fixture)
+      const [first, second] = fixture.workspace.maps.map(({ id }) => id)
+      const relation = fixture.graph.relations[0]
+      const type = fixture.graph.relationTypes.find(({ id }) => id === relation.predicate)!
+      const id = relationKey(relation)
+      let count = 0
+      return {
+        prepare: () =>
+          store.applyOperations([
+            count % 2
+              ? { kind: 'relation.connect', ...relation, type }
+              : { kind: 'relation.remove', id },
+          ]),
+        run: () => store.setMap(count++ % 2 ? first : (second ?? null)),
+      }
+    },
+  },
+  {
     name: 'store: undo and redo',
     setup: (fixture) => {
       const { store, ids } = open(fixture)
