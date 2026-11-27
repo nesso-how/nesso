@@ -33,6 +33,24 @@ export async function verifyCreation(context: CheckContext) {
   )
   await ready(`document.querySelectorAll('#canvas .react-flow__node[data-id]').length===3`)
   const baseline = await nodes()
+  const pane = '#canvas .react-flow__pane'
+  const cut = `document.querySelector('#canvas [aria-label="Cut"]')`
+  const selectAll = `[...document.querySelectorAll('[role="menuitem"]')].find(item=>item.textContent.trim()==='Select all')`
+  await click(pane)
+  await ready(`${cut}?.disabled === true`)
+  await evaluate(
+    `document.querySelector('${pane}').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,clientX:400,clientY:300}))`,
+  )
+  await ready(`!!(${selectAll})`)
+  await evaluate(`(${selectAll}).click()`)
+  await ready(
+    `document.querySelectorAll('#canvas .react-flow__node.selected').length===${baseline.length} &&
+     !!document.querySelector('#canvas .react-flow__edge.selected') && ${cut}?.disabled === false`,
+  )
+  await ready(`!(${selectAll})`)
+  key('Escape')
+  await ready(`${cut}?.disabled === true`)
+
   for (const mouse of [false, true]) {
     await create()
     const provisional = await evaluate<string>(

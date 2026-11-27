@@ -9,7 +9,6 @@ import type {
   WorkspaceState,
 } from '@nesso-how/core'
 import { viewportKey } from '@nesso-how/core'
-import type { ThemeDefinition } from '@nesso-how/plugin'
 import {
   newIri,
   relationKey,
@@ -20,7 +19,6 @@ import {
   type RelationType,
   type SchemaIssue,
 } from '@nesso-how/schema'
-import { isLocale } from '@nesso-how/i18n'
 import { aiChatLimits } from '@nesso-how/ai'
 import {
   fail,
@@ -30,13 +28,7 @@ import {
   parsePreferences,
   parseWorkspace,
 } from './settings.ts'
-import {
-  sectionIds,
-  type HostOperation,
-  type HostState,
-  type MapVisibility,
-  type RendererDefinition,
-} from './types.ts'
+import type { HostOperation, HostState, MapVisibility } from './types.ts'
 import {
   ListEdit,
   sameBends,
@@ -49,6 +41,7 @@ import {
   mapChanges,
 } from './delta.ts'
 import { applyPluginStorage } from './plugin-storage.ts'
+import { applyPreferenceOperation, type OperationRegistry } from './preference-operations.ts'
 
 export const conceptPlacementOffset = Object.freeze({ x: 160, y: 100 })
 
@@ -363,10 +356,7 @@ export const samePreferences = (left: Preferences, right: Preferences): boolean 
 export const applyStateOperations = (
   state: HostState,
   operations: readonly HostOperation[],
-  registry: {
-    readonly renderers: ReadonlyMap<string, RendererDefinition>
-    readonly themes: ReadonlyMap<string, ThemeDefinition>
-  },
+  registry: OperationRegistry,
   useSelectionForNewConcepts = true,
 ) => {
   let concepts = new ListEdit(state.graph.concepts, (item) => item.id, sameConcept)
@@ -976,79 +966,11 @@ export const applyStateOperations = (
         }
         break
       }
-      case 'preferences.vocab':
-        if (!state.vocabs.some((vocab) => vocab.id === operation.id)) {
-          throw new SchemaError([
-            { path: 'activeVocabId', message: `Unknown vocabulary: ${operation.id}` },
-          ])
-        }
-        preferences = { ...preferences, activeVocabId: operation.id }
-        break
-      case 'preferences.renderer':
-        if (!registry.renderers.has(operation.id)) {
-          throw new SchemaError([
-            { path: 'activeRendererId', message: `Unknown renderer: ${operation.id}` },
-          ])
-        }
-        preferences = { ...preferences, activeRendererId: operation.id }
-        break
-      case 'preferences.theme':
-        if (!registry.themes.has(operation.id))
-          fail('preferences.activeThemeId', `Unknown theme: ${operation.id}`)
-        preferences = { ...preferences, activeThemeId: operation.id }
-        break
-      case 'preferences.locale':
-        if (!isLocale(operation.value)) fail('preferences.locale', 'Unsupported locale')
-        preferences = { ...preferences, locale: operation.value }
-        break
-      case 'preferences.intro-seen':
-        preferences = { ...preferences, introSeen: true }
-        break
-      case 'preferences.mcpEnabled':
-        if (typeof operation.value !== 'boolean')
-          fail('preferences.mcpEnabled', 'Expected a boolean')
-        preferences = { ...preferences, mcpEnabled: operation.value }
-        break
-      case 'preferences.panels':
-        preferences = { ...preferences, panels: { ...operation.value } }
-        break
-      case 'preferences.disabledBundledActionPlugins':
-        if (!Array.isArray(operation.value))
-          fail('preferences.disabledBundledActionPlugins', 'Expected an array')
-        preferences = { ...preferences, disabledBundledActionPlugins: [...operation.value] }
-        break
-      case 'preferences.canvasTabOrder.append': {
-        if (!Array.isArray(operation.ids)) fail('preferences.canvasTabOrder', 'Expected an array')
-        const order = preferences.canvasTabOrder ?? []
-        const unseen = [...new Set(operation.ids)].filter((id) => !order.includes(id))
-        if (unseen.length) preferences = { ...preferences, canvasTabOrder: [...order, ...unseen] }
-        break
-      }
-      case 'preferences.inspectorTab':
-        preferences = { ...preferences, inspectorTab: operation.value }
-        break
-      case 'preferences.appearance':
-        preferences = { ...preferences, appearance: operation.value }
-        break
-      case 'preferences.relationGroups':
-        preferences = { ...preferences, relationGroups: operation.value }
-        break
-      case 'preferences.section': {
-        if (!sectionIds.includes(operation.id))
-          fail('preferences.collapsedSections', 'Unknown section')
-        if (typeof operation.open !== 'boolean') fail('section.open', 'Expected a boolean')
-        const collapsed = preferences.collapsedSections ?? []
-        if (!collapsed.includes(operation.id) === operation.open) break
-        preferences = {
-          ...preferences,
-          collapsedSections: operation.open
-            ? collapsed.filter((id) => id !== operation.id)
-            : [...collapsed, operation.id],
-        }
-        break
-      }
-      default:
+      case 'history.undo':
+      case 'history.redo':
         throw new SchemaError([{ path: 'operations', message: 'Unknown operation' }])
+      default:
+        preferences = applyPreferenceOperation(preferences, operation, state.vocabs, registry)
     }
   }
 

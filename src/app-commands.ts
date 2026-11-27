@@ -4,7 +4,7 @@ import type { MenuState } from '../shared/menu.ts'
 import type { HostStore } from './store/types.ts'
 import { isEditableTarget } from './graph/interactions.ts'
 import { historyShortcut, historyTarget } from './graph/editing-policy.ts'
-import { graphSelection } from './graph/commands.ts'
+import { selectAllInView } from './graph/commands.ts'
 
 export function useAppCommands({
   store,
@@ -93,7 +93,7 @@ export function useAppCommands({
       } else if (command === 'selectAll') {
         if (current.nativeEditing) menu.edit(command)
         else if (!current.blocked) {
-          store.setSelection(graphSelection(store.getState().mapGraph))
+          selectAllInView(store)
           focusRef.current?.focus()
         }
       } else if (command === 'whatsNew') {

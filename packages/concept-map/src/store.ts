@@ -5,6 +5,8 @@ import type { Position } from '@nesso-how/schema'
 import { createContext, useContext, useSyncExternalStore, type Ref, type RefObject } from 'react'
 
 export type GraphCommands = {
+  readonly canCut: (state: Pick<NessoState, 'graph' | 'selected'>) => boolean
+  readonly selectAll: () => void
   readonly deleteSelection: () => void
   readonly copy: (cut?: boolean) => Promise<void>
   readonly paste: (text?: string, position?: Position) => Promise<void>

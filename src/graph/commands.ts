@@ -2,6 +2,7 @@ import type {
   GraphSnapshot,
   NessoOperation,
   NessoState,
+  NessoStore,
   Selection,
   MapGraphSnapshot,
 } from '@nesso-how/core'
@@ -15,10 +16,23 @@ import {
   type RelationBend,
 } from '@nesso-how/schema'
 
-export const graphSelection = (graph: GraphSnapshot): Selection => [
-  ...graph.concepts.map(({ id }) => ({ kind: 'concept' as const, id })),
-  ...graph.relations.map((relation) => ({ kind: 'relation' as const, id: relationKey(relation) })),
-]
+export const selectAllInView = (store: Pick<NessoStore, 'getState' | 'setSelection'>): void => {
+  const { mapGraph } = store.getState()
+  store.setSelection([
+    ...mapGraph.concepts.map(({ id }) => ({ kind: 'concept' as const, id })),
+    ...mapGraph.relations.map((relation) => ({
+      kind: 'relation' as const,
+      id: relationKey(relation),
+    })),
+  ])
+}
+
+export const canCutSelection = ({
+  graph,
+  selected,
+}: Pick<NessoState, 'graph' | 'selected'>): boolean =>
+  selected.length > 0 &&
+  selected.filter(({ kind }) => kind === 'concept').length < graph.concepts.length
 
 export const selectionCoversGraph = (selected: Selection, graph: GraphSnapshot): boolean => {
   const concepts = new Set(
