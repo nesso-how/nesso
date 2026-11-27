@@ -6,6 +6,7 @@ See [README.md](README.md) for the product overview, architecture, and package d
 
 - Leave changes uncommitted and unpushed unless the user explicitly requests a commit or push.
 - Before opening a PR, fetch `origin` and ensure the branch includes the latest `origin/main`; resolve or report blockers before proceeding.
+- Name branches `<type>/<name>` in lowercase kebab-case, and write commits and PR titles as Conventional Commits with the types in `.github/workflows/pr-title.yml`; squash merges turn PR titles into the `CHANGELOG.md` entries.
 - Complete applicable sections of `.github/pull_request_template.md` for PRs and the matching `.github/ISSUE_TEMPLATE/` template for issues, when available.
 - Before implementing an issue, resolve its open decisions with the user and record them in the issue body. During implementation, stop and ask before choices that are costly to reverse or outside the agreed scope, such as persisted formats, compatibility, plugin API, dependencies, security, or user-visible behavior the issue leaves open, and record the answers; settle other choices with the simplest option consistent with the issue.
 - Enable auto-merge only on explicit request; watch the PR until merged or blocked, and report blockers.

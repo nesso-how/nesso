@@ -1,0 +1,20 @@
+name: PR title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions: {}
+
+jobs:
+  pr-title:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          pattern='^(feat|fix|docs|style|refactor|perf|test|chore|ci|hotfix)(\([a-z0-9-]+\))?!?: [^A-Z].*[^.]$'
+          if [[ ! $TITLE =~ $pattern || ${#TITLE} -gt 72 ]]; then
+            echo "::error::PR title must be a Conventional Commit subject of at most 72 characters, such as 'feat(maps): add map groups'."
+            exit 1
+          fi
