@@ -11,15 +11,8 @@ import {
 import { createStore } from 'zustand/vanilla'
 import { createCommands } from './commands.ts'
 import { createHistory } from './history.ts'
-import {
-  applyStateOperations,
-  checkGraph,
-  checkWorkspace,
-  materialize,
-  newDocument,
-  newWorkspace,
-  relationLabelIssues,
-} from './operations.ts'
+import { applyStateOperations, materialize, newDocument, newWorkspace } from './operations.ts'
+import { checkGraph, checkWorkspace, relationLabelIssues } from './validation.ts'
 import {
   defaultCanvasTabOrder,
   defaultPanels,

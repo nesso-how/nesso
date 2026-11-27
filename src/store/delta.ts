@@ -8,6 +8,19 @@ export type Change<T> = {
   readonly after?: Entry<T>
 }
 
+const indexes = new WeakMap<readonly unknown[], Map<string, number>>()
+
+const cachedIndex = <T>(items: readonly T[], key: (item: T) => string): Map<string, number> => {
+  let index = indexes.get(items)
+  if (!index) indexes.set(items, (index = new Map(items.map((item, at) => [key(item), at]))))
+  return index
+}
+
+export const indexOf: <T>(
+  items: readonly T[],
+  key: (item: T) => string,
+) => ReadonlyMap<string, number> = cachedIndex
+
 export class ListEdit<T> {
   private current: readonly T[]
   private indices?: Map<string, number>
@@ -30,8 +43,9 @@ export class ListEdit<T> {
   }
 
   private index(id: string): number | undefined {
-    this.indices ??= new Map(this.current.map((item, index) => [this.key(item), index]))
-    if (this.current === this.original) this.originalIndices ??= this.indices
+    if (this.current === this.original)
+      this.indices ??= this.originalIndices ??= cachedIndex(this.original, this.key)
+    else this.indices ??= new Map(this.current.map((item, index) => [this.key(item), index]))
     return this.indices.get(id)
   }
 
@@ -42,7 +56,7 @@ export class ListEdit<T> {
 
   private touch(id: string): void {
     if (this.touched.has(id)) return
-    this.originalIndices ??= new Map(this.original.map((item, index) => [this.key(item), index]))
+    this.originalIndices ??= cachedIndex(this.original, this.key)
     const index = this.originalIndices.get(id)
     this.touched.set(id, index === undefined ? undefined : { index, value: this.original[index] })
   }
@@ -121,13 +135,12 @@ export class ListEdit<T> {
       }
       changes.push({ id, before, after })
     }
-    return {
-      items:
-        changes.length === 0 && this.current.length === this.original.length
-          ? this.original
-          : this.current,
-      changes,
-    }
+    const items =
+      changes.length === 0 && this.current.length === this.original.length
+        ? this.original
+        : this.current
+    if (items !== this.original && this.indices) indexes.set(items, this.indices)
+    return { items, changes }
   }
 }
 
@@ -144,6 +157,8 @@ export const applyChanges = <T>(
       const entry = (forward ? change.after : change.before)!
       next[entry.index] = entry.value
     }
+    const index = indexes.get(items)
+    if (index) indexes.set(next, index)
     return next
   }
   const ids = new Set(changes.map((change) => change.id))

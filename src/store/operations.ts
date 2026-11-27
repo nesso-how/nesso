@@ -13,21 +13,13 @@ import {
   newIri,
   relationKey,
   SchemaError,
-  validateGraph,
   type Graph,
   type Relation,
   type RelationType,
-  type SchemaIssue,
 } from '@nesso-how/schema'
 import { aiChatLimits } from '@nesso-how/ai'
-import {
-  fail,
-  maxConceptLabelLength,
-  maxRelationLabelLength,
-  parseConversation,
-  parsePreferences,
-  parseWorkspace,
-} from './settings.ts'
+import { fail, parseConversation, parsePreferences } from './settings.ts'
+import { checkGraphChanges, checkWorkspaceChanges } from './validation.ts'
 import type { HostOperation, HostState, MapVisibility } from './types.ts'
 import {
   ListEdit,
@@ -49,55 +41,6 @@ type Removal = Extract<HostOperation, { kind: 'concept.remove' | 'relation.remov
 type Member = WorkspaceMap['members'][number]
 const isRemoval = (operation: HostOperation): operation is Removal =>
   operation.kind === 'concept.remove' || operation.kind === 'relation.remove'
-
-export const relationLabelIssues = (types: readonly { label: string }[]): SchemaIssue[] =>
-  types.flatMap((type, index) =>
-    type.label.length > maxRelationLabelLength
-      ? [
-          {
-            path: `relationTypes[${index}].label`,
-            message: `Relation label must not exceed ${maxRelationLabelLength} characters`,
-          },
-        ]
-      : [],
-  )
-
-export const checkGraph = (graph: GraphSnapshot): void => {
-  const issues = validateGraph(graph)
-  if (graph.concepts.length === 0)
-    issues.push({ path: 'concepts', message: 'Graph must keep at least one concept' })
-  graph.concepts.forEach((concept, index) => {
-    if (concept.label.length > maxConceptLabelLength) {
-      issues.push({
-        path: `concepts[${index}].label`,
-        message: `Concept label must not exceed ${maxConceptLabelLength} characters`,
-      })
-    }
-  })
-  issues.push(...relationLabelIssues(graph.relationTypes))
-  if (issues.length > 0) throw new SchemaError(issues)
-}
-
-export const checkWorkspace = (graph: GraphSnapshot, workspace: WorkspaceState): void => {
-  const concepts = new Set(graph.concepts.map(({ id }) => id))
-  const relations = new Set(graph.relations.map(relationKey))
-  for (const [index, map] of workspace.maps.entries()) {
-    const members = new Set(map.members.map(({ id }) => id))
-    if ([...members].some((id) => !concepts.has(id)))
-      fail(`workspace.maps[${index}].members`, 'Unknown concept')
-    const bends = (map.relationBends ?? []).map(relationKey)
-    if (
-      new Set(bends).size < bends.length ||
-      map.relationBends?.some(
-        (bend) =>
-          !relations.has(relationKey(bend)) ||
-          !members.has(bend.source) ||
-          !members.has(bend.target),
-      )
-    )
-      fail(`workspace.maps[${index}].relationBends`, 'Duplicate or invalid relation bend')
-  }
-}
 
 export const reconcileSelection = (graph: GraphSnapshot, selected: Selection): Selection => {
   if (selected.length === 0) return selected
@@ -1016,15 +959,21 @@ export const applyStateOperations = (
     candidate = state.graph
     selected = explicitSelection
   }
-  if (candidate !== state.graph) checkGraph(candidate)
+  const changes = reset
+    ? undefined
+    : {
+        concepts: conceptEdit.changes,
+        relations: relationEdit.changes,
+        relationTypes: typeEdit.changes,
+      }
+  if (candidate !== state.graph) checkGraphChanges(candidate, changes)
   if (mapEdit.items !== workspace.maps) workspace = { ...workspace, maps: mapEdit.items }
   if (pinEdit.items !== workspace.pinnedMapIds)
     workspace = { ...workspace, pinnedMapIds: pinEdit.items }
   if (mapGroupEdit.items !== workspace.mapGroups)
     workspace = pruneCollapsedMapGroups({ ...workspace, mapGroups: mapGroupEdit.items })
   if (workspace !== state.workspace) {
-    parseWorkspace(workspace)
-    checkWorkspace(candidate, workspace)
+    checkWorkspaceChanges(candidate, workspace, state.workspace, changes)
     if (sameWorkspace(workspace, state.workspace)) workspace = state.workspace
   }
   if (preferences !== state.preferences) {
