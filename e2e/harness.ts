@@ -1,5 +1,5 @@
 import { app, BrowserWindow, ipcMain, protocol, session } from 'electron'
-import { readFile } from 'node:fs/promises'
+import { readFile, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import path from 'node:path'
 import assert from 'node:assert/strict'
@@ -21,8 +21,22 @@ protocol.registerSchemesAsPrivileged([
 ])
 
 let stage = 'initialization'
-const deadline = setTimeout(() => {
+let active: BrowserWindow | undefined
+const failure = (extension: string) => path.join(profile, `failure.${extension}`)
+const capture = async () => {
+  if (!active || active.isDestroyed()) return
+  const { webContents } = active
+  const saved = Promise.all([
+    webContents.capturePage().then((image) => writeFile(failure('png'), image.toPNG())),
+    webContents
+      .executeJavaScript('document.documentElement.outerHTML')
+      .then((html: string) => writeFile(failure('html'), html)),
+  ]).catch((error: unknown) => console.error(`${scenario}/${name}: capture failed`, error))
+  await Promise.race([saved, new Promise((resolve) => setTimeout(resolve, 5_000))])
+}
+const deadline = setTimeout(async () => {
   console.error(`${scenario}/${name}: timed out during ${stage}`)
+  await capture()
   app.exit(1)
 }, 60_000)
 
@@ -107,12 +121,16 @@ app
       )
         console.error(event.message.slice(0, 2048))
     })
+    active = window
     if (process.platform === 'linux') window.show()
     try {
       stage = scenario
       await (
         await load()
       )({ window, url, name, attempted })
+    } catch (error) {
+      await capture()
+      throw error
     } finally {
       window.destroy()
       server.close()
