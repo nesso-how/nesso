@@ -19,5 +19,6 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["vite.config.ts", "scripts/**/*.ts", "e2e/**/*.ts"]
+  "include": ["vite.config.ts", "scripts/**/*.ts", "e2e/**/*.ts"],
+  "exclude": ["scripts/perf.ts", "scripts/perf"]
 }

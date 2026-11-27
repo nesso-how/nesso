@@ -140,11 +140,11 @@ pnpm install
 pnpm desktop
 ```
 
-For desktop development with live reload, run `pnpm dev --host 127.0.0.1 --strictPort` and `pnpm desktop:dev` in separate terminals. To use a port other than 5173, pass `--port <port>` to `pnpm dev` and set `NESSO_DEV_PORT=<port>` for `pnpm desktop:dev`. Development builds keep their data in `.nesso-dev/` in the checkout, separate from the installed app. For the web demo alone, use `pnpm dev`.
+For desktop development with live reload, run `pnpm dev --host 127.0.0.1 --strictPort` and `pnpm desktop:dev` in separate terminals. To use a port other than 5173, pass `--port <port>` to `pnpm dev` and set `NESSO_DEV_PORT=<port>` for `pnpm desktop:dev`. `pnpm desktop` and `pnpm desktop:dev` keep their data in `.nesso-dev/` in the checkout, separate from the installed app. For the web demo alone, use `pnpm dev`.
 
 Checks: `pnpm build`, `pnpm lint`, `pnpm test`, `pnpm test:e2e`, and `pnpm analyze --summary`.
 
-See the [development workflow](docs/development.md) for the OpenCode commands from issue to release, the [plugin guide](packages/plugin/README.md#create-a-plugin) for plugin authoring, and the [release guide](docs/releases.md) for versioning, release notes, and publishing.
+See the [development workflow](docs/development.md) for the OpenCode commands from issue to release, the [plugin guide](packages/plugin/README.md#create-a-plugin) for plugin authoring, the [release guide](docs/releases.md) for versioning, release notes, and publishing, and the [profiling guide](docs/profiling.md) for benchmarks and app profiling.
 
 ## FAQ
 
