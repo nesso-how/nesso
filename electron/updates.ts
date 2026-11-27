@@ -3,6 +3,7 @@ import type { AppUpdater } from 'electron-updater'
 import type { AutoUpdater } from 'electron'
 import { gt } from 'semver'
 import { ElectronError } from './errors.ts'
+import { logError, logInfo } from './logs.ts'
 
 export type UpdateState = {
   status: 'downloading' | 'ready' | 'saving' | 'installing'
@@ -37,13 +38,17 @@ export function connectUpdates(
   updater.autoInstallOnAppQuit = installOnQuit
   updater.allowDowngrade = false
 
-  const publish = (next: UpdateState) => {
+  const publish = (next: NonNullable<UpdateState>) => {
     state = next
+    logInfo('update', next)
     notify(state)
   }
   const idle = () => !state || state.status === 'ready' || state.error === 'download'
+  let failure: unknown
   const fail = (error: unknown) => {
-    console.error(
+    if (error === failure) return
+    failure = error
+    logError(
       new ElectronError([
         { path: 'update', message: error instanceof Error ? error.message : String(error) },
       ]),

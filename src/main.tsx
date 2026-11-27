@@ -1,3 +1,4 @@
+import '@/error-reports'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { defaultLocale } from '@nesso-how/i18n'

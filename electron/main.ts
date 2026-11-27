@@ -14,7 +14,7 @@ import {
 } from 'electron'
 import electronUpdater from 'electron-updater'
 import path from 'node:path'
-import { ElectronError } from './errors.ts'
+import { connectLogs, logError } from './logs.ts'
 import { connectUpdates } from './updates.ts'
 import { connectAi } from './ai/ai.ts'
 import { connectMcp } from './mcp/mcp.ts'
@@ -58,11 +58,7 @@ protocol.registerSchemesAsPrivileged([
 ])
 
 const report = (error: unknown): void => {
-  console.error(
-    new ElectronError([
-      { path: 'desktop', message: error instanceof Error ? error.message : String(error) },
-    ]),
-  )
+  logError(error)
   if (!app.isReady()) return app.exit(1)
   const choice = dialog.showMessageBoxSync({
     type: 'error',
@@ -120,6 +116,7 @@ app
   .whenReady()
   .then(async () => {
     const trusted = createTrustedRequest(rendererUrl)
+    connectLogs(app, ipcMain, trusted)
     connectMenu(trusted, dev)
     connectNotesLinks(ipcMain, trusted, (url) => shell.openExternal(url))
     connectFiles(trusted)

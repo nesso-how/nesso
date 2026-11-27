@@ -3,6 +3,7 @@ import path from 'node:path'
 import { gt, valid } from 'semver'
 import type { IpcMain } from 'electron'
 import { ElectronError } from '../errors.ts'
+import { logError } from '../logs.ts'
 import { writeFileData } from '../file-system.ts'
 import type { TrustedRequest } from '../ipc.ts'
 
@@ -24,7 +25,7 @@ export async function recordReleaseLaunch(directory: string, version: string) {
     await rename(`${file}.tmp`, file)
     return previous
   } catch (error) {
-    console.error(
+    logError(
       error instanceof ElectronError
         ? error
         : new ElectronError([

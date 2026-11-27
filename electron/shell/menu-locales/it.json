@@ -30,5 +30,6 @@
   "whatsNew": "Novità",
   "shortcuts": "Scorciatoie da tastiera",
   "documentation": "Documentazione",
-  "reportIssue": "Segnala un problema"
+  "reportIssue": "Segnala un problema",
+  "openLogs": "Apri cartella dei log"
 }
