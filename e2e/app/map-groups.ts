@@ -14,7 +14,7 @@ export async function verifyMapGroups(context: CheckContext) {
     enabled: true,
   })
   const ready = (script: string) =>
-    waitFor(() => evaluate<boolean>(script), Boolean, 6000).catch(async (cause: unknown) => {
+    waitFor(() => evaluate<boolean>(script), Boolean).catch(async (cause: unknown) => {
       const active = await evaluate<string>(`document.activeElement?.outerHTML.slice(0, 300)`)
       throw new Error(`Timed out: ${script}\nFocused element: ${active}`, { cause })
     })

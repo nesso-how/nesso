@@ -366,9 +366,9 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     )
   const selectAll = Menu.getApplicationMenu()?.getMenuItemById('selectAll')
   assert.ok(selectAll)
-  await waitFor(async () => selectAll.enabled, Boolean, 2_000)
+  await waitFor(async () => selectAll.enabled, Boolean)
   selectAll.click(undefined, context.window, undefined)
-  await waitFor(allSelected, Boolean, 2_000)
+  await waitFor(allSelected, Boolean)
   await choose('Review')
   assert.ok(
     preloaded.includes(

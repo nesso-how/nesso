@@ -91,7 +91,7 @@ export async function waitFor<T>(
     if (ready(value)) return value
     await new Promise((resolve) => setTimeout(resolve, 25))
   }
-  assert.fail('Plugin runtime check timed out')
+  assert.fail(`Timed out after ${timeout} ms`)
 }
 
 export async function listExamplePlugin() {

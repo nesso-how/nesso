@@ -40,6 +40,10 @@ jobs:
   e2e:
     if: github.event_name == 'push' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [desktop, static-web]
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4
@@ -52,4 +56,10 @@ jobs:
       - name: Allow Chromium sandbox
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - name: Run e2e tests
-        run: node e2e/run.ts
+        run: node e2e/run.ts ${{ matrix.platform }}
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failures-${{ matrix.platform }}
+          path: /tmp/nesso-*/failure.*
+          if-no-files-found: ignore

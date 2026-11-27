@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process'
 import { once } from 'node:events'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { createRequire } from 'node:module'
-import { tmpdir } from 'node:os'
+import { availableParallelism, tmpdir } from 'node:os'
 import path from 'node:path'
 import { describe, it } from 'node:test'
 import { fileURLToPath } from 'node:url'
@@ -23,7 +23,7 @@ const selected = Object.entries(scenarios)
 if (!selected.length)
   throw new NessoError([{ path: 'e2e', message: 'No matching scenario or platform' }])
 
-describe('e2e', { concurrency: 4 }, () => {
+describe('e2e', { concurrency: Math.max(1, Math.floor(availableParallelism() / 2)) }, () => {
   for (const [index, { scenario, platform, args }] of selected.entries())
     it(`${scenario}/${platform}`, async () => {
       const profile = mkdtempSync(path.join(tmpdir(), `nesso-${scenario}-${platform}-`))
