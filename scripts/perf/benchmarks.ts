@@ -127,16 +127,16 @@ const benchmarks: Benchmark[] = [
     name: 'graph: settle layout',
     setup: ({ graph, workspace }) => {
       const visible = materialize(graph, { ...workspace, activeMapId: null })
-      return () => settle(visible, new Map())
+      return () => settle(visible, { positions: new Map(), alpha: 0 })
     },
   },
   {
     name: 'graph: update scene',
     setup: ({ graph, workspace }) => {
       const visible = materialize(graph, { ...workspace, activeMapId: null })
-      const layout = new Map()
+      const layout = { positions: new Map(), alpha: 0 }
       const byId = new Map(settle(visible, layout).bubbles.map((bubble) => [bubble.id, bubble]))
-      return () => scene(visible, layout, byId)
+      return () => scene(visible, layout.positions, byId)
     },
   },
   {
