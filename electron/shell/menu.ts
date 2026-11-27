@@ -9,6 +9,7 @@ import {
 } from 'electron'
 import type { TrustedRequest } from '../ipc.ts'
 import { ElectronError } from '../errors.ts'
+import { logError } from '../logs.ts'
 import { menuState, type MenuCommand, type MenuState } from '../../shared/menu.ts'
 import { isAllowedExternalLink } from '../../shared/link-policy.ts'
 import en from './menu-locales/en.json' with { type: 'json' }
@@ -20,7 +21,7 @@ function openLink(url: string) {
   void shell
     .openExternal(url)
     .catch((error: unknown) =>
-      console.error(
+      logError(
         new ElectronError([
           { path: 'menu.link', message: error instanceof Error ? error.message : String(error) },
         ]),
@@ -134,6 +135,14 @@ function createMenuTemplate(state: MenuState, dev: boolean): MenuItemConstructor
         {
           label: t.reportIssue,
           click: () => openLink('https://github.com/nesso-how/nesso/issues/new/choose'),
+        },
+        {
+          label: t.openLogs,
+          click: () =>
+            void shell.openPath(app.getPath('logs')).then((message) => {
+              if (message)
+                logError(new ElectronError([{ path: 'menu.logs', message: 'Could not open logs' }]))
+            }),
         },
         ...(!mac ? [{ type: 'separator' } as const, about] : []),
       ],

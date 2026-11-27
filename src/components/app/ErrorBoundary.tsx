@@ -2,6 +2,7 @@ import { Component, type ReactNode } from 'react'
 import { defaultLocale } from '@nesso-how/i18n'
 import { translate } from '@/i18n'
 import { nessoStore } from '@/store'
+import { reportError } from '@/logs'
 
 type Props = { children: ReactNode; save: () => Promise<boolean> }
 type State = { failed: boolean; saving: boolean; saveFailed: boolean }
@@ -11,6 +12,10 @@ export class ErrorBoundary extends Component<Props, State> {
 
   static getDerivedStateFromError(): Partial<State> {
     return { failed: true }
+  }
+
+  componentDidCatch(error: unknown) {
+    reportError('error-boundary', error)
   }
 
   reload = async () => {

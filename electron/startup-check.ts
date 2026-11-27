@@ -9,6 +9,7 @@ export function connectStartupCheck(profile: string, update: boolean): void {
       { path: 'startup-check', message: 'Expected an absolute profile path' },
     ])
   app.setPath('userData', profile)
+  app.setAppLogsPath(path.join(profile, 'logs'))
   const fail = (error: unknown) => {
     console.error(error)
     app.exit(1)

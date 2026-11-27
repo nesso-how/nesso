@@ -30,5 +30,6 @@
   "whatsNew": "更新内容",
   "shortcuts": "键盘快捷键",
   "documentation": "文档",
-  "reportIssue": "报告问题"
+  "reportIssue": "报告问题",
+  "openLogs": "打开日志文件夹"
 }

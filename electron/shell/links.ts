@@ -1,5 +1,6 @@
 import type { IpcMain, WebContents } from 'electron'
 import { ElectronError } from '../errors.ts'
+import { logError } from '../logs.ts'
 import {
   isAllowedNotesLink,
   isAllowedExternalLink,
@@ -8,7 +9,7 @@ import {
 import type { TrustedRequest } from '../ipc.ts'
 
 function reportLinkError(error: unknown) {
-  console.error(
+  logError(
     new ElectronError([
       {
         path: 'external-link',

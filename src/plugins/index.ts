@@ -30,6 +30,7 @@ import {
 import { loadActions, type ActionPackage } from './actions.ts'
 import { withInitializationTimeout } from './initialization.ts'
 import { translate } from '../i18n/index.ts'
+import { reportPluginFailure } from '../logs.ts'
 import {
   parsePackageIdentity,
   verifyPluginPackage,
@@ -78,6 +79,7 @@ const recordLocalError = (
   entry: Pick<PluginEntry, 'id' | 'contentId' | 'npmIntegrity'>,
   error: unknown,
 ) => {
+  reportPluginFailure(entry.id, error)
   if (isLocalPlugin(entry))
     localErrors.set(
       entry.id,

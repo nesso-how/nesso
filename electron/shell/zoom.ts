@@ -3,6 +3,7 @@ import { readFileSync, renameSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { z } from 'zod'
 import { ElectronError } from '../errors.ts'
+import { logError } from '../logs.ts'
 
 const schema = z.strictObject({
   version: z.literal(1),
@@ -12,7 +13,7 @@ const schema = z.strictObject({
 export function connectWindowZoom(window: BrowserWindow, directory: string) {
   const file = path.join(directory, 'zoom.json')
   const report = (error: unknown) =>
-    console.error(
+    logError(
       new ElectronError([
         { path: 'zoom', message: error instanceof Error ? error.message : String(error) },
       ]),
