@@ -1,6 +1,6 @@
 # @nesso-how/concept-map
 
-See [README.md](README.md) for controls, usage, and the public API overview.
+See [README.md](README.md) for usage and the public API overview, and [docs/guide.md](../../docs/guide.md) for controls.
 
 - Inherit host theme tokens and use synchronous store APIs for renderer interactions.
 - Expose renderer focus through the public ref; do not require host queries into renderer DOM.

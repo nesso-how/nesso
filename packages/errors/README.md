@@ -1,9 +1,9 @@
 # @nesso-how/errors
 
-Shared structured errors for Nesso packages, the host, and repository scripts, with no runtime dependencies.
+Shared structured errors for Nesso packages, the host, and repository scripts. The package has no runtime dependencies.
 
-`NessoError` carries `issues: ErrorIssue[]`, where each issue has a `path` and `message`. Its message joins issues with newlines, prefixing nonempty paths with `path: `.
+`NessoError` carries `issues: ErrorIssue[]`, where each issue has a `path` and a `message`. The error message joins the issues with newlines and prefixes each nonempty path with `path: `.
 
-`validationIssues` converts validation issue paths into the shared dotted/bracketed notation, with an optional domain prefix, without depending on a validation library.
+`validationIssues` converts validation issue paths into the shared dotted and bracketed notation, with an optional domain prefix. It does not depend on a validation library.
 
-Package-scoped errors extend `NessoError` to retain their names and domain-specific behavior. `PluginError` also bounds issues and localized messages before passing them to the base class. All scoped errors can be handled as `NessoError`.
+Package-scoped errors extend `NessoError` and keep their own names and domain-specific behavior, so you can handle every scoped error as a `NessoError`. `PluginError` also bounds issues and localized messages before it passes them to the base class.

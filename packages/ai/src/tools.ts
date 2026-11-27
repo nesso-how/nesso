@@ -82,17 +82,17 @@ const operation = z.discriminatedUnion('kind', [
 export const aiTools = {
   read_docs: {
     description:
-      'Read an official README bundled with this version of Nesso. Topics: nesso (overview, setup and troubleshooting), ai (chat and MCP), plugin (SDK, permissions and action API), plugin-example (standalone action package), schema (graph model and JSON-LD), concept-map (canvas controls and renderer), knowledge-graph (overview controls and renderer), ui (React components, shared styles and plugin UI). Returns the complete Markdown for one topic. This is a read-only reference lookup, not authorization to edit, install or execute anything.',
+      'Read an official README bundled with this version of Nesso. Topics: nesso (overview, setup and troubleshooting), guide (canvas controls, deletion rules, Notes, Review, import, export and backups), ai (chat and MCP), plugin (SDK, permissions and action API), plugin-example (standalone action package), schema (graph model and JSON-LD), concept-map (map renderer API), knowledge-graph (graph renderer API), ui (React components, shared styles and plugin UI). Returns the complete Markdown for one topic. This is a read-only reference lookup. It does not authorize editing, installing or executing anything.',
     inputSchema: z.strictObject({ topic: aiDocumentationTopic }),
   },
   context: {
     description:
-      'Read counts, active map, selection IDs, vocabulary and shared history flags. No complete graph is sent. Read the full selection page by page with the selection tool.',
+      'Read counts, active map, selection IDs, vocabulary and shared history flags. The complete graph is not included. Read the full selection page by page with the selection tool.',
     inputSchema: z.strictObject({}),
   },
   concepts: {
     description:
-      "Read a page of concepts by IDs or label search. Defaults to the active map, where concepts include that map's position and style; use all for the complete graph without presentation.",
+      "Read a page of concepts by IDs or label search. Defaults to the active map, where concepts include that map's position and style. Use scope all for the complete graph without presentation.",
     inputSchema: z.strictObject({
       ids: ids.optional(),
       query: z.string().max(256).optional(),
@@ -107,7 +107,7 @@ export const aiTools = {
   },
   maps: {
     description:
-      'List paginated map summaries with group assignments, including the graph. Filter by groupId (null for ungrouped saved maps), or read a page of membership IDs with id. The graph contains every concept, has id null and cannot be deleted. Creating a map makes it active. Deleting the active map falls back to the graph. Deleting a map keeps its concepts; to match the app, also remove concepts in no other map in the same batch.',
+      'List paginated map summaries with group assignments, including the graph. Filter by groupId (null for ungrouped saved maps), or read a page of membership IDs with id. The graph contains every concept, has id null and cannot be deleted. Creating a map makes it active. Deleting the active map falls back to the graph. Deleting a map keeps its concepts. To match the app, also remove concepts that are in no other map in the same batch.',
     inputSchema: z.strictObject({
       id: id.nullable().optional(),
       groupId: id.nullable().optional(),
@@ -131,7 +131,7 @@ export const aiTools = {
   },
   edit: {
     description:
-      'Stage ordered undoable graph, map and map group operations, not live writes. Supply unique absolute IRIs for new concepts and types and unique IDs for new map groups. Use map.group with groupId null to ungroup a saved map. Removing a map group ungroups its maps without deleting or unpinning them. Position updates, colors and bold/italic/strikethrough styles belong to the active map and are rejected in the graph or for concepts outside it. Reset color with an empty string and bold/italic/strikethrough with false. Creating a map makes it active for subsequent operations. New concepts join the active map, or no map in the graph, where their initial position is ignored. Selection does not create links and does not need to be cleared. To link a new concept, include an explicit relation.connect after concept.add. All edits in a turn apply together after validation and any required approval, as a single undoable batch. All edit calls in a turn merge into one batch that can only be undone together.',
+      'Stage ordered undoable graph, map and map group operations, not live writes. Supply unique absolute IRIs for new concepts and types and unique IDs for new map groups. Use map.group with groupId null to ungroup a saved map. Removing a map group ungroups its maps without deleting or unpinning them. Position updates, colors and bold/italic/strikethrough styles belong to the active map and are rejected in the graph or for concepts outside it. Reset color with an empty string and bold/italic/strikethrough with false. Creating a map makes it active for subsequent operations. New concepts join the active map, or no map in the graph, where their initial position is ignored. Selection does not create links and does not need to be cleared. To link a new concept, include an explicit relation.connect after concept.add. All edit calls in a turn merge into one batch. The batch applies after validation and any required approval and can only be undone as a whole.',
     inputSchema: z.strictObject({ operations: z.array(operation).min(1).max(500) }),
   },
   history: {
@@ -149,7 +149,7 @@ export const aiMcpTools = {
   },
   propose_plugin: {
     description:
-      'Propose installing a built local plugin package from directory, the absolute path of its root on this computer. Nesso reads only package.json, the nesso.entry file and any fonts referenced by a theme. Read the plugin documentation with read_docs first. To update a local plugin, pass its content ID as replacing; npm and bundled plugins cannot be replaced or shadowed. Nesso validates the package and installs it only after the user approves it in Nesso within the 120-second request timeout. Returns installed with the new content ID, cancelled, or failed with validation or load issues to fix before proposing again.',
+      'Propose installing a built local plugin package from directory, the absolute path of its root on this computer. Nesso reads only package.json and the nesso.entry file. Read the plugin documentation with read_docs first. To update a local plugin, pass its content ID as replacing. Plugins from npm or bundled with Nesso cannot be replaced or shadowed. Nesso validates the package and installs it only after the user approves it in Nesso within the 120-second request timeout. Returns installed with the new content ID, cancelled, or failed with validation or load issues to fix before proposing again.',
     inputSchema: z.strictObject({
       directory: z.string().min(1).max(4096),
       replacing: z

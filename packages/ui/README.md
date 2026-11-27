@@ -1,18 +1,18 @@
 # Nesso UI
 
-React components styled for Nesso, including buttons, forms, menus, dialogs, and panels. Many controls build on [Base UI](https://base-ui.com/). The package depends on Nesso's theme tokens; it does not include a standalone theme.
+React components styled for Nesso, including buttons, forms, menus, dialogs, and panels. Many controls build on [Base UI](https://base-ui.com/). The package depends on Nesso's theme tokens and does not include a standalone theme.
 
 ## Install
 
 ```sh
-npm install @nesso-how/ui@alpha
+npm install @nesso-how/ui
 ```
 
-Requires React and React DOM `^19.2.8`. The package follows Nesso's app version; test against the app versions you support rather than assuming compatibility from matching version numbers.
+Requires React and React DOM `^19.2.8`. The package version follows Nesso's app version, but matching version numbers do not guarantee compatibility, so test against the app versions you support.
 
 ## Use in a Nesso plugin
 
-Nesso supplies React, component styles, and theme tokens inside plugin UI panels. No package stylesheet import is needed:
+Inside plugin UI panels, Nesso supplies React, component styles, and theme tokens. You do not need to import a package stylesheet:
 
 ```tsx
 import { Button } from '@nesso-how/ui'
@@ -22,18 +22,25 @@ export function PluginUI() {
 }
 ```
 
-Keep React and React DOM external in your plugin bundle. Import your own layout CSS normally; Nesso does not compile arbitrary Tailwind classes from plugin source. Start with the [standalone plugin example](https://github.com/nesso-how/nesso/tree/main/packages/plugin/example) and see the [SDK UI contract](https://github.com/nesso-how/nesso/blob/main/packages/plugin/README.md#action-ui) for setup and permissions.
+Keep React and React DOM external in your plugin bundle. You can import your own layout CSS as usual, but Nesso does not compile arbitrary Tailwind classes from plugin source. Start with the [standalone plugin example](https://github.com/nesso-how/nesso/tree/main/packages/plugin/example), and see the [SDK UI contract](https://github.com/nesso-how/nesso/blob/main/packages/plugin/README.md#action-ui) for setup and permissions.
 
 ## Use outside Nesso
 
-Install React/React DOM and configure [Tailwind CSS 4](https://tailwindcss.com/docs/installation) in your application. Import the package's source CSS after Tailwind in your main stylesheet:
+Install React and React DOM, and configure [Tailwind CSS 4](https://tailwindcss.com/docs/installation) in your application. In your main stylesheet, import the package's source CSS after Tailwind:
 
 ```css
 @import 'tailwindcss';
 @import '@nesso-how/ui/styles.css';
 ```
 
-Your build must compile this CSS; it is not a precompiled stylesheet. Supply the theme CSS variables on your document or component container: colors such as `--background`, `--foreground`, and `--border`; `--font-sans` and `--font-mono`; `--radius-control` and `--radius-object` with length units; and `--duration-state` with time units. No theme values or font files are included. See the [theme schema](https://github.com/nesso-how/nesso/blob/main/packages/plugin/src/definitions.ts) for all color tokens and [Paper's theme](https://github.com/nesso-how/nesso/blob/main/plugins/paper-theme/src/index.ts) for example values.
+This is source CSS, not a precompiled stylesheet, so your build must compile it. Supply these theme CSS variables on your document or component container:
+
+- Colors such as `--background`, `--foreground`, and `--border`.
+- `--font-sans` and `--font-mono`.
+- `--radius-control` and `--radius-object`, with length units.
+- `--duration-state`, with time units.
+
+The package includes no theme values or font files. See the [theme schema](https://github.com/nesso-how/nesso/blob/main/packages/plugin/src/definitions.ts) for all color tokens and [Paper's theme](https://github.com/nesso-how/nesso/blob/main/plugins/paper-theme/src/index.ts) for example values.
 
 ## Components
 
@@ -48,20 +55,24 @@ Your build must compile this CSS; it is not a precompiled stylesheet. Supply the
 | Feedback               | `Banner`, `BannerRow`, `BannerDetails`, `ToastViewport`, `Spinner`, `CharacterLimitHint`                                  |
 | Labels and icons       | `Kbd`, `ContextLabel`, `ActionIcon`                                                                                       |
 
-`Button` supports `default`, `outline`, and `ghost` variants. `SidePanel` supports controlled resizing and collapse. `Spinner` accepts an accessible `label` and respects reduced motion. State, content, and event handling remain yours to provide.
+Components leave state, content, and event handling to you. Some have options worth knowing:
 
-Use `MenuSubmenuTrigger` inside `Menu.SubmenuRoot`. `MenuPopup` accepts a preferred `side`.
+- `Button` supports `default`, `outline`, and `ghost` variants.
+- `SidePanel` supports controlled resizing and collapse.
+- `Spinner` accepts an accessible `label` and respects reduced motion.
+- `MenuPopup` accepts a preferred `side`.
+- `MenuSubmenuTrigger` goes inside `Menu.SubmenuRoot`.
 
-`BottomSheet` is a controlled, non-modal drawer with a title, close label, optional footer, and popup ref for measuring covered content. It supports swipe-down dismissal, safe-area padding, and reduced motion. Reading text can use `--nesso-reading-font-size` and `--nesso-reading-line-height`, which increase from 13/20px to 15/23px on narrow screens or coarse pointers.
+`BottomSheet` is a controlled, non-modal drawer with a title, a close label, an optional footer, and a popup ref for measuring covered content. It supports swipe-down dismissal, safe-area padding, and reduced motion. Reading text can use `--nesso-reading-font-size` and `--nesso-reading-line-height`, which grow from 13/20px to 15/23px on narrow screens or with coarse pointers.
 
-`MarkdownInput` accepts Markdown through `value`/`onChange`, with live preview of emphasis, inline code, links, and lists. Syntax reappears around the selection. Cmd/Ctrl+B/I/E toggles bold, italic, and inline code; Enter continues or exits lists, Tab/Shift+Tab changes nesting, and Shift+Enter inserts a line break. Optional `tasks` enables clickable task checkboxes; `placeholder` appears when empty.
+`MarkdownInput` takes Markdown through `value` and `onChange` and shows a live preview of emphasis, inline code, links, and lists, with the syntax reappearing around the selection. Cmd/Ctrl+B/I/E toggles bold, italic, and inline code, Enter continues or exits lists, Tab/Shift+Tab changes nesting, and Shift+Enter inserts a line break. The optional `tasks` prop enables clickable task checkboxes, and `placeholder` appears when the field is empty.
 
-Pass localized `toolbar` labels (`label`, `bold`, `italic`, `code`, `bullet`, `numbered`, and `task`) to show formatting controls above editable text. Inline formatting applies to a selection or to the whole word when the caret is strictly inside it. Applying bold, italic, or inline code to a mixed selection merges spans of the same format when Markdown supports a single span. Inline code displays other formatting markers literally. Cmd/Ctrl+Shift+8/7/9 toggles bulleted, numbered, and task lists on the selected lines; the task control and shortcut require `tasks`.
+Pass localized `toolbar` labels (`label`, `bold`, `italic`, `code`, `bullet`, `numbered`, and `task`) to show formatting controls above editable text. Inline formatting applies to the selection, or to the whole word when the caret sits strictly inside one. If you apply bold, italic, or inline code to a mixed selection, spans of the same format merge wherever Markdown supports a single span. Inline code shows other formatting markers literally. Cmd/Ctrl+Shift+8/7/9 toggles bulleted, numbered, and task lists on the selected lines, although the task control and its shortcut require `tasks`.
 
-Use `compactToolbar` for 12 px icons, 24 px buttons with a mouse or trackpad, and 40 px touch targets on devices with a coarse pointer. The toolbar is hidden in read-only fields unless `readOnlyToolbar` keeps it visible with formatting buttons disabled. Optional `toolbarEnd` renders a caller-provided control at the end of the visible toolbar, outside the formatting group.
+Use `compactToolbar` for 12 px icons and 24 px buttons with a mouse or trackpad, while devices with a coarse pointer still get 40 px touch targets. Read-only fields hide the toolbar unless you set `readOnlyToolbar`, which keeps it visible with its formatting buttons disabled. The optional `toolbarEnd` renders a control you provide at the end of the visible toolbar, outside the formatting group.
 
-Undo/redo is local by default. Use `history={false}` for host-owned history or `history="focus"` to reset local history on blur and external value changes. Exhausted local history never falls through. Menu commands can send `beforeinput` events (`historyUndo`/`historyRedo`) to the focused editor inside `[data-local-history]`.
+Undo and redo are local by default. Use `history={false}` when the host owns history, or `history="focus"` to reset local history on blur and on external value changes. When local history runs out, undo and redo stop there and never reach the document history. Menu commands can send `beforeinput` events (`historyUndo`/`historyRedo`) to the focused editor inside `[data-local-history]`.
 
-Cmd/Ctrl-click calls `onOpenLink`; read-only fields use a regular click. The host validates and opens destinations.
+Cmd/Ctrl-click calls `onOpenLink`, and in read-only fields a regular click does the same. The host validates and opens destinations.
 
-The package also exports `useMediaQuery`, `conceptColor`, and the `ActionIconName` and `ToastItem` types. See the [public exports](https://github.com/nesso-how/nesso/blob/main/packages/ui/src/index.ts) and component source files for prop definitions; published TypeScript declarations provide editor completion.
+The package also exports `useMediaQuery`, `conceptColor`, and the `ActionIconName` and `ToastItem` types. For prop definitions, see the [public exports](https://github.com/nesso-how/nesso/blob/main/packages/ui/src/index.ts) and the component source files. The published TypeScript declarations provide editor completion.

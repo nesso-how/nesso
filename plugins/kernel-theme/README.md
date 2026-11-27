@@ -1,12 +1,12 @@
 # @nesso-how/kernel-theme
 
-Kernel, Nesso's default light-only theme, providing semantic tokens.
+Kernel is Nesso's default and bundled fallback theme, with light and dark palettes.
 
 ## Usage
 
-The package supplies the manifest and `definition.json` data. The host parses and validates the definition without executing it. No Kernel stylesheet or executable module is imported into the host.
+The package supplies the manifest and `definition.json` data, which the host parses and validates without executing. The host imports no Kernel stylesheet or executable module.
 
-The host applies only validated tokens and supplies Geist and IBM Plex Mono independently of themes. The trusted renderer inherits these directly from the host. Component recipes and layout stay outside this plugin; Kernel is the bundled fallback theme.
+The host applies only validated tokens, while component recipes and layout stay outside this plugin. It supplies Geist and IBM Plex Mono independently of themes, and the trusted renderer inherits these fonts directly from the host.
 
 ## API
 

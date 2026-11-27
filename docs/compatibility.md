@@ -1,40 +1,36 @@
 # Compatibility and migrations
 
-Nesso's data formats don't all change with each app release, so their versions are separate from the app version and the plugin API. Being able to read older data does not mean an older app can read newer data or run newer plugins.
+Nesso's data formats don't all change with each app release, so their versions are separate from the app version and the plugin API. Support for older data works in one direction only, which means an older app might not read newer data or run newer plugins.
 
 ## Data
 
-New releases retain the migration steps needed to read valid data in supported older formats. Startup and backup restoration share those steps for the app's persisted records. Unknown versions and malformed records are reported rather than silently overwritten.
+New releases keep the migration steps they need to read valid data in supported older formats, and startup and backup restoration use the same steps for the app's persisted records. If a record has an unknown version or is malformed, Nesso reports it instead of silently overwriting it.
 
-When startup upgrades a persisted record, it saves a backup of the originals before writing the new version. If that backup fails, the upgrade is not saved. Reading or converting a file in memory does not change its source or require a backup.
+When startup upgrades a persisted record, it first saves a backup of the originals and then writes the new version. If that backup fails, the upgrade is not saved. Reading or converting a file in memory needs no backup because it leaves the source unchanged.
 
-Migrations preserve saved information and its meaning, except where an explicitly documented retention policy removes older data. [Review](../plugins/review/README.md#api), for example, keeps the learning state and the latest 20 review logs. The scheduler uses the learning state rather than those logs to plan future reviews. Older logs are discarded on the next rating, so Review does not promise to preserve a complete history.
+Migrations preserve saved information and its meaning. The only exception is older data removed by a documented retention policy, as in [Review's progress records](../plugins/review/README.md#api).
 
-Plugins manage their own private data formats and migrations. The host preserves their payloads when migrating storage records but does not interpret their fields or upgrade the plugin's code.
+Plugins own their private data formats and migrations. When the host migrates storage records, it keeps plugin payloads intact without interpreting their fields or upgrading the plugin's code.
 
 ## Plugin API
 
-Nesso supports only the current plugin API version. There are no adapters or feature negotiation, and no promised support period for superseded API versions. A plugin targeting an unsupported version is not loaded, but its installed record and private data are retained.
+Nesso supports only the current plugin API version. It has no adapters or feature negotiation, and superseded API versions have no promised support period. If a plugin targets an unsupported version, Nesso doesn't load it but keeps its installed record and private data.
 
-An `apiVersion` describes the complete contract, including behavior and permissions. Plugins already compatible with that version remain compatible as the app changes. A change that requires a newer host gets a new API version, even if it only adds a method. Release notes explain incompatible changes and any plugin updates they require. An API update does not grant extra permissions or migrate private plugin data.
+An `apiVersion` describes the complete contract, including behavior and permissions, and a plugin that is compatible with that version stays compatible as the app changes. Any change that requires a newer host therefore gets a new API version, even if it only adds a method. Release notes explain incompatible changes and any plugin updates they require. An API update does not grant extra permissions or migrate private plugin data.
 
 ## Downgrades and backups
 
-Neither the app nor plugins automatically convert newer data back to an older format. Returning to an older version requires originals or a backup from before the upgrade that the older version can read. That snapshot does not include changes made after it was saved. A matching `apiVersion` does not guarantee that an older plugin can read private data written by a newer plugin.
+Neither the app nor plugins convert newer data back to an older format automatically, so returning to an older version requires the originals or a backup from before the upgrade that the older version can read. That snapshot leaves out any changes made after it was saved. For plugins, a matching `apiVersion` does not guarantee that an older plugin can read private data written by a newer one.
 
-An app backup contains the document and its workspace, preferences, conversation, and private plugin data. It does not contain provider credentials or installed plugin packages. Restoring it therefore restores saved data, not the whole installation or earlier plugin code.
+An app backup contains the document and its workspace, preferences, conversation, and private plugin data, but it leaves out provider credentials and installed plugin packages. Restoring a backup therefore brings back saved data without restoring the whole installation or earlier plugin code.
 
-AI connection records use storage format version 1. On the first read of a valid unversioned record, the app preserves its exact encrypted bytes next to `ai-connections.enc` as `ai-connections.enc.backup-<sha256>`, where the hash identifies the encrypted original. The backup must be durably saved before the upgraded record is written. These encrypted copies stay on the device, outside app backups and data-folder transfers; they require the same system credential storage as the original. Unsupported or malformed records are left untouched.
-
-Installed plugin records use envelope format version 1, which wraps the verified package with its enabled state and npm provenance. Unversioned records are converted in memory when read and stay unchanged until their next change. Before enabling or disabling the plugin writes version 1, the app durably saves the exact original next to it as `<record>.json.backup-<sha256>`, where the hash identifies the original bytes. Installing, updating, or removing the plugin replaces or removes its record without this backup. Backups stay on the device, outside app backups. Unsupported or malformed records are reported and never rewritten automatically; reinstalling the same plugin replaces them.
-
-The data location configuration uses format version 1, which includes any in-progress transfer journal. Unversioned configurations are converted in memory when read and stay unchanged until the next move or transfer cleanup. Before that write, the app durably saves the exact original next to `data-location.json` as `data-location.json.backup-<sha256>`, where the hash identifies the original bytes. This copy stays in the app's local profile folder and is never transferred. Unsupported or malformed configurations stop startup before any transfer cleanup or write, and the app never falls back to an empty data folder.
+AI connections, installed packages, and data-location configuration are device-local records. Before upgrading one of them, Nesso saves a copy of the original in the desktop profile, and these copies aren't part of app backups or data-folder transfers. See the [data folder layout](architecture.md#from-memory-to-disk) and the format index below.
 
 ## Data formats
 
-A format gets its own version when it can outlive the code that wrote it or pass between independently updated components, and its meaning needs to be preserved. Structures that always change together can share a version. Disposable state such as window geometry can remain unversioned when falling back to defaults is an acceptable recovery. A version change is needed when the format's structure or meaning requires an explicit conversion.
+A format gets its own version when its meaning must be preserved and it can outlive the code that wrote it or pass between components that update independently. That version changes whenever the format's structure or meaning requires an explicit conversion. Structures that always change together can share a version, while disposable state such as window geometry can stay unversioned if falling back to defaults is an acceptable recovery.
 
-Each module handles validation and conversion for the formats it uses. The table below links to that code. "No migrations yet" describes an already versioned format with no conversion steps, while "Not versioned" means the format has no version field.
+Each module validates and converts the formats it uses, and the table below links to that code. "No migrations yet" means the format is versioned but has no conversion steps. "Not versioned" means the format has no version field.
 
 | Format or contract                                        | Current schema                                                                                                          | Migrations                                                                             |
 | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |

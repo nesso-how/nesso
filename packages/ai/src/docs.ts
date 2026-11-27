@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 export const aiDocumentationTopic = z.enum([
   'nesso',
+  'guide',
   'ai',
   'plugin',
   'plugin-example',
