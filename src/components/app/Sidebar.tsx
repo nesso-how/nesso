@@ -196,11 +196,12 @@ export function AppSidebar({
   const row = (map: WorkspaceMap, siblings: readonly WorkspaceMap[], shortcut = false) => {
     const key = mapKey(map.id, shortcut)
     const isPinned = workspace.pinnedMapIds.includes(map.id)
+    const group = shortcut ? groups.find(({ id }) => id === map.groupId) : undefined
     const item: MapDrag = { kind: shortcut ? 'pin' : 'map', id: map.id }
     return (
       <ListRow
         key={map.id}
-        className="map-drop has-[[aria-current]]:bg-pressed"
+        className="map-drop min-h-9 has-[[aria-current]]:bg-pressed"
         data-map-row={map.id}
         {...dropTarget(key, item)}
       >
@@ -210,7 +211,7 @@ export function AppSidebar({
           aria-current={workspace.activeMapId === map.id ? 'page' : undefined}
         >
           <ListRowTitle>{map.name}</ListRowTitle>
-          <ListRowDetail>{t('conceptCount', { count: map.members.length })}</ListRowDetail>
+          {group && <ListRowDetail className="font-sans break-words">{group.name}</ListRowDetail>}
         </ListRowButton>
         {actions(
           key,
