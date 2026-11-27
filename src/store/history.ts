@@ -192,7 +192,7 @@ const restore = (
   if (workspace !== state.workspace)
     checkWorkspaceChanges(graph, workspace, state.workspace, changes)
   const visibility = pruneMapVisibility(state, workspace)
-  const mapGraph = materialize(graph, workspace, state, visibility)
+  const mapGraph = materialize(graph, workspace, state, visibility, changes)
   return {
     ...state,
     graph,
