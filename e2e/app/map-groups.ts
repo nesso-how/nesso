@@ -58,6 +58,8 @@ export async function verifyMapGroups(context: CheckContext) {
     `[...((${rows(sectionName)})?.querySelectorAll('[data-map-row] > button > span:first-child') ?? [])].map(title => title.textContent).join()`
   const mapButton = (sectionName: string, name: string) =>
     `[...(${rows(sectionName)}).querySelectorAll('[data-map-row] > button')].find(button => button.firstChild.textContent === ${JSON.stringify(name)})`
+  const energyDetail = (sectionName: string) =>
+    `(${mapButton(sectionName, 'Energy')}).children[1]?.textContent ?? null`
   const block = (sectionName: string) => `(${section(sectionName)}).closest('[data-map-section]')`
   const groupOrder = `[...document.querySelectorAll('[data-map-section="group"] button[aria-controls]')].map(button => button.textContent.trim()).join()`
   type Point = { x: number; y: number }
@@ -132,6 +134,13 @@ export async function verifyMapGroups(context: CheckContext) {
   await ready(
     `!!(${actions(pinned)}) && !!(${actions(group)}) && !document.querySelector('[role="menu"]')`,
   )
+  assert.equal(await evaluate(energyDetail(pinned)), group)
+  assert.equal(await evaluate(energyDetail(group)), null)
+  const graphTitle = element('[data-slot="sidebar-inner"] button > span:first-child', 'Graph')
+  assert.match(
+    await evaluate<string>(`(${graphTitle}).nextElementSibling.textContent`),
+    /^\d+ concepts?$/,
+  )
 
   await click(actions(group))
   await ready(`!!(${move})`)
@@ -143,6 +152,8 @@ export async function verifyMapGroups(context: CheckContext) {
     `document.activeElement===(${actions(ungrouped)}) && !document.querySelector('[role="menu"]')`,
   )
   assert.equal(await evaluate(`!!(${actions(pinned)}) && !(${actions(group)})`), true)
+  assert.equal(await evaluate(energyDetail(pinned)), null)
+  assert.equal(await evaluate(energyDetail(ungrouped)), null)
   await click(actions(ungrouped))
   await assignGroup()
 
