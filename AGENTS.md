@@ -1,6 +1,6 @@
 # Nesso
 
-See [README.md](README.md) for the product overview, architecture, and package documentation index.
+See [README.md](README.md) for the product overview and [docs/architecture.md](docs/architecture.md) for architecture and the package index.
 
 ## Code
 

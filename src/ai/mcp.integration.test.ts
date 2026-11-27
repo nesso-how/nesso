@@ -162,6 +162,7 @@ test('MCP reads are immediate; edits and shared history require consent and reje
   const topics = aiTools.read_docs.inputSchema.shape.topic.options
   assert.deepEqual(topics, [
     'nesso',
+    'guide',
     'ai',
     'plugin',
     'plugin-example',

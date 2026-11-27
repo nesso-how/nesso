@@ -1,12 +1,12 @@
 # @nesso-how/base-vocab
 
-Base's default relation vocabulary plugin: `linksTo`, `partOf`, `causes`, `kindOf`, `dependsOn`, `exampleOf`, `contradicts`, `defines`, `enables`, and `precedes`.
+The plugin for Base, the default relation vocabulary. It defines `linksTo`, `partOf`, `causes`, `kindOf`, `dependsOn`, `exampleOf`, `contradicts`, `defines`, `enables`, and `precedes`.
 
 ## Usage
 
-The build supplies the manifest and `definition.json` data. The host parses and validates the definition without executing it. Its default type is `linksTo`; the graph renderer hides the active vocabulary's default relation label. See the [plugin guide](../../packages/plugin/README.md).
+The build supplies the manifest and the `definition.json` data, which the host parses and validates without executing. The default type is `linksTo`, and the graph renderer hides the label of the active vocabulary's default relation. See the [plugin guide](../../packages/plugin/README.md).
 
-Display labels are supplied in English, Italian, and Simplified Chinese in `src/labels.json`. They follow the app locale without changing the canonical labels or stable IRIs saved in the graph. User-defined relation types are not translated.
+Display labels in English, Italian, and Simplified Chinese live in `src/labels.json` and follow the app locale, while the canonical labels and stable IRIs saved in the graph stay the same. User-defined relation types are not translated.
 
 ## API
 

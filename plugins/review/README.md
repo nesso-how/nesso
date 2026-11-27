@@ -1,20 +1,16 @@
 # @nesso-how/review
 
-Isolated action plugin for spaced-repetition practice of a map’s concepts without changing the graph.
+An isolated action plugin for spaced-repetition practice of a map’s concepts. It leaves the graph unchanged.
 
 ## Usage
 
-Open the bundled **Review** action from a map’s actions. The overview includes every concept in that map, with new and due concepts first. Start a round and recall each concept: when it has in-map connections, the prompt lists their relation types and directions with the other concepts hidden, and also asks for an explanation if the concept has notes; otherwise it asks only for an explanation. Reveal its notes and in-map connections, then choose **Again / Hard / Good / Easy**. Space reveals; keys 1–4 rate. **Undo rating** or Backspace restores the concept’s previous progress and returns to it revealed for a new rating; it steps back through the round’s ratings, including from the completion summary, until the round ends or a new one starts. Escape or **End session** finishes the round immediately and returns to the overview, keeping completed reviews and leaving remaining concepts available.
-
-The action badge counts new and due concepts in its target map, even with the panel closed. It updates after progress or graph changes and when the next scheduled concept becomes due; zero counts are hidden.
-
-Each round covers its currently due concepts once and returns to the overview. Ratings save progress shared across overlapping maps; closing the panel discards only the unfinished round. Progress is private plugin data, excluded from JSON-LD and graph history. Invalid records or failed writes block further ratings until progress is explicitly reloaded, without advancing the round or overwriting saved data.
+See [Review in the map actions reference](../../docs/guide.md#review) for recall prompts, ratings, and keyboard shortcuts.
 
 ## API
 
-- `create()`: factory contributing the `review` action with an isolated React panel. Metadata and `storage`/`ui` access declarations live in `package.json`; localized action labels and panel messages live in `src/index.ts` and `src/i18n.ts`.
-- `createReview(storage)`: plugin-local scheduler using pinned `ts-fsrs@6.0.0` (FSRS-6, default weights), 90% retention, 1-minute/10-minute learning steps, a 10-minute relearning step, a 36,500-day maximum interval, and no fuzzing.
-- `reviewBadge(input)`: readonly count and next refresh time using the same progress validation as the panel, without initializing FSRS.
-- Each concept’s first rating creates a concept-associated `progress` record; subsequent ratings atomically update its card and keep only its 20 most recent review log entries. Version 1 records, which kept every entry, are read as version 2 by keeping their latest 20 entries and are rewritten on the concept's next rating. The host owns persistence and retains records after concept deletion; the plugin owns its payload schema and explicit cleanup.
+- `create()`: factory contributing the `review` action with an isolated React panel. Metadata and `storage`/`ui` access declarations live in `package.json`, while localized action labels and panel messages live in `src/index.ts` and `src/i18n.ts`.
+- `createReview(storage)`: plugin-local scheduler using pinned `ts-fsrs@6.0.0` (FSRS-6 with default weights), 90% retention, learning steps of 1 minute and 10 minutes, a 10-minute relearning step, a maximum interval of 36,500 days, and no fuzzing.
+- `reviewBadge(input)`: returns a readonly count and the next refresh time, using the same progress validation as the panel without initializing FSRS.
+- A concept’s first rating creates a `progress` record associated with that concept, and later ratings update its card atomically while keeping only the 20 most recent review log entries. Version 1 records, which kept every entry, are read as version 2 with their latest 20 entries and rewritten on the concept's next rating. The host owns persistence and keeps records after a concept is deleted, while the plugin owns its payload schema and is responsible for cleaning up its records.
 
 See [src/index.ts](src/index.ts), [src/scheduler.ts](src/scheduler.ts), and the [plugin guide](../../packages/plugin/README.md).
