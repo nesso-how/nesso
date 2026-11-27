@@ -21,6 +21,11 @@ See [README.md](README.md) for the product overview, architecture, and package d
 - When adding or changing an external link in the app, review `electron/links.ts` and update its allowlist if the destination is not already covered. Keep external links restricted to trusted HTTPS destinations and open them in the system browser.
 - After code changes, run `pnpm analyze --summary`. Inspect findings introduced by the branch with `pnpm analyze audit --base origin/main` and verify unused exports with `pnpm analyze dead-code --trace FILE:EXPORT` before deleting them. Do not run Fallow autofix or add suppressions to make a check pass.
 
+## Self-improvement
+
+- When tooling or instructions get in your way, such as a missing command or PATH entry, a documented command that fails, or an outdated or conflicting rule, report it in your reply with a concrete fix instead of silently working around it.
+- When the user repeats a correction or states a durable invariant the code does not show, propose the smallest fix, preferring a script, check, or config change over a new rule, and removing rules that no longer hold. Edit instruction files only after approval.
+
 ## Release
 
 - Release the app, UI, plugin SDK, and official example together from clean `main` using `pnpm release`; see `pnpm release --help` for options and behavior. Keep published packages in `scripts/release-packages.json`, in dependency-first publication order.
