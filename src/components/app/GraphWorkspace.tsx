@@ -13,6 +13,7 @@ import {
 import { ConceptMap, type ConceptMapHandle } from '@nesso-how/concept-map'
 import { KnowledgeGraph, type KnowledgeGraphHandle } from '@nesso-how/knowledge-graph'
 import { newIri, type Position } from '@nesso-how/schema'
+import { canCutSelection } from '../../graph/commands.ts'
 import { useGraphInteractions } from '../../graph/interactions.ts'
 import type { HostOperation, HostStore } from '../../store/types.ts'
 import { defaultMapName } from '../../store/operations.ts'
@@ -63,6 +64,8 @@ export function GraphWorkspace({
   }, [commands])
   const rendererCommands = useMemo(
     () => ({
+      canCut: canCutSelection,
+      selectAll: () => currentCommands.current.selectAll(),
       deleteSelection: () => currentCommands.current.deleteSelection(),
       copy: (cut?: boolean) => currentCommands.current.copy(cut),
       paste: (text?: string, position?: Position) => currentCommands.current.paste(text, position),

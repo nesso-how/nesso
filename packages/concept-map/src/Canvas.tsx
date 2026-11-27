@@ -140,7 +140,6 @@ export function Canvas({
   )
   const indexed = useMemo(() => indexGraph(displayed, vocabs, locale), [displayed, vocabs, locale])
   const selected = useNesso((state) => state.selected)
-  const conceptCount = useNesso((state) => state.graph.concepts.length)
   const map = useNesso((state) => state.workspace.activeMapId)
   const defaultTypeId = useNesso(
     (state) => state.vocabs.find(({ id }) => id === state.preferences.activeVocabId)?.defaultTypeId,
@@ -483,8 +482,8 @@ export function Canvas({
   }, [connection, map, flow])
 
   const canDelete = interactive && selected.length > 0
-  const canCut =
-    canDelete && selected.filter(({ kind }) => kind === 'concept').length < conceptCount
+  const canCutSelection = useNesso(commands.canCut)
+  const canCut = interactive && canCutSelection
   const selectedConcepts = graph.concepts.filter((concept) =>
     selected.some(({ kind, id }) => kind === 'concept' && id === concept.id),
   )
@@ -584,17 +583,6 @@ export function Canvas({
   const handleDelete = () => {
     setContextMenu(null)
     commands.deleteSelection()
-  }
-
-  const selectAll = () => {
-    const { mapGraph } = store.getState()
-    selection([
-      ...mapGraph.concepts.map(({ id }) => ({ kind: 'concept' as const, id })),
-      ...mapGraph.relations.map((relation) => ({
-        kind: 'relation' as const,
-        id: relationKey(relation),
-      })),
-    ])
   }
 
   const addConceptAt = (point: { x: number; y: number }, selection = store.getState().selected) => {
@@ -1323,7 +1311,7 @@ export function Canvas({
           {
             label: t('selectAll'),
             icon: ListChecks,
-            onClick: selectAll,
+            onClick: commands.selectAll,
             disabled: !interactive || visibleCount === 0,
           },
           {

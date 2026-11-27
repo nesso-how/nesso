@@ -1018,6 +1018,7 @@ test('invalid state batches reject every preceding change without notification',
     { kind: 'preferences.disabledBundledActionPlugins', value: 'notes' as never },
     { kind: 'preferences.disabledBundledActionPlugins', value: [''] },
     { kind: 'preferences.disabledBundledActionPlugins', value: ['notes', 'notes'] },
+    { kind: 'preferences.unknown' as never },
     { kind: 'document.reset', id: '' },
     { kind: 'concept.position', id: 'urn:n1', value: { x: NaN, y: 0 } },
   ]

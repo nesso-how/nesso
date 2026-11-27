@@ -14,11 +14,12 @@ import { notifications } from '../notifications/index.ts'
 import { useNessoStore } from '../store/index.ts'
 import { translate } from '../i18n/index.ts'
 import {
+  canCutSelection,
   copyGraph,
   deleteOperations,
   deletionNeedsConfirmation,
-  graphSelection,
   pasteOperations,
+  selectAllInView,
   selectionCoversGraph,
 } from './commands.ts'
 
@@ -59,22 +60,12 @@ export function useGraphInteractions(
       tone: 'warning',
       title: translate(store.getState().preferences.locale ?? defaultLocale)(key),
     })
-  const canCut = () => {
-    const { selected, graph } = store.getState()
-    return (
-      selected.length > 0 &&
-      selected.filter(({ kind }) => kind === 'concept').length < graph.concepts.length
-    )
-  }
   const remove = () => {
     const state = store.getState()
     if (deletionNeedsConfirmation(state)) onConfirmDelete?.()
     else store.applyOperations(deleteOperations(state))
   }
-  const selectAll = useCallback(() => {
-    const { mapGraph } = store.getState()
-    store.setSelection(graphSelection(mapGraph))
-  }, [store])
+  const selectAll = useCallback(() => selectAllInView(store), [store])
   useEffect(() => {
     if (readOnly) return
     const onKeyDown = (event: KeyboardEvent) => {
@@ -98,14 +89,16 @@ export function useGraphInteractions(
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [readOnly, store, focusRef, selectAll])
   const commands = {
+    selectAll,
     deleteSelection: () => {
       if (readOnly) return
-      const { selected, mapGraph } = store.getState()
-      if (selectionCoversGraph(selected, mapGraph)) onDeleteMap?.()
-      else if (canCut()) remove()
+      const state = store.getState()
+      if (selectionCoversGraph(state.selected, state.mapGraph)) onDeleteMap?.()
+      else if (canCutSelection(state)) remove()
     },
     copy: async (cut = false, event?: ClipboardEvent<HTMLDivElement>) => {
-      if (cut && (readOnly || !canCut())) return
+      const before = store.getState()
+      if (cut && (readOnly || !canCutSelection(before))) return
       if (
         event &&
         (event.defaultPrevented ||
@@ -113,7 +106,6 @@ export function useGraphInteractions(
           window.getSelection()?.isCollapsed === false)
       )
         return
-      const before = store.getState()
       const element = canvas.current
       const version = clipboardEpoch.current
       const text = copyGraph(before.mapGraph, before.selected)
