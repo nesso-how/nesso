@@ -7,3 +7,5 @@ Nesso is developed with OpenCode. Each step is a command in [`.opencode/commands
 3. `/app` opens the app, or the desktop app with `desktop`, for the final human review of intent, UX, architecture, tests, and docs.
 4. `/pr` commits, pushes, and opens the PR; `auto` enables auto-merge.
 5. `/release` publishes; see the [release guide](releases.md).
+
+Periodically, not per issue, `/retro [N]` checks whether the workflow adds entropy. It runs `pnpm entropy` over the last N sessions and the commits they produced, investigates the metrics that moved against the previous window, and proposes changes to rules, scripts, or checks for approval one by one.

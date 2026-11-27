@@ -5,3 +5,7 @@ packages:
 
 allowBuilds:
   electron-winstaller: false
+
+permissions:
+  fallow:
+    skills: false
