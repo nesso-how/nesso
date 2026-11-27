@@ -13,7 +13,16 @@ Run either action from a map's context menu in the Explorer, or from its actions
 
 ## Build your own
 
-Use Node.js 24. Copy this example into a separate project. Choose your own package name, update the metadata and action IDs/labels, and remove any permissions you do not use. Then install dependencies and build:
+Use Node.js 24. The published npm package includes the source, TypeScript configuration, and Vite configuration. Replace `X.Y.Z` below with the target desktop app version from Settings → About or the MCP server's reported version, including any prerelease suffix such as `-beta.31`.
+
+```sh
+npm pack @nesso-how/plugin-example@X.Y.Z
+mkdir my-nesso-plugin
+tar -xzf nesso-how-plugin-example-X.Y.Z.tgz -C my-nesso-plugin --strip-components=1
+cd my-nesso-plugin
+```
+
+If you already have a source checkout for that release, you can copy its `packages/plugin/example` directory into a separate project instead. Choose your own package name, update the metadata and action IDs/labels, and remove any permissions you do not use. Then install dependencies and build:
 
 ```sh
 npm install
