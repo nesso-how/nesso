@@ -28,7 +28,7 @@ const fixture = (
     check = callback
     return { unref() {} } as NodeJS.Timeout
   })
-  context.mock.method(console, 'error', () => {})
+  const errors = context.mock.method(console, 'error', () => {})
   const updater = Object.assign(new EventEmitter(), {
     autoDownload: true,
     autoInstallOnAppQuit: true,
@@ -46,7 +46,7 @@ const fixture = (
     installOnQuit,
   )
   if (startupComplete) updates.start()
-  return { updater, nativeUpdater, updates, notify, interval, check: () => check() }
+  return { updater, nativeUpdater, updates, notify, interval, errors, check: () => check() }
 }
 
 test('updates check once startup completes and hourly without overlap, retrying after failure', async (context) => {
@@ -118,14 +118,17 @@ test('updates download automatically but restart only after confirmation, valida
   assert.equal(updater.quitAndInstall.mock.callCount(), 1)
 })
 
-test('failed downloads are reported and retried automatically at the next interval', async (context) => {
-  const { updater, updates, check } = fixture(context)
+test('failed downloads are reported once and retried automatically at the next interval', async (context) => {
+  const { updater, updates, errors, check } = fixture(context)
+  const failure = new Error('Download failed')
   updater.downloadUpdate.mock.mockImplementationOnce(async () => {
-    throw new Error('Download failed')
+    updater.emit('error', failure)
+    throw failure
   })
   updater.emit('update-available', { version })
   await setImmediate()
   assert.deepEqual(updates.getState(), { status: 'downloading', version, error: 'download' })
+  assert.equal(errors.mock.callCount(), 1)
   updates.restart()
   updates.install(true)
   assert.equal(updater.quitAndInstall.mock.callCount(), 0)

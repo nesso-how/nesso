@@ -3,6 +3,7 @@ import { readFileSync, renameSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { z } from 'zod'
 import { ElectronError } from '../errors.ts'
+import { logError } from '../logs.ts'
 
 const rectangle = z.strictObject({
   x: z.int(),
@@ -16,7 +17,7 @@ const schema = z.strictObject({
   maximized: z.boolean(),
 })
 const report = (error: unknown) => {
-  console.error(
+  logError(
     new ElectronError([
       { path: 'windowState', message: error instanceof Error ? error.message : String(error) },
     ]),

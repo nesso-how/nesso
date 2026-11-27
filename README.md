@@ -180,6 +180,8 @@ If a suspected plugin problem prevents startup, quit Nesso completely and relaun
 
 Installed packages and documents are preserved. Quit and relaunch without the flag to resume normal operation.
 
+To report a bug, attach the logs from Help → Open Logs Folder. They contain error details, not your data, and stay on your device.
+
 ## License
 
 [MIT](LICENSE) © 2026 Omar Desogus and Paolo Manfredotti.

@@ -10,6 +10,7 @@ import { NessoError } from '@nesso-how/errors'
 import { persistenceSections, type PersistenceSection } from '../../shared/persistence.ts'
 import { createFileStorage } from './file-storage.ts'
 import { ElectronError } from '../errors.ts'
+import { logError } from '../logs.ts'
 import type { TrustedRequest } from '../ipc.ts'
 import { onDocumentNavigation } from '../shell/navigation.ts'
 import type { DataLocation } from './data-location/index.ts'
@@ -137,7 +138,7 @@ export function connectDesktopPersistence(
         .catch((error) => {
           closing = false
           quitting = false
-          console.error(
+          logError(
             new ElectronError([
               {
                 path: 'storage',

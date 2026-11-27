@@ -9,6 +9,7 @@ import type { NotesLinkBridge } from '../shared/link-policy'
 import type { BackupBridge } from '../shared/backup'
 import type { MenuBridge } from '../shared/menu'
 import type { WhatsNewBridge } from '../shared/whats-new'
+import type { LogBridge } from '../shared/logs'
 
 declare global {
   interface Window {
@@ -23,5 +24,6 @@ declare global {
     nessoBackups?: BackupBridge
     nessoMenu?: MenuBridge
     nessoWhatsNew?: WhatsNewBridge
+    nessoLog?: LogBridge
   }
 }
