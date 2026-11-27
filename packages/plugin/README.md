@@ -10,7 +10,7 @@ Use Node.js 24. Add the SDK to an existing TypeScript project with:
 npm install --save-dev @nesso-how/plugin
 ```
 
-For a new project, start with the [standalone example](example/), which includes TypeScript, Vite, and React configuration. Plugins can be installed locally through MCP without publishing to npm.
+For a new action plugin, start with the [standalone example](example/README.md#build-your-own), which includes TypeScript, Vite, and React configuration. Through MCP, its setup instructions are available under the `plugin-example` topic of `read_docs`. Plugins can be installed locally through MCP without publishing to npm.
 
 The app, UI package, SDK, and official example share a release version on npm's default `latest` channel, including beta versions. Plugin compatibility is identified separately by `nesso.apiVersion`; matching the app's exact version is not required.
 
@@ -30,11 +30,11 @@ Use an agent such as Claude Code or Codex that can create files and run commands
 
 > Build a Nesso plugin that [describe the behavior]. Call `read_docs` for `plugin` and `plugin-example` through Nesso MCP and follow the documented workflow, then propose a local installation for my approval in Nesso.
 
-The agent should work in a separate project, choose a unique package name, and request only the permissions the plugin needs. For a panel, also read `read_docs` with `{"topic":"ui"}`. Follow [Build and test](#build-and-test), then [Install or update through MCP](#install-or-update-through-mcp). Nesso reads the finished package; it never installs dependencies or runs build scripts.
+The agent should work in a separate project, choose a unique package name, and request only the permissions the plugin needs. For a panel, also read `read_docs` with `{"topic":"ui"}`. See [Examples by use case](#examples-by-use-case) for relevant implementations. Follow [Build and test](#build-and-test), then [Install or update through MCP](#install-or-update-through-mcp). Nesso reads the finished package; it never installs dependencies or runs build scripts.
 
 ### By hand
 
-Copy the [standalone example](example/) into a separate project and install its dependencies:
+Copy the [standalone example](example/README.md#build-your-own) into a separate project and install its dependencies:
 
 ```sh
 npm install
@@ -151,6 +151,15 @@ Local plugins stay installed across restarts and appear in Settings → Plugins 
 To update a local plugin the user has asked to replace, call `plugins`, find its entry with `local: true`, and pass its current `contentId` as `replacing` alongside `directory`. MCP cannot replace or shadow npm-installed or bundled plugins; use a different package name for your local copy.
 
 Try the installed action from a map's actions menu, or choose the theme/vocabulary in Settings. Check that the plugin handles cancellation and stale-state errors, closes cleanly, and restores saved data after restarting Nesso.
+
+### Examples by use case
+
+- **Panel with persistent data:** [Notes](https://github.com/nesso-how/nesso/blob/main/plugins/notes/README.md#api) shows autosave and map-scoped storage. [Review](https://github.com/nesso-how/nesso/blob/main/plugins/review/README.md#api) shows action badges, concept-scoped progress, and a private data migration.
+- **Graph import or export:** Read the `schema` topic in `read_docs` for the JSON-LD profile. [Import](https://github.com/nesso-how/nesso/blob/main/plugins/import/README.md#api) builds an atomic batch of graph edits from a file; [Export](https://github.com/nesso-how/nesso/blob/main/plugins/export/README.md#api) saves JSON-LD or a PNG through the host.
+- **Theme or vocabulary:** [Paper](https://github.com/nesso-how/nesso/blob/main/plugins/paper-theme/README.md#api) shows theme tokens and metrics. [Base Vocab](https://github.com/nesso-how/nesso/blob/main/plugins/base-vocab/README.md#api) shows stable relation IRIs and translated labels.
+- **Update an existing plugin:** Read the [compatibility guide](https://github.com/nesso-how/nesso/blob/main/docs/compatibility.md#plugin-api) for supported API versions and how upgrades, downgrades, and backups affect private plugin data.
+
+For source that matches a specific Nesso release, use its `vX.Y.Z` Git tag instead of `main`.
 
 ## Action API
 
