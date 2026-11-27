@@ -10,13 +10,8 @@ import {
   type PersistenceSection as Section,
   type PersistenceStorage,
 } from '../../shared/persistence.ts'
-import {
-  checkGraph,
-  checkWorkspace,
-  sameGraph,
-  samePreferences,
-  sameWorkspace,
-} from './operations.ts'
+import { sameGraph, samePreferences, sameWorkspace } from './operations.ts'
+import { checkGraph, checkWorkspace } from './validation.ts'
 import { parsePluginStorage } from './plugin-storage.ts'
 import {
   migrateConversation,

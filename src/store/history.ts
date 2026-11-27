@@ -15,14 +15,12 @@ import {
   type MapChange,
 } from './delta.ts'
 import {
-  checkGraph,
-  checkWorkspace,
   materialize,
   pruneCollapsedMapGroups,
   pruneMapVisibility,
   reconcileSelection,
 } from './operations.ts'
-import { parseWorkspace } from './settings.ts'
+import { checkGraphChanges, checkWorkspaceChanges } from './validation.ts'
 
 export const historyLimit = 100
 
@@ -150,7 +148,14 @@ const restore = (
     relationTypes === state.graph.relationTypes
       ? state.graph
       : { concepts, relations, relationTypes }
-  if (graph !== state.graph) checkGraph(graph)
+  const toward = <T>(list: readonly Change<T>[]) =>
+    forward ? list : list.map(({ id, before, after }) => ({ id, before: after, after: before }))
+  const changes = {
+    concepts: toward(delta.concepts),
+    relations: toward(delta.relations),
+    relationTypes: toward(delta.relationTypes),
+  }
+  if (graph !== state.graph) checkGraphChanges(graph, changes)
   const maps = restoreViews(state.workspace.maps, delta.maps, forward)
   const pinnedMapIds = applyChanges(
     state.workspace.pinnedMapIds,
@@ -184,10 +189,8 @@ const restore = (
           activeMapId,
           ...(collapsed && { collapsedMapGroupIds: collapsed }),
         })
-  if (workspace !== state.workspace) {
-    parseWorkspace(workspace)
-    checkWorkspace(graph, workspace)
-  }
+  if (workspace !== state.workspace)
+    checkWorkspaceChanges(graph, workspace, state.workspace, changes)
   const visibility = pruneMapVisibility(state, workspace)
   const mapGraph = materialize(graph, workspace, state, visibility)
   return {

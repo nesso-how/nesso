@@ -56,7 +56,7 @@ const mapSchema = z.strictObject({
   groupId: z.string().min(1).optional(),
   relationBends: z.array(relationBendSchema).optional(),
 })
-const workspaceSchema = z
+export const workspaceSchema = z
   .strictObject({
     activeMapId: z.string().nullable(),
     maps: z.array(mapSchema),
