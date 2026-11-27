@@ -140,7 +140,7 @@ pnpm install
 pnpm desktop
 ```
 
-For desktop development with live reload, run `pnpm dev --host 127.0.0.1 --strictPort` and `pnpm desktop:dev` in separate terminals. To use a port other than 5173, pass `--port <port>` to `pnpm dev` and set `NESSO_DEV_PORT=<port>` for `pnpm desktop:dev`. For the web demo alone, use `pnpm dev`.
+For desktop development with live reload, run `pnpm dev --host 127.0.0.1 --strictPort` and `pnpm desktop:dev` in separate terminals. To use a port other than 5173, pass `--port <port>` to `pnpm dev` and set `NESSO_DEV_PORT=<port>` for `pnpm desktop:dev`. Development builds keep their data in `.nesso-dev/` in the checkout, separate from the installed app. For the web demo alone, use `pnpm dev`.
 
 Checks: `pnpm build`, `pnpm lint`, `pnpm test`, `pnpm test:e2e`, and `pnpm analyze --summary`.
 

@@ -13,6 +13,7 @@ dist
 dist-ssr
 dist-electron
 release
+.nesso-dev
 *.local
 /public/plugin-runner/
 /public/preinstalled/
