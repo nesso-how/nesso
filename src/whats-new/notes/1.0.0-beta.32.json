@@ -1,0 +1,17 @@
+{
+  "en": [
+    "When you first open a large **Graph**, the app stays more responsive as the layout settles. Editing a label or moving a concept in a small map is faster, even when the full graph is large.",
+    "Pinned maps now show their group name in the sidebar, so you can see where they belong.",
+    "When reporting a problem, find local diagnostic logs under **Help → Open Logs Folder**."
+  ],
+  "it": [
+    "Alla prima apertura di un **Grafo** di grandi dimensioni, l’app rimane più reattiva mentre dispone i concetti. Cambiare un’etichetta o spostare un concetto in una mappa piccola è più rapido anche quando il grafo completo è grande.",
+    "Le mappe fissate mostrano il nome del loro gruppo nella barra laterale, così puoi vedere a quale gruppo appartengono.",
+    "Se vuoi segnalare un problema, trovi i log di diagnostica locali in **Aiuto → Apri cartella dei log**."
+  ],
+  "zh-CN": [
+    "首次打开大型**图谱**时，应用在排列概念的过程中更流畅。即使整个图谱很大，在小型导图中修改标签或移动概念也更快。",
+    "侧边栏中的置顶导图现在会显示所属分组的名称，方便你一眼看出它们属于哪个分组。",
+    "报告问题时，可通过**帮助 → 打开日志文件夹**找到本地诊断日志。"
+  ]
+}

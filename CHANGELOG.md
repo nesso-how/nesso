@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.0.0-beta.32 — 2026-11-27
+
+### Documentation
+
+- **agents:** Add self-improvement rules (#403)
+- Reorganize project docs and add guide topic (#415)
+- Allow cleanup when merged changes match (#419)
+
+### Features
+
+- **mcp:** Guide agents building plugins (#400)
+- **desktop:** Write errors to local log files (#406)
+- **perf:** Add graph-size benchmarks and app profiling (#412)
+
+### Fixes
+
+- **sidebar:** Show groups on pinned maps (#399)
+- **desktop:** Keep dev data out of the installed profile (#401)
+
+### Performance
+
+- **graph:** Settle the first graph open across frames (#417)
+- **store:** Validate only what a batch changes (#418)
+- **store:** Scale single-item edits with the active map (#423)
+
 ## 1.0.0-beta.31 — 2026-11-26
 
 ### Features
