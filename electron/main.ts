@@ -38,10 +38,12 @@ import { createFileStorage } from './persistence/file-storage.ts'
 import { releasesUrl } from '../shared/link-policy.ts'
 
 const dev = !app.isPackaged && process.argv.includes('--dev')
-if (dev) {
-  nativeTheme.themeSource = 'light'
-  app.setPath('userData', path.join(app.getAppPath(), '.nesso-dev'))
-}
+if (dev) nativeTheme.themeSource = 'light'
+if (!app.isPackaged)
+  app.setPath(
+    'userData',
+    path.resolve(process.env.NESSO_USER_DATA || path.join(app.getAppPath(), '.nesso-dev')),
+  )
 const rendererUrl = appUrl(dev)
 const root = path.join(app.getAppPath(), 'dist')
 const startupCheckProfile = process.env.NESSO_STARTUP_CHECK_PROFILE
@@ -117,7 +119,7 @@ app
   .then(async () => {
     const trusted = createTrustedRequest(rendererUrl)
     connectLogs(app, ipcMain, trusted)
-    connectMenu(trusted, dev)
+    connectMenu(trusted, !app.isPackaged)
     connectNotesLinks(ipcMain, trusted, (url) => shell.openExternal(url))
     connectFiles(trusted)
     connectPlugins(trusted)

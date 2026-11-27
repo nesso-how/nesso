@@ -4,6 +4,6 @@
     "lib": ["ES2024", "DOM"],
     "types": ["node", "vite/client"]
   },
-  "include": ["**/*.test.ts", "src/desktop.d.ts"],
+  "include": ["**/*.test.ts", "scripts/perf.ts", "scripts/perf", "src/desktop.d.ts"],
   "exclude": ["node_modules"]
 }
