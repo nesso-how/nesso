@@ -805,7 +805,7 @@ export function Canvas({
           event.target.closest('.relation-group')
         ) {
           const id = event.target.closest('.react-flow__node')?.getAttribute('data-id')
-          const group = groups.find((group) => `#group:${group.key}` === id)
+          const group = groups.find((group) => `#group:${group.frame}` === id)
           if (group) {
             event.currentTarget.setPointerCapture(event.pointerId)
             groupDrag.current = {
