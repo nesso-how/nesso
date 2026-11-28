@@ -721,17 +721,18 @@ export function Canvas({
       if (!graph.concepts.some(({ id }) => id === focusTarget)) return
       const bounds = getNodesBounds([focusTarget])
       const viewport = getViewport()
-      if (bottomInset === 0) canvas.current?.focus()
-      const visibleArea = { width, height: height - bottomInset }
-      if (settledInViewport(framingUntil.current, bounds, viewport, visibleArea)) return
-      framingUntil.current = performance.now() + duration
-      if (bottomInset > 0)
+      if (bottomInset > 0) {
         void setCenter(
           bounds.x + bounds.width / 2,
           bounds.y + bounds.height / 2 + bottomInset / 2 / viewport.zoom,
           { zoom: viewport.zoom, duration, ease: easeOut, interpolate: 'linear' },
         )
-      else void fitView({ ...animatedFraming, nodes: [{ id: focusTarget }] })
+        return
+      }
+      canvas.current?.focus()
+      if (settledInViewport(framingUntil.current, bounds, viewport, { width, height })) return
+      framingUntil.current = performance.now() + duration
+      void fitView({ ...animatedFraming, nodes: [{ id: focusTarget }] })
     })
     return () => cancelAnimationFrame(frame)
   }, [
