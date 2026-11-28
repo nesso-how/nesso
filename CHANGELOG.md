@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0-beta.33 — 2026-11-28
+
+### Fixes
+
+- **concept-map:** Share frames between groups with the same members (#425)
+- **inspector:** Focus the concept when switching maps (#427)
+
 ## 1.0.0-beta.32 — 2026-11-27
 
 ### Documentation
