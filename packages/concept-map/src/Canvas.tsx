@@ -55,7 +55,7 @@ import { newIri, relationKey } from '@nesso-how/schema'
 import { ConceptNodeView } from './ConceptNodeView'
 import { GroupNodeView } from './GroupNodeView'
 import { RelationEdgeView } from './RelationEdgeView'
-import { arrange, type LayoutBounds } from './layout'
+import { arrange, inViewport, type LayoutBounds } from './layout'
 import { groupRelations } from './groups'
 import { ConnectionPreview } from './ConnectionPreview'
 import { GraphContextMenu } from './GraphContextMenu'
@@ -182,6 +182,7 @@ export function Canvas({
     [store],
   )
   const [focusTarget, setFocusTarget] = useState<string | null>(null)
+  const framingUntil = useRef(0)
   const [focusAfterReuse, setFocusAfterReuse] = useState(0)
   useLayoutEffect(() => {
     if (!focusAfterReuse) return
@@ -194,7 +195,7 @@ export function Canvas({
     getNodesBounds,
     setViewport,
     setCenter,
-    getZoom,
+    getViewport,
   } = useReactFlow()
   const userSelecting = useFlowStore((state) => state.userSelectionActive)
   const [sizes, setSizes] = useState<ConceptNodeSizes>({})
@@ -716,21 +717,21 @@ export function Canvas({
   useEffect(() => {
     if (!focusTarget || !nodesInitialized || !width || !height) return
     const frame = requestAnimationFrame(() => {
-      if (graph.concepts.some(({ id }) => id === focusTarget)) {
-        if (bottomInset > 0) {
-          const bounds = getNodesBounds([focusTarget])
-          const zoom = getZoom()
-          void setCenter(
-            bounds.x + bounds.width / 2,
-            bounds.y + bounds.height / 2 + bottomInset / 2 / zoom,
-            { zoom, duration, ease: easeOut, interpolate: 'linear' },
-          )
-        } else {
-          void fitView({ ...animatedFraming, nodes: [{ id: focusTarget }] })
-          canvas.current?.focus()
-        }
-      }
       setFocusTarget(null)
+      if (!graph.concepts.some(({ id }) => id === focusTarget)) return
+      const bounds = getNodesBounds([focusTarget])
+      const viewport = getViewport()
+      if (bottomInset === 0) canvas.current?.focus()
+      const visibleArea = { width, height: height - bottomInset }
+      if (settledInViewport(framingUntil.current, bounds, viewport, visibleArea)) return
+      framingUntil.current = performance.now() + duration
+      if (bottomInset > 0)
+        void setCenter(
+          bounds.x + bounds.width / 2,
+          bounds.y + bounds.height / 2 + bottomInset / 2 / viewport.zoom,
+          { zoom: viewport.zoom, duration, ease: easeOut, interpolate: 'linear' },
+        )
+      else void fitView({ ...animatedFraming, nodes: [{ id: focusTarget }] })
     })
     return () => cancelAnimationFrame(frame)
   }, [
@@ -744,7 +745,7 @@ export function Canvas({
     canvas,
     bottomInset,
     getNodesBounds,
-    getZoom,
+    getViewport,
     setCenter,
     duration,
   ])
@@ -1325,4 +1326,8 @@ export function Canvas({
       />
     </div>
   )
+}
+
+function settledInViewport(framingUntil: number, ...view: Parameters<typeof inViewport>) {
+  return performance.now() >= framingUntil && inViewport(...view)
 }

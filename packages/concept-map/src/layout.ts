@@ -201,3 +201,16 @@ export function arrange({
       ]),
   )
 }
+
+export function inViewport(
+  bounds: LayoutBounds,
+  { x, y, zoom }: { readonly x: number; readonly y: number; readonly zoom: number },
+  { width, height }: Size,
+) {
+  return (
+    bounds.x * zoom + x >= 0 &&
+    bounds.y * zoom + y >= 0 &&
+    (bounds.x + bounds.width) * zoom + x <= width &&
+    (bounds.y + bounds.height) * zoom + y <= height
+  )
+}

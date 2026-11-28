@@ -12,7 +12,8 @@ import {
 } from '@nesso-how/ui'
 import { Plus } from 'lucide-react'
 import type { WorkspaceMap } from '@nesso-how/core'
-import { useRef, useState } from 'react'
+import type { ConceptMapHandle } from '@nesso-how/concept-map'
+import { useRef, useState, type RefObject } from 'react'
 import { nessoStore, useNessoStore } from '@/store'
 import type { HostStore } from '@/store/types'
 import { maxMapNameLength } from '@/store/settings'
@@ -26,10 +27,12 @@ export function ConceptMaps({
   store = nessoStore,
   conceptIds,
   readonly = false,
+  renderer,
 }: {
   store?: HostStore
   conceptIds: readonly string[]
   readonly?: boolean
+  renderer?: RefObject<ConceptMapHandle | null>
 }) {
   const t = useTranslation(store)
   const workspace = useNessoStore((state) => state.workspace, store)
@@ -54,6 +57,9 @@ export function ConceptMaps({
           : [],
     },
   ].filter((group) => group.items.length > 0)
+  const focus = () => {
+    if (conceptIds.length === 1) renderer?.current?.focusConcept(conceptIds[0])
+  }
   const addTo = (mapId: string) =>
     store.applyOperations([
       ...conceptIds.map((conceptId) => ({
@@ -82,7 +88,10 @@ export function ConceptMaps({
               <ListRow key={map.id} className="min-h-0 has-[[aria-current]]:bg-accent">
                 <ListRowButton
                   className="py-1.5"
-                  onClick={() => store.setMap(map.id)}
+                  onClick={() => {
+                    store.setMap(map.id)
+                    focus()
+                  }}
                   aria-current={map.id === workspace.activeMapId ? 'page' : undefined}
                 >
                   <ListRowTitle>{map.name}</ListRowTitle>
@@ -125,6 +134,7 @@ export function ConceptMaps({
           if (!option) return
           if (option.create) store.createMap(option.name, conceptIds)
           else addTo(option.id)
+          focus()
           setOpen(false)
         }}
       >
