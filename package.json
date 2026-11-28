@@ -13,6 +13,7 @@
     "build": "pnpm build:plugins && tsc -b && vite build",
     "build:packages": "pnpm --filter \"./packages/*\" -r --if-present build",
     "build:plugins": "pnpm build:packages && node scripts/build-plugins.ts",
+    "typecheck": "tsc -b",
     "lint": "oxlint",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
