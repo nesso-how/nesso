@@ -436,6 +436,7 @@ export function Inspector({
           store={store}
           conceptIds={conceptIds}
           readonly={readonly}
+          renderer={renderer}
         />
       )}
       {concept && (

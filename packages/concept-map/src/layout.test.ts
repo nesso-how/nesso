@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { arrange, type LayoutBox } from './layout.ts'
+import { arrange, inViewport, type LayoutBox } from './layout.ts'
 
 const box = (
   id: string,
@@ -53,4 +53,14 @@ test('arrange separates overlapping free nodes without moving fixed ones', () =>
   const placed = [...positions].map(([id, position]) => ({ id, width: 100, height: 44, position }))
   assert.ok(!overlaps(placed[0], placed[1]))
   for (const node of placed) assert.ok(!overlaps(node, fixed[0]))
+})
+
+test('in viewport requires the whole scaled box inside the visible area', () => {
+  const bounds = { x: 100, y: 50, width: 100, height: 40 }
+  const size = { width: 400, height: 200 }
+  assert.ok(inViewport(bounds, { x: 0, y: 0, zoom: 1 }, size))
+  assert.ok(!inViewport(bounds, { x: 0, y: 0, zoom: 3 }, size))
+  assert.ok(!inViewport(bounds, { x: -150, y: 0, zoom: 1 }, size))
+  assert.ok(!inViewport(bounds, { x: 0, y: -60, zoom: 1 }, size))
+  assert.ok(!inViewport(bounds, { x: 0, y: 0, zoom: 1 }, { width: 400, height: 80 }))
 })
