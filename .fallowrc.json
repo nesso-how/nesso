@@ -55,6 +55,10 @@
         "patterns": ["packages/plugin/**", "packages/ui/**"]
       },
       {
+        "name": "core-contract",
+        "patterns": ["packages/core/src/types.ts", "packages/core/src/vocab.ts"]
+      },
+      {
         "name": "shared",
         "patterns": ["packages/**"]
       }
@@ -62,11 +66,11 @@
     "rules": [
       {
         "from": "host",
-        "allow": ["app-shared", "schema", "errors", "sdk", "shared"]
+        "allow": ["app-shared", "schema", "errors", "sdk", "core-contract", "shared"]
       },
       {
         "from": "app-shared",
-        "allow": ["schema", "errors", "sdk", "shared"]
+        "allow": ["schema", "errors", "sdk", "core-contract", "shared"]
       },
       {
         "from": "schema",
@@ -78,19 +82,23 @@
       },
       {
         "from": "sdk",
-        "allow": ["schema", "errors", "shared"]
+        "allow": ["schema", "errors", "core-contract", "shared"]
       },
       {
         "from": "shared",
-        "allow": ["schema", "errors", "sdk"]
+        "allow": ["schema", "errors", "sdk", "core-contract"]
       },
       {
         "from": "plugins",
-        "allow": ["schema", "errors", "sdk"]
+        "allow": ["schema", "errors", "sdk", "core-contract"]
+      },
+      {
+        "from": "core-contract",
+        "allow": ["schema", "errors", "shared"]
       },
       {
         "from": "plugin-tests",
-        "allow": ["plugins", "schema", "errors", "sdk", "shared"]
+        "allow": ["plugins", "schema", "errors", "sdk", "core-contract", "shared"]
       }
     ],
     "coverage": {
