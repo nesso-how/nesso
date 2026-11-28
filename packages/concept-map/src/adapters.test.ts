@@ -99,6 +99,26 @@ test('group adapters preserve identities, expose member relations and expand par
     width: movedGroups[0].bounds.width,
     height: movedGroups[0].bounds.height,
   })
+  const chained = structuredClone(graph)
+  chained.concepts.push({ id: 'urn:d', label: 'D', position: { x: 0, y: 160 } })
+  chained.relations.push(
+    ...['urn:b', 'urn:c'].map((source) => ({ source, predicate: 'urn:p', target: 'urn:d' })),
+  )
+  const shared = adapt({
+    ...options,
+    graph: chained,
+    indexed: indexGraph(chained),
+    groups: groupRelations(chained),
+    selected: [],
+  })
+  assert.equal(shared.nodes.filter(({ type }) => type === 'relationGroup').length, 1)
+  assert.deepEqual(
+    shared.edges.map(({ source, target }) => [source, target]),
+    [
+      [shared.nodes[0].id, 'urn:d'],
+      ['urn:a', shared.nodes[0].id],
+    ],
+  )
 })
 
 test('graph elements preserve dimensions and unchanged identities across snapshots without sharing instance caches', () => {

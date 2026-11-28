@@ -5,6 +5,7 @@ type Concept = PresentedGraph['concepts'][number]
 type Bounds = { x: number; y: number; width: number; height: number }
 export type RelationGroup = {
   key: string
+  frame: string
   direction: 'in' | 'out'
   anchor: string
   predicate: string
@@ -32,7 +33,7 @@ export function groupRelations({
       { ...position, ...(sizes[id] ?? { width: 100, height: 44 }) },
     ]),
   )
-  const candidates = new Map<string, Omit<RelationGroup, 'key' | 'bounds'>>()
+  const candidates = new Map<string, Omit<RelationGroup, 'key' | 'frame' | 'bounds'>>()
   for (const relation of relations) {
     if (relation.bend) continue
     for (const direction of ['out', 'in'] as const) {
@@ -85,10 +86,12 @@ export function groupRelations({
       bounds.width -= bounds.x
       bounds.height -= bounds.y
       if ([...boxes].some(([id, box]) => !members.includes(id) && overlaps(bounds, box))) continue
+      const frame = JSON.stringify(members)
       valid.push({
         ...base,
         members,
         bounds,
+        frame,
         key: JSON.stringify([candidate, members]),
         relations: base.relations.filter((_, i) => members.includes(base.members[i])).sort(),
       })
@@ -103,7 +106,7 @@ export function groupRelations({
       groups.some(
         (group) =>
           candidate.relations.some((id) => group.relations.includes(id)) ||
-          overlaps(group.bounds, candidate.bounds),
+          (group.frame !== candidate.frame && overlaps(group.bounds, candidate.bounds)),
       )
     )
       continue

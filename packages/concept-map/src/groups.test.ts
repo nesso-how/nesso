@@ -105,6 +105,21 @@ test('members may anchor other groups, but each relation joins one group', () =>
   assert.equal(groupRelations(graph).length, 1)
 })
 
+test('fan-out and fan-in over the same members share a frame', () => {
+  const graph = fixture()
+  graph.concepts.push(concept('z', 120, 200))
+  graph.relations.push(...['b', 'c', 'd'].map((id) => relation(id, 'z', 'urn:q')))
+  const groups = groupRelations(graph)
+  assert.deepEqual(
+    groups.map(({ direction, anchor }) => [direction, anchor]),
+    [
+      ['in', 'urn:z'],
+      ['out', 'urn:a'],
+    ],
+  )
+  assert.equal(groups[0].frame, groups[1].frame)
+})
+
 test('identical type labels do not combine predicates, and sizes affect closeness', () => {
   const graph = fixture()
   graph.relations = [relation('a', 'b'), relation('a', 'c', 'urn:q')]

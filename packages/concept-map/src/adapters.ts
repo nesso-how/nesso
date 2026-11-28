@@ -306,7 +306,7 @@ export function createGraphElements() {
       ]),
     )
     for (const group of visibleGroups) {
-      const id = `#group:${group.key}`
+      const id = `#group:${group.frame}`
       const names = group.members.map((id) => indexed.concepts.get(id)!.label).join(', ')
       const node: ConceptNode = {
         id,
@@ -323,22 +323,23 @@ export function createGraphElements() {
         connectable: false,
         deletable: false,
         zIndex: -1,
-        className: `graph-relation-group${preview.has(group.key) ? ' graph-group-preview' : ''}${group.members.every((id) => selectedConcepts.has(id)) ? ' graph-group-selected' : ''}`,
+        className: `graph-relation-group${visibleGroups.some(({ frame, key }) => frame === group.frame && preview.has(key)) ? ' graph-group-preview' : ''}${group.members.every((id) => selectedConcepts.has(id)) ? ' graph-group-selected' : ''}`,
       }
       const before = previousNodes.get(id)
-      nodes.unshift(
-        before &&
-          before.position.x === node.position.x &&
-          before.position.y === node.position.y &&
-          before.width === node.width &&
-          before.height === node.height &&
-          before.data.label === names &&
-          before.className === node.className &&
-          before.data.onGroupSelect === onGroupSelect &&
-          before.data.editable === node.data.editable
-          ? before
-          : node,
-      )
+      if (!boxes.has(id))
+        nodes.unshift(
+          before &&
+            before.position.x === node.position.x &&
+            before.position.y === node.position.y &&
+            before.width === node.width &&
+            before.height === node.height &&
+            before.data.label === names &&
+            before.className === node.className &&
+            before.data.onGroupSelect === onGroupSelect &&
+            before.data.editable === node.data.editable
+            ? before
+            : node,
+        )
       boxes.set(id, { position: node.position, ...group.bounds })
       const concept = { id, label: names, position: node.position }
       const groupIndex = { ...indexed, concepts: new Map([...indexed.concepts, [id, concept]]) }
@@ -357,7 +358,7 @@ export function createGraphElements() {
           defaultTypeId,
           { ...sizes, [id]: group.bounds },
         ),
-        id,
+        id: `#group:${group.key}`,
         data: { relations: group.relations },
         ariaLabel: group.members
           .map((member) =>
